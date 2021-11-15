@@ -12,15 +12,30 @@ from typing import Any
 
 # --- GLOBALS
 
+
 SCREEN_WIDTH: int = 500
 SCREEN_HEIGHT: int = 500
 
+
+# --- HELPERS
+
+
+def to_c_array(arr: list[float]):
+    ''' '''
+    # Example:
+    # arr = (ctypes.c_float * 10)
+    return (gl.GLfloat * len(arr))(*arr)
+
+
 # --- C TYPES
+
 
 NULL_PTR = ctypes.c_void_p(0)
 FLOAT_SIZE = ctypes.sizeof(gl.GLfloat)
 
+
 # --- MATH HELPERS
+
 
 PI: float = 3.14159265358979323846
 PIOVER2: float = 1.57079632679489661923
@@ -84,41 +99,46 @@ class V3:
     z: float = 0.0
 
 
+def v3_copy(v3: V3) -> V3:
+    '''Return a copy of passed in V3'''
+    return V3(v3.x, v3.y, v3.z)
+
+
 def v3_add(a: V3, b: V3) -> V3:
     '''V3 add'''
-    vx = a.x + b.x
-    vy = a.y + b.y
-    vz = a.z + b.z
-    return V3(x=vx, y=vy, z=vz)
+    vx: float = a.x + b.x
+    vy: float = a.y + b.y
+    vz: float = a.z + b.z
+    return V3(vx, vy, vz)
 
 
 def v3_sub(a: V3, b: V3) -> V3:
     '''V3 sub'''
-    vx = a.x - b.x
-    vy = a.y - b.y
-    vz = a.z - b.z
-    return V3(x=vx, y=vy, z=vz)
+    vx: float = a.x - b.x
+    vy: float = a.y - b.y
+    vz: float = a.z - b.z
+    return V3(vx, vy, vz)
 
 
 def v3_scale(a: V3, by: float) -> V3:
     '''V3 scale'''
-    vx = a.x * by
-    vy = a.y * by
-    vz = a.z * by
-    return V3(x=vx, y=vy, z=vz)
+    vx: float = a.x * by
+    vy: float = a.y * by
+    vz: float = a.z * by
+    return V3(vx, vy, vz)
 
 
 def v3_cross(a: V3, b: V3) -> V3:
     '''V3 cross product'''
-    vx = (a.y * b.z) - (a.z * b.y)
-    vy = (a.z * b.x) - (a.x * b.z)
-    vz = (a.x * b.y) - (a.y * b.x)
-    return V3(x=vx, y=vy, z=vz)
+    vx: float = (a.y * b.z) - (a.z * b.y)
+    vy: float = (a.z * b.x) - (a.x * b.z)
+    vz: float = (a.x * b.y) - (a.y * b.x)
+    return V3(vx, vy, vz)
 
 
 def v3_unit(a: V3) -> V3:
     '''V3 unit length'''
-    inv = inv_sqrt(v3_length_sq(a))
+    inv: float = inv_sqrt(v3_length_sq(a))
     return v3_scale(a, inv)
 
 
@@ -173,11 +193,6 @@ class M4:
     dy: float = 0.0
     dz: float = 0.0
     dw: float = 0.0
-
-
-def m4_init_identity() -> M4:
-    '''Init a matrix 4x4's values for a identity matrix'''
-    return M4(ax=1.0, by=1.0, cz=1.0, dw=1.0)
 
 
 def m4_init_scaler(v3: V3) -> M4:
@@ -328,7 +343,7 @@ def m4_look_at(eye: V3, target: V3, up: V3) -> M4:
     z: V3 = v3_unit(v3_sub(eye, target))
 
     if is_zero(z.x) and is_zero(z.y) and is_zero(z.z):
-        return m4_init_identity()
+        return M4(ax=1.0, by=1.0, cz=1.0, dw=1.0)
 
     x: V3 = v3_unit(v3_cross(up, z))
     y: V3 = v3_unit(v3_cross(z, x))
@@ -364,12 +379,14 @@ def m4_from_axis(ang_radians: float, axis: V3) -> M4:
     z2: float = sqr(z)
     ww: float = 1.0 - c
 
-    ax: float = x + x2 * ww
+    ax: float = c + x2 * ww
     ay: float = x * y * ww - z * s
     az: float = x * z * ww + y * s
+
     bx: float = y * x * ww + z * s
-    by: float = x + y2 * ww
+    by: float = c + y2 * ww
     bz: float = y * z * ww - x * s
+
     cx: float = z * x * ww - y * s
     cy: float = z * y * ww + x * s
     cz: float = c + z2 * ww
@@ -388,7 +405,7 @@ def m4_frustum(
         top: float,
         far: float,
         near: float) -> M4:
-    '''Get frustum of matrix 4x4 '''
+    '''Get a frustum matrix 4x4 '''
     rlInv: float = 1.0 / (right - left)
     tbInv: float = 1.0 / (top - bottom)
     fnInv: float = 1.0 / (far - near)
@@ -409,7 +426,7 @@ def m4_frustum(
 
 
 def m4_projection(fov: float, aspect: float, near: float, far: float) -> M4:
-    '''Get projection of matrix 4x4 '''
+    '''Get a projection matrix 4x4 '''
     if fov <= 0.0 or fov >= PI:
         raise M4Err('m4 projection fov out of range')
 
@@ -417,7 +434,7 @@ def m4_projection(fov: float, aspect: float, near: float, far: float) -> M4:
         raise M4Err('m4 projection aspect out of range')
 
     top: float = near * tan(0.5 * fov)
-    bottom: float = -top
+    bottom: float = top * -1.0
     left: float = bottom * aspect
     right: float = top * aspect
 
@@ -569,10 +586,11 @@ def m4_to_multi_array(m4: M4) -> list[list[float]]:
 
 # --- TRANSFORM
 
+
 @dataclass(eq=False, repr=False, slots=True)
 class Transform:
     position: V3 = V3()
-    scale: V3 = V3()
+    scale: V3 = V3(1.0, 1.0, 1.0)
     angle_radians: float = 0.0
 
 
@@ -631,9 +649,6 @@ class Cube:
         h: float = self.height / 2.0
         d: float = self.depth / 2.0
 
-        from functools import reduce
-        from operator import iconcat
-
         # point data
         p0 = [-w, -h, -d]
         p1 = [w, -h, -d]
@@ -658,7 +673,9 @@ class Cube:
                 p1, p0, p2,
                 p1, p2, p3]
 
-        # flatern multi array
+        # flattern array
+        from functools import reduce
+        from operator import iconcat
         self.verts = reduce(iconcat, points, [])
 
 # --- SHADER
@@ -681,13 +698,15 @@ def shader_default(shader: Shader) -> None:
     out vec3 b_col;
 
     uniform vec3 color;
+
+    uniform mat4 model;
     uniform mat4 view;
     uniform mat4 projection;
 
     void main() {
         b_col = color;
-
-        gl_Position = projection * view * vec4(a_position, 1.0);
+        mat4 mvp = projection * view * model;
+        gl_Position = mvp * vec4(a_position, 1.0);
     }
     '''
 
@@ -750,12 +769,6 @@ def vbo_clean(vbo: Vbo) -> None:
         gl.glDeleteBuffers(1, v)
 
 
-def to_c_array(arr: list[float]):
-    ''' '''
-    carr = (gl.GLfloat * len(arr))
-    return carr(*arr)
-
-
 def vbo_add_data(vbo: Vbo, arr: list[float]) -> None:
     '''Add data to vbo'''
     v_buffer = gl.glGenBuffers(1)
@@ -789,7 +802,7 @@ def vbo_use(vbo: Vbo) -> None:
     '''Bind vbo to vertex Array'''
 
     count = vbo.data_size // vbo.components
-    if count == 0:
+    if count <= 0:
         return
     gl.glBindVertexArray(vbo.vao)
     gl.glDrawArrays(gl.GL_TRIANGLES, 0, count)
@@ -801,22 +814,16 @@ def vbo_use(vbo: Vbo) -> None:
 @dataclass(eq=False, repr=False, slots=True)
 class Camera:
     position: V3 = V3()
-    front: V3 = V3(0.0, 0.0, -1.0)
-    up: V3 = V3(0.0, 1.0, 0.0)
-    right: V3 = V3(1.0, 0.0, 0.0)
-    width: float = 0.0
-    height: float = 0.0
-    aspect: float = 0.0
+    front: V3 = V3(z=-1.0)
+    up: V3 = V3(y=1.0)
+    right: V3 = V3(x=1.0)
+    aspect: float = 1.0
 
     fovy: float = PIOVER2
     yaw: float = PIOVER2 * -1.0
     pitch: float = 0.0
     znear: float = 0.01
     zfar: float = 1000.0
-
-    def __post_init__(self):
-        if not is_zero(self.height):
-            self.aspect = self.width / self.height
 
 
 def camera_update_pitch(cam: Camera, angR: float) -> None:
@@ -829,7 +836,7 @@ def camera_update_pitch(cam: Camera, angR: float) -> None:
     z: float = sin(cam.yaw) * cos(cam.pitch)
 
     cam.front = v3_unit(V3(x, y, z))
-    cam.right = v3_unit(v3_cross(cam.front, V3(0.0, 1.0, 0.0)))
+    cam.right = v3_unit(v3_cross(cam.front, V3(y=1.0)))
     cam.up = v3_unit(v3_cross(cam.right, cam.front))
 
 
@@ -841,7 +848,7 @@ def camera_update_yaw(cam: Camera, angR: float) -> None:
     z: float = sin(cam.yaw) * cos(cam.pitch)
 
     cam.front = v3_unit(V3(x, y, z))
-    cam.right = v3_unit(v3_cross(cam.front, V3(0.0, 1.0, 0.0)))
+    cam.right = v3_unit(v3_cross(cam.front, V3(y=1.0)))
     cam.up = v3_unit(v3_cross(cam.right, cam.front))
 
 
@@ -855,7 +862,7 @@ def camera_update_fovy(cam: Camera, angR: float) -> None:
     z: float = sin(cam.yaw) * cos(cam.pitch)
 
     cam.front = v3_unit(V3(x, y, z))
-    cam.right = v3_unit(v3_cross(cam.front, V3(0.0, 1.0, 0.0)))
+    cam.right = v3_unit(v3_cross(cam.front, V3(y=1.0)))
     cam.up = v3_unit(v3_cross(cam.right, cam.front))
 
 
@@ -930,17 +937,8 @@ def main():
         clock = Clock()
 
         camera = Camera(
-                position=V3(z=5.0),
-                width=float(SCREEN_WIDTH),
-                height=float(SCREEN_HEIGHT))
-
-        '''
-        verts: list[float] = [
-            -0.5, -0.5, 0.0,
-            0.5, -0.5, 0.0,
-            0.0, 0.5, 0.0
-        ]
-        '''
+                position=V3(z=3.0),
+                aspect=float(SCREEN_WIDTH) / float(SCREEN_HEIGHT))
 
         cube = Cube()
 
@@ -948,7 +946,6 @@ def main():
         shader_default(shader)
 
         vbo: Vbo = Vbo(data_size=cube.data_size)
-        print(cube.verts)
 
         vbo_add_data(vbo, cube.verts)
 
@@ -962,17 +959,17 @@ def main():
             shader_use(shader)
             vbo_use(vbo)
 
+            model = m4_from_axis(
+                    to_radians(clock.ticks),
+                    V3(x=0.5, y=1.0))
+
+            view = camera_view_matrix(camera)
+            proj = camera_projection_matrix(camera)
+
             shader_set_vec3(shader, 'color', V3(x=1.0, y=0.5))
-
-            shader_set_m4(
-                    shader,
-                    'view',
-                    camera_view_matrix(camera))
-
-            shader_set_m4(
-                    shader,
-                    'projection',
-                    camera_projection_matrix(camera))
+            shader_set_m4(shader, 'model', model)
+            shader_set_m4(shader, 'view', view)
+            shader_set_m4(shader, 'projection', proj)
 
             # ---
             glfw.swap_buffers(gl_window.window)
