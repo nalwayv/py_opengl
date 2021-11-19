@@ -37,27 +37,22 @@ FLOAT_SIZE = ctypes.sizeof(gl.GLfloat)
 
 # --- TRANSFORM
 
+# @dataclass(eq=False, repr=False, slots=True)
+# class Transform:
+#    position: glm.Vec3 = glm.Vec3()
+#    scale: glm.Vec3 = glm.Vec3(1.0, 1.0, 1.0)
+#    angle_radians: float = 0.0
 
-@dataclass(eq=False, repr=False, slots=True)
-class Transform:
-    position: glm.Vec3 = glm.Vec3()
-    scale: glm.Vec3 = glm.Vec3(1.0, 1.0, 1.0)
-    angle_radians: float = 0.0
+# def transform_get_transform_m4(trans: Transform) -> glm.Mat4:
+#    '''Get transform matrix 4x4'''
+#    r: glm.Mat4 = glm.m4_from_axis(trans.angle_radians, glm.Vec3(z=1.0))
+#    t: glm.Mat4 = glm.m4_init_translate(trans.position)
+#    s: glm.Mat4 = glm.m4_init_scaler(trans.scale)
+#    return glm.m4_multiply_m4s(r, t, s)
 
-
-def transform_get_transform_m4(trans: Transform) -> glm.Mat4:
-    '''Get transform matrix 4x4'''
-    r: glm.Mat4 = glm.m4_from_axis(trans.angle_radians, glm.Vec3(z=1.0))
-    t: glm.Mat4 = glm.m4_init_translate(trans.position)
-    s: glm.Mat4 = glm.m4_init_scaler(trans.scale)
-
-    return glm.m4_multiply_m4s(r, t, s)
-
-
-def transform_get_inv_transform_m4(trans: Transform) -> glm.Mat4:
-    '''Get inverse transform matrix 4x4'''
-    return glm.m4_inverse(transform_get_transform_m4(trans))
-
+# def transform_get_inv_transform_m4(trans: Transform) -> glm.Mat4:
+#    '''Get inverse transform matrix 4x4'''
+#    return glm.m4_inverse(transform_get_transform_m4(trans))
 
 # --- CLOCK
 
@@ -92,7 +87,7 @@ class Cube:
     height: float = 1.0
     depth: float = 1.0
     verts: list[float] = field(default_factory=list)
-
+    color: list[float] = field(default_factory=list)
     points: int = 8
     data_size: int = 108
     components: int = 3
@@ -102,35 +97,81 @@ class Cube:
         h: float = self.height / 2.0
         d: float = self.depth / 2.0
 
-        # point data
-        p0 = [-w, -h, -d]
-        p1 = [w, -h, -d]
-        p2 = [-w, h, -d]
-        p3 = [w, h, -d]
-        p4 = [-w, -h, d]
-        p5 = [w, -h, d]
-        p6 = [-w, h, d]
-        p7 = [w, h, d]
+        self.verts = [
+                w, -h, d,
+                w, -h, -d,
+                w, h, -d,
+                w, -h, d,
+                w, h, -d,
+                w, h, d,
+                -w, -h, -d,
+                -w, -h, d,
+                -w, h, d,
+                -w, -h, -d,
+                -w, h, d,
+                -w, h, -d,
+                -w, h, d,
+                w, h, d,
+                w, h, -d,
+                -w, h, d,
+                w, h, -d,
+                -w, h, -d,
+                -w, -h, -d,
+                w, -h, -d,
+                w, -h, d,
+                -w, -h, -d,
+                w, -h, d,
+                -w, -h, d,
+                -w, -h, d,
+                w, -h, d,
+                w, h, d,
+                -w, -h, d,
+                w, h, d,
+                -w, h, d,
+                w, -h, -d,
+                -w, -h, -d,
+                -w, h, -d,
+                w, -h, -d,
+                -w, h, -d,
+                w, h, -d]
 
-        points = [
-                p5, p1, p3,
-                p5, p3, p7,
-                p0, p4, p6,
-                p0, p6, p2,
-                p6, p7, p3,
-                p6, p3, p2,
-                p0, p1, p5,
-                p0, p5, p4,
-                p4, p5, p7,
-                p4, p7, p6,
-                p1, p0, p2,
-                p1, p2, p3]
-
-        # flattern array
-        from functools import reduce
-        from operator import iconcat
-        self.verts = reduce(iconcat, points, [])
-
+        self.color = [
+            1, 0.5, 0.5,
+            1, 0.5, 0.5,
+            1, 0.5, 0.5,
+            1, 0.5, 0.5,
+            1, 0.5, 0.5,
+            1, 0.5, 0.5,
+            0.5, 0, 0,
+            0.5, 0, 0,
+            0.5, 0, 0,
+            0.5, 0, 0,
+            0.5, 0, 0,
+            0.5, 0, 0,
+            0.5, 1, 0.5,
+            0.5, 1, 0.5,
+            0.5, 1, 0.5,
+            0.5, 1, 0.5,
+            0.5, 1, 0.5,
+            0.5, 1, 0.5,
+            0, 0.5, 0,
+            0, 0.5, 0,
+            0, 0.5, 0,
+            0, 0.5, 0,
+            0, 0.5, 0,
+            0, 0.5, 0,
+            0.5, 0.5, 1,
+            0.5, 0.5, 1,
+            0.5, 0.5, 1,
+            0.5, 0.5, 1,
+            0.5, 0.5, 1,
+            0.5, 0.5, 1,
+            0, 0, 0.5,
+            0, 0, 0.5,
+            0, 0, 0.5,
+            0, 0, 0.5,
+            0, 0, 0.5,
+            0, 0, 0.5]
 
 # --- SHADER
 
@@ -148,17 +189,16 @@ def shader_default(shader: Shader) -> None:
 
     vert: str = '''#version 330 core
     layout (location = 0) in vec3 a_position;
+    layout (location = 1) in vec3 a_color;
 
     out vec3 b_col;
-
-    uniform vec3 color;
 
     uniform mat4 model;
     uniform mat4 view;
     uniform mat4 projection;
 
     void main() {
-        b_col = color;
+        b_col = a_color;
         mat4 mvp = projection * view * model;
         gl_Position = mvp * vec4(a_position, 1.0);
     }
@@ -315,14 +355,13 @@ def glwin_center_screen_position(glwin: GlWindow) -> None:
 
 
 def glwin_mouse_pos(glwin: GlWindow) -> glm.Vec3:
-    cx, cy = glfw.get_cursor_pos(glwin)
+    cx, cy = glfw.get_cursor_pos(glwin.window)
     return glm.Vec3(x=cx, y=cy)
 
 
 def glwin_mouse_state(glwin: GlWindow, button: int) -> int:
     '''Get glfw mouse button state'''
     return glfw.get_mouse_button(glwin.window, button)
-
 
 # --- CAMERA
 
@@ -342,11 +381,7 @@ class Camera:
     zfar: float = 1000.0
 
 
-def camera_update_pitch(cam: Camera, angR: float) -> None:
-    low: float = glm.to_radians(-89.0)
-    high: float = glm.to_radians(89.0)
-    cam.pitch = glm.clamp(angR, low, high)
-
+def camera_update(cam: Camera) -> None:
     x: float = glm.cos(cam.yaw) * glm.cos(cam.pitch)
     y: float = glm.sin(cam.pitch)
     z: float = glm.sin(cam.yaw) * glm.cos(cam.pitch)
@@ -356,30 +391,33 @@ def camera_update_pitch(cam: Camera, angR: float) -> None:
     cam.up = glm.v3_unit(glm.v3_cross(cam.right, cam.front))
 
 
-def camera_update_yaw(cam: Camera, angR: float) -> None:
-    cam.yaw = angR
+def camera_yaw(val: float) -> float:
+    '''helper func to update camera yaw position
 
-    x: float = glm.cos(cam.yaw) * glm.cos(cam.pitch)
-    y: float = glm.sin(cam.pitch)
-    z: float = glm.sin(cam.yaw) * glm.cos(cam.pitch)
-
-    cam.front = glm.v3_unit(glm.Vec3(x, y, z))
-    cam.right = glm.v3_unit(glm.v3_cross(cam.front, glm.Vec3(y=1.0)))
-    cam.up = glm.v3_unit(glm.v3_cross(cam.right, cam.front))
+    Example:
+        camera.yaw += camera_yaw(45.0) * 0.2
+    '''
+    return glm.to_radians(val)
 
 
-def camera_update_fovy(cam: Camera, angR: float) -> None:
-    low: float = glm.to_radians(1.0)
-    high: float = glm.to_radians(45.0)
-    cam.fovy = glm.clamp(angR, low, high)
+def camera_pitch(val: float) -> float:
+    '''helper func to update camera pitch position
 
-    x: float = glm.cos(cam.yaw) * glm.cos(cam.pitch)
-    y: float = glm.sin(cam.pitch)
-    z: float = glm.sin(cam.yaw) * glm.cos(cam.pitch)
+    Example:
+        camera.pitch += camera_pitch(45.0) * 0.1
+    '''
+    ang = glm.clamp(val, -89.0, 90.0)
+    return glm.to_radians(ang)
 
-    cam.front = glm.v3_unit(glm.Vec3(x, y, z))
-    cam.right = glm.v3_unit(glm.v3_cross(cam.front, glm.Vec3(y=1.0)))
-    cam.up = glm.v3_unit(glm.v3_cross(cam.right, cam.front))
+
+def camera_fovy(val: float) -> float:
+    '''helper func to update camera fov position
+
+    Example:
+        camera.fovy += camera_fovy(45.0) * 0.1
+    '''
+    ang = glm.clamp(val, 1.0, 45.0)
+    return glm.to_radians(ang)
 
 
 def camera_view_matrix(cam: Camera) -> glm.Mat4:
@@ -459,7 +497,6 @@ def mouse_state(
 
 # --- MAIN
 
-
 def main() -> None:
     ''' '''
     if not glfw.init():
@@ -483,34 +520,50 @@ def main() -> None:
 
         vbo: Vbo = Vbo(data_size=cube.data_size)
         vbo_add_data(vbo, cube.verts)
+        vbo_add_data(vbo, cube.color)
 
         mouse = Mouse()
+        first_move = True
+        last_mouse_pos = glm.Vec3()
 
         while not glwin_should_close(glwin):
             clock_update(clock)
 
-            gl.glClearColor(0.3, 0.2, 0.2, 1.0)
+            gl.glClearColor(0.7, 0.7, 0.7, 1.0)
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+
+            gl.glDisable(gl.GL_BLEND)
+            gl.glEnable(gl.GL_DEPTH_TEST)
+            gl.glDepthMask(gl.GL_TRUE)
             # ---
 
             shader_use(shader)
             vbo_use(vbo)
 
-            model: glm.Mat4 = glm.m4_from_axis(
-                                    glm.to_radians(clock.ticks),
-                                    glm.Vec3(x=0.5, y=1.0))
-
+            model = glm.m4_from_axis(clock.ticks, glm.Vec3(x=0.5, y=0.5))
             view = camera_view_matrix(camera)
             proj = camera_projection_matrix(camera)
 
-            shader_set_vec3(shader, 'color', glm.Vec3(x=1.0, y=0.5))
             shader_set_m4(shader, 'model', model)
             shader_set_m4(shader, 'view', view)
             shader_set_m4(shader, 'projection', proj)
 
-            state = glwin_mouse_state(glwin, 0)
-            if mouse_state(mouse, 0, state) == MouseState.HELD:
-                print('pressed')
+            # mouse move
+            ms = glwin_mouse_state(glwin, 0)
+            current_mouse_pos = glwin_mouse_pos(glwin)
+
+            if mouse_state(mouse, 0, ms) == MouseState.HELD:
+                if first_move:
+                    last_mouse_pos = current_mouse_pos
+                    first_move = False
+                else:
+                    new_dir = glm.v3_sub(current_mouse_pos, last_mouse_pos)
+                    last_mouse_pos = current_mouse_pos
+
+                    camera.yaw -= camera_yaw(new_dir.x) * 0.2
+                    camera.pitch += camera_pitch(new_dir.y) * 0.2
+
+                    camera_update(camera)
 
             # ---
             glfw.swap_buffers(glwin.window)
