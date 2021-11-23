@@ -3,13 +3,14 @@
 import glfw
 import ctypes
 
+from loguru import logger
 from py_opengl import glm
-
 from OpenGL import GL as gl
 from OpenGL.GL.shaders import compileShader, compileProgram
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Tuple
 from enum import Enum
+
 
 # --- GLOBALS
 
@@ -33,26 +34,6 @@ def to_c_array(arr: list[float]):
 
 NULL_PTR = ctypes.c_void_p(0)
 FLOAT_SIZE = ctypes.sizeof(gl.GLfloat)
-
-
-# --- TRANSFORM
-
-# @dataclass(eq=False, repr=False, slots=True)
-# class Transform:
-#    position: glm.Vec3 = glm.Vec3()
-#    scale: glm.Vec3 = glm.Vec3(1.0, 1.0, 1.0)
-#    angle_radians: float = 0.0
-
-# def transform_get_transform_m4(trans: Transform) -> glm.Mat4:
-#    '''Get transform matrix 4x4'''
-#    r: glm.Mat4 = glm.m4_from_axis(trans.angle_radians, glm.Vec3(z=1.0))
-#    t: glm.Mat4 = glm.m4_init_translate(trans.position)
-#    s: glm.Mat4 = glm.m4_init_scaler(trans.scale)
-#    return glm.m4_multiply_m4s(r, t, s)
-
-# def transform_get_inv_transform_m4(trans: Transform) -> glm.Mat4:
-#    '''Get inverse transform matrix 4x4'''
-#    return glm.m4_inverse(transform_get_transform_m4(trans))
 
 # --- CLOCK
 
@@ -78,9 +59,9 @@ def clock_update(clock: Clock) -> None:
 
 
 # --- CUBE
+# TODO() ...
 
 
-# TODO(14/11/1021) ...
 @dataclass(eq=False, repr=False, slots=True)
 class Cube:
     width: float = 1.0
@@ -93,85 +74,41 @@ class Cube:
     components: int = 3
 
     def __post_init__(self):
-        w: float = self.width / 2.0
-        h: float = self.height / 2.0
-        d: float = self.depth / 2.0
+        wp: float = self.width / 2.0
+        hp: float = self.height / 2.0
+        dp: float = self.depth / 2.0
+
+        wn: float = wp * -1.0
+        hn: float = hp * -1.0
+        dn: float = dp * -1.0
 
         self.verts = [
-                w, -h, d,
-                w, -h, -d,
-                w, h, -d,
-                w, -h, d,
-                w, h, -d,
-                w, h, d,
-                -w, -h, -d,
-                -w, -h, d,
-                -w, h, d,
-                -w, -h, -d,
-                -w, h, d,
-                -w, h, -d,
-                -w, h, d,
-                w, h, d,
-                w, h, -d,
-                -w, h, d,
-                w, h, -d,
-                -w, h, -d,
-                -w, -h, -d,
-                w, -h, -d,
-                w, -h, d,
-                -w, -h, -d,
-                w, -h, d,
-                -w, -h, d,
-                -w, -h, d,
-                w, -h, d,
-                w, h, d,
-                -w, -h, d,
-                w, h, d,
-                -w, h, d,
-                w, -h, -d,
-                -w, -h, -d,
-                -w, h, -d,
-                w, -h, -d,
-                -w, h, -d,
-                w, h, -d]
+                wp, hn, dp, wp, hn, dn, wp, hp, dn,
+                wp, hn, dp, wp, hp, dn, wp, hp, dp,
+                wn, hn, dn, wn, hn, dp, wn, hp, dp,
+                wn, hn, dn, wn, hp, dp, wn, hp, dn,
+                wn, hp, dp, wp, hp, dp, wp, hp, dn,
+                wn, hp, dp, wp, hp, dn, wn, hp, dn,
+                wn, hn, dn, wp, hn, dn, wp, hn, dp,
+                wn, hn, dn, wp, hn, dp, wn, hn, dp,
+                wn, hn, dp, wp, hn, dp, wp, hp, dp,
+                wn, hn, dp, wp, hp, dp, wn, hp, dp,
+                wp, hn, dn, wn, hn, dn, wn, hp, dn,
+                wp, hn, dn, wn, hp, dn, wp, hp, dn]
 
         self.color = [
-            1, 0.5, 0.5,
-            1, 0.5, 0.5,
-            1, 0.5, 0.5,
-            1, 0.5, 0.5,
-            1, 0.5, 0.5,
-            1, 0.5, 0.5,
-            0.5, 0, 0,
-            0.5, 0, 0,
-            0.5, 0, 0,
-            0.5, 0, 0,
-            0.5, 0, 0,
-            0.5, 0, 0,
-            0.5, 1, 0.5,
-            0.5, 1, 0.5,
-            0.5, 1, 0.5,
-            0.5, 1, 0.5,
-            0.5, 1, 0.5,
-            0.5, 1, 0.5,
-            0, 0.5, 0,
-            0, 0.5, 0,
-            0, 0.5, 0,
-            0, 0.5, 0,
-            0, 0.5, 0,
-            0, 0.5, 0,
-            0.5, 0.5, 1,
-            0.5, 0.5, 1,
-            0.5, 0.5, 1,
-            0.5, 0.5, 1,
-            0.5, 0.5, 1,
-            0.5, 0.5, 1,
-            0, 0, 0.5,
-            0, 0, 0.5,
-            0, 0, 0.5,
-            0, 0, 0.5,
-            0, 0, 0.5,
-            0, 0, 0.5]
+            1.0, 0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 0.5, 0.5,
+            1.0, 0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 0.5, 0.5,
+            0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0,
+            0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0,
+            0.5, 1.0, 0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 0.5,
+            0.5, 1.0, 0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 0.5,
+            0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.5, 0.0,
+            0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.5, 0.0,
+            0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 0.5, 0.5, 1.0,
+            0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 0.5, 0.5, 1.0,
+            0.0, 0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.5,
+            0.0, 0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.5]
 
 # --- SHADER
 
@@ -187,7 +124,7 @@ class Shader:
 def shader_default(shader: Shader) -> None:
     '''Simple Shader'''
 
-    vert: str = '''#version 330 core
+    vert: str = '''#version 430 core
     layout (location = 0) in vec3 a_position;
     layout (location = 1) in vec3 a_color;
 
@@ -204,7 +141,7 @@ def shader_default(shader: Shader) -> None:
     }
     '''
 
-    frag: str = '''#version 330 core
+    frag: str = '''#version 430 core
 
     in vec3 b_col;
     out vec4 c_col;
@@ -312,7 +249,7 @@ def vbo_use(vbo: Vbo) -> None:
 # --- GL WINDOW
 
 
-class GlWindowErr(Exception):
+class GlWindowError(Exception):
     '''Custom error for gl window'''
 
     def __init__(self, msg: str):
@@ -336,7 +273,7 @@ class GlWindow:
         )
 
         if not self.window:
-            raise GlWindowErr('failed to init glfw window')
+            raise GlWindowError('failed to init glfw window')
 
 
 def glwin_should_close(glwin: GlWindow) -> bool:
@@ -355,13 +292,54 @@ def glwin_center_screen_position(glwin: GlWindow) -> None:
 
 
 def glwin_mouse_pos(glwin: GlWindow) -> glm.Vec3:
+    '''Get current cursor possition on current window'''
     cx, cy = glfw.get_cursor_pos(glwin.window)
     return glm.Vec3(x=cx, y=cy)
 
 
-def glwin_mouse_state(glwin: GlWindow, button: int) -> int:
-    '''Get glfw mouse button state'''
-    return glfw.get_mouse_button(glwin.window, button)
+def glwin_mouse_state(glwin: GlWindow, button: int) -> Tuple[int, int]:
+    '''Get glfw mouse button state
+
+    Parameters
+    ---
+    glwin: GlWindow
+        glfw iwndow
+    button: int
+        glfw mouse button macro number
+        left: 0
+        right: 1
+        middle: 2
+
+    Returns
+    ---
+    Tuple[int, int]:
+        buttoncode: int
+        keystate: int
+            GLFW_RELEASE: 0
+            GLFW_PRESS: 1
+    '''
+    return (button, glfw.get_mouse_button(glwin.window, button))
+
+
+def glwin_key_state(glwin: GlWindow, key: int) -> Tuple[int, int]:
+    '''Get glfw keybutton state
+
+    Parameters
+    ---
+    glwin: GlWindow
+    key: int
+        glfw keyboard macro number
+
+    Returns
+    ---
+    Tuple[int, int]:
+        keycode: int
+        keystate: int
+            GLFW_RELEASE: 0
+            GLFW_PRESS: 1
+    '''
+    return (key, glfw.get_key(glwin.window, key))
+
 
 # --- CAMERA
 
@@ -382,6 +360,7 @@ class Camera:
 
 
 def camera_update(cam: Camera) -> None:
+    '''Update camera'''
     x: float = glm.cos(cam.yaw) * glm.cos(cam.pitch)
     y: float = glm.sin(cam.pitch)
     z: float = glm.sin(cam.yaw) * glm.cos(cam.pitch)
@@ -432,8 +411,69 @@ def camera_projection_matrix(cam: Camera) -> glm.Mat4:
     '''Camera get projection matrix'''
     return glm.m4_projection(cam.fovy, cam.aspect, cam.znear, cam.zfar)
 
+
+# --- KEYBOARD
+
+
+class KeyState(Enum):
+    PRESSED = 0
+    RELEASED = 1
+    HELD = 2
+    DEFAULT = 3
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Keyboard:
+    states: list[int] = field(default_factory=list)
+
+    def __post_init__(self):
+        self.states = [0xFF]*301
+
+
+def _keyboard_set_current_at(kb: Keyboard, key: int, value: int) -> None:
+    kb.states[key] = (kb.states[key] & 0xFFFFFF00) | value
+
+
+def _keyboard_set_previous_at(kb: Keyboard, key: int, value: int) -> None:
+    kb.states[key] = (kb.states[key] & 0xFFFF00FF) | (value << 8)
+
+
+def _keyboard_get_current_at(kb: Keyboard, key: int) -> int:
+    return 0xFF & kb.states[key]
+
+
+def _keyboard_get_previous_at(kb: Keyboard, key: int) -> int:
+    return 0xFF & (kb.states[key] >> 8)
+
+
+def key_state(kb: Keyboard, glfw_key_state: Tuple[int, int]) -> KeyState:
+    '''Keyboard button pressed'''
+    key, state = glfw_key_state
+    if key > 301:
+        return KeyState.DEFAULT
+
+    tmp = _keyboard_get_current_at(kb, key)
+    _keyboard_set_previous_at(kb, key, tmp)
+    _keyboard_set_current_at(kb, key, state)
+
+    if _keyboard_get_previous_at(kb, key) == 0:
+        if _keyboard_get_current_at(kb, key) == 0:
+            return KeyState.DEFAULT
+        else:
+            # pressed
+            return KeyState.PRESSED
+    else:
+        if _keyboard_get_current_at(kb, key) == 0:
+            # released
+            return KeyState.RELEASED
+        else:
+            # held
+            return KeyState.HELD
+
+    return KeyState.DEFAULT
+
+
 # --- MOUSE
-# TODO()
 
 
 class MouseState(Enum):
@@ -445,61 +485,62 @@ class MouseState(Enum):
 
 @dataclass(eq=False, repr=False, slots=True)
 class Mouse:
-    state: int = 0xFF
+    states: list[int] = field(default_factory=list)
+
+    def __post_init__(self):
+        self.states = [0xFF]*3
 
 
-def _mouse_set_current(mouse: Mouse, value: int) -> None:
-    mouse.state = (mouse.state & 0xFFFFFF00) | value
+def _mouse_set_current(mouse: Mouse, key: int, value: int) -> None:
+    mouse.states[key] = (mouse.states[key] & 0xFFFFFF00) | value
 
 
-def _mouse_set_previous(mouse: Mouse, value: int) -> None:
-    mouse.state = (mouse.state & 0xFFFF00FF) | (value << 8)
+def _mouse_set_previous(mouse: Mouse, key: int, value: int) -> None:
+    mouse.states[key] = (mouse.states[key] & 0xFFFF00FF) | (value << 8)
 
 
-def _mouse_get_current(mouse: Mouse) -> int:
-    return 0xFF & mouse.state
+def _mouse_get_current(mouse: Mouse, key: int) -> int:
+    return 0xFF & mouse.states[key]
 
 
-def _mouse_get_previous(mouse: Mouse) -> int:
-    return 0xFF & (mouse.state >> 8)
+def _mouse_get_previous(mouse: Mouse, key: int) -> int:
+    return 0xFF & (mouse.states[key] >> 8)
 
 
-def mouse_state(
-        mouse: Mouse,
-        button: int,
-        glfw_mouse_state: int) -> MouseState:
+def mouse_state(mouse: Mouse, glfw_mouse_state: Tuple[int, int]) -> MouseState:
     '''Mouse button pressed'''
-    button = glm.clamp(button, 0, 3)
-    glfw_mouse_state = glm.clamp(glfw_mouse_state, 0, 3)
+    key, state = glfw_mouse_state
+    if key > 3:
+        return MouseState.DEFAULT
 
-    tmp = _mouse_get_current(mouse)
-    _mouse_set_previous(mouse, tmp)
-    _mouse_set_current(mouse, glfw_mouse_state)
+    tmp = _mouse_get_current(mouse, key)
+    _mouse_set_previous(mouse, key, tmp)
+    _mouse_set_current(mouse, key, state)
 
-    result = MouseState.DEFAULT
-
-    if _mouse_get_previous(mouse) == 0:
-        if _mouse_get_current(mouse) == 0:
-            result = MouseState.DEFAULT
+    if _mouse_get_previous(mouse, key) == 0:
+        if _mouse_get_current(mouse, key) == 0:
+            return MouseState.DEFAULT
         else:
             # pressed
-            result = MouseState.PRESSED
+            return MouseState.PRESSED
     else:
-        if _mouse_get_current(mouse) == 0:
+        if _mouse_get_current(mouse, key) == 0:
             # released
-            result = MouseState.RELEASED
+            return MouseState.RELEASED
         else:
             # held
-            result = MouseState.HELD
+            return MouseState.HELD
 
-    return result
+    return MouseState.DEFAULT
 
 
 # --- MAIN
 
+
 def main() -> None:
     ''' '''
     if not glfw.init():
+        logger.error('failed to init glfw')
         return
 
     try:
@@ -522,14 +563,17 @@ def main() -> None:
         vbo_add_data(vbo, cube.verts)
         vbo_add_data(vbo, cube.color)
 
+        keyboard = Keyboard()
+
         mouse = Mouse()
         first_move = True
-        last_mouse_pos = glm.Vec3()
+        last_mp = glm.Vec3()
+        mouse_rs = 0.2
 
         while not glwin_should_close(glwin):
             clock_update(clock)
 
-            gl.glClearColor(0.7, 0.7, 0.7, 1.0)
+            gl.glClearColor(0.10, 0.10, 0.10, 1.0)
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
             gl.glDisable(gl.GL_BLEND)
@@ -548,20 +592,24 @@ def main() -> None:
             shader_set_m4(shader, 'view', view)
             shader_set_m4(shader, 'projection', proj)
 
+            # keyboard
+            ks = glwin_key_state(glwin, 65)     # 65=A
+            if key_state(keyboard, ks) == KeyState.PRESSED:
+                print('A pressed')
+
             # mouse move
             ms = glwin_mouse_state(glwin, 0)
-            current_mouse_pos = glwin_mouse_pos(glwin)
-
-            if mouse_state(mouse, 0, ms) == MouseState.HELD:
+            current_mp = glwin_mouse_pos(glwin)     # 0=LEFT
+            if mouse_state(mouse, ms) == MouseState.HELD:
                 if first_move:
-                    last_mouse_pos = current_mouse_pos
+                    last_mp = current_mp
                     first_move = False
                 else:
-                    new_dir = glm.v3_sub(current_mouse_pos, last_mouse_pos)
-                    last_mouse_pos = current_mouse_pos
+                    new_dir = glm.v3_sub(current_mp, last_mp)
+                    last_mp = current_mp
 
-                    camera.yaw -= camera_yaw(new_dir.x) * 0.2
-                    camera.pitch += camera_pitch(new_dir.y) * 0.2
+                    camera.yaw -= camera_yaw(new_dir.x) * mouse_rs
+                    camera.pitch += camera_pitch(new_dir.y) * mouse_rs
 
                     camera_update(camera)
 
@@ -569,21 +617,19 @@ def main() -> None:
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
-    except GlWindowErr as gl_window_error:
-        print(f'ERROR: {gl_window_error}')
+    except GlWindowError as window_err:
+        logger.error(f'ERROR: {window_err}')
         glfw.terminate()
 
-    except glm.Mat4Err as mat4_error:
-        print(f'ERROR: {mat4_error}')
+    except glm.Mat4Error as mat4_err:
+        logger.error(f'ERROR: {mat4_err}')
         glfw.terminate()
 
     finally:
+        logger.debug('CLOSED')
         vbo_clean(vbo)
         shader_clean(shader)
-
         glfw.terminate()
-
-        print('CLOSED')
 
 
 if __name__ == '__main__':
