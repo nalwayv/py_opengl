@@ -8,15 +8,15 @@ from py_opengl import glm
 from OpenGL import GL as gl
 from OpenGL.GL.shaders import compileShader, compileProgram
 from dataclasses import dataclass, field
-from typing import Any, Tuple
+from typing import Any, Final
 from enum import Enum
 
 
 # --- GLOBALS
 
 
-SCREEN_WIDTH: int = 500
-SCREEN_HEIGHT: int = 500
+SCREEN_WIDTH: Final[int] = 500
+SCREEN_HEIGHT: Final[int] = 500
 
 
 # --- HELPERS
@@ -25,7 +25,8 @@ SCREEN_HEIGHT: int = 500
 def to_c_array(arr: list[float]):
     ''' '''
     # Example:
-    # arr = (ctypes.c_float * 10)
+    # create c type array and unpack data into it
+    # arr = (ctypes.c_float * 3) = [0, 0, 0]
     return (gl.GLfloat * len(arr))(*arr)
 
 
@@ -59,7 +60,6 @@ def clock_update(clock: Clock) -> None:
 
 
 # --- CUBE
-# TODO() ...
 
 
 @dataclass(eq=False, repr=False, slots=True)
@@ -297,7 +297,7 @@ def glwin_mouse_pos(glwin: GlWindow) -> glm.Vec3:
     return glm.Vec3(x=cx, y=cy)
 
 
-def glwin_mouse_state(glwin: GlWindow, button: int) -> Tuple[int, int]:
+def glwin_mouse_state(glwin: GlWindow, button: int) -> tuple[int, int]:
     '''Get glfw mouse button state
 
     Parameters
@@ -312,7 +312,7 @@ def glwin_mouse_state(glwin: GlWindow, button: int) -> Tuple[int, int]:
 
     Returns
     ---
-    Tuple[int, int]:
+    tuple[int, int]:
         buttoncode: int
         keystate: int
             GLFW_RELEASE: 0
@@ -321,7 +321,7 @@ def glwin_mouse_state(glwin: GlWindow, button: int) -> Tuple[int, int]:
     return (button, glfw.get_mouse_button(glwin.window, button))
 
 
-def glwin_key_state(glwin: GlWindow, key: int) -> Tuple[int, int]:
+def glwin_key_state(glwin: GlWindow, key: int) -> tuple[int, int]:
     '''Get glfw keybutton state
 
     Parameters
@@ -332,7 +332,7 @@ def glwin_key_state(glwin: GlWindow, key: int) -> Tuple[int, int]:
 
     Returns
     ---
-    Tuple[int, int]:
+    tuple[int, int]:
         keycode: int
         keystate: int
             GLFW_RELEASE: 0
@@ -352,8 +352,8 @@ class Camera:
     right: glm.Vec3 = glm.Vec3(x=1.0)
     aspect: float = 1.0
 
-    fovy: float = glm.PIOVER2
-    yaw: float = glm.PIOVER2 * -1.0
+    fovy: float = glm.PIOVER2 * 0.5     # 45 deg
+    yaw: float = glm.PIOVER2 * -1.0     # -90.0 deg
     pitch: float = 0.0
     znear: float = 0.01
     zfar: float = 1000.0
@@ -361,46 +361,30 @@ class Camera:
 
 def camera_update(cam: Camera) -> None:
     '''Update camera'''
-    x: float = glm.cos(cam.yaw) * glm.cos(cam.pitch)
-    y: float = glm.sin(cam.pitch)
-    z: float = glm.sin(cam.yaw) * glm.cos(cam.pitch)
+    cam.front.x = glm.cos(cam.pitch) * glm.cos(cam.yaw)
+    cam.front.y = glm.sin(cam.pitch)
+    cam.front.z = glm.cos(cam.pitch) * glm.sin(cam.yaw)
 
-    cam.front = glm.v3_unit(glm.Vec3(x, y, z))
+    cam.front = glm.v3_unit(cam.front)
+
     cam.right = glm.v3_unit(glm.v3_cross(cam.front, glm.Vec3(y=1.0)))
     cam.up = glm.v3_unit(glm.v3_cross(cam.right, cam.front))
 
 
-def camera_yaw(val: float) -> float:
-    '''helper func to update camera yaw position
-
-    Example:
-        camera.yaw += camera_yaw(45.0) * 0.2
-    '''
+def camera_to_yaw(val: float) -> float:
     return glm.to_radians(val)
 
 
-def camera_pitch(val: float) -> float:
-    '''helper func to update camera pitch position
-
-    Example:
-        camera.pitch += camera_pitch(45.0) * 0.1
-    '''
-    ang = glm.clamp(val, -89.0, 90.0)
-    return glm.to_radians(ang)
+def camera_to_pitch(val: float) -> float:
+    return glm.to_radians(glm.clamp(val, -89.0, 89.0))
 
 
-def camera_fovy(val: float) -> float:
-    '''helper func to update camera fov position
-
-    Example:
-        camera.fovy += camera_fovy(45.0) * 0.1
-    '''
-    ang = glm.clamp(val, 1.0, 45.0)
-    return glm.to_radians(ang)
+def camera_to_fovy(val: float) -> float:
+    return glm.to_radians(glm.clamp(val, 1.0, 45.0))
 
 
 def camera_view_matrix(cam: Camera) -> glm.Mat4:
-    '''Camerea get view matrix'''
+    '''Return Camera view matrix'''
     return glm.m4_look_at(
             cam.position,
             glm.v3_add(cam.position, cam.front),
@@ -408,7 +392,7 @@ def camera_view_matrix(cam: Camera) -> glm.Mat4:
 
 
 def camera_projection_matrix(cam: Camera) -> glm.Mat4:
-    '''Camera get projection matrix'''
+    '''Return camera projection matrix'''
     return glm.m4_projection(cam.fovy, cam.aspect, cam.znear, cam.zfar)
 
 
@@ -446,8 +430,19 @@ def _keyboard_get_previous_at(kb: Keyboard, key: int) -> int:
     return 0xFF & (kb.states[key] >> 8)
 
 
-def key_state(kb: Keyboard, glfw_key_state: Tuple[int, int]) -> KeyState:
-    '''Keyboard button pressed'''
+def key_state(kb: Keyboard, glfw_key_state: tuple[int, int]) -> KeyState:
+    '''Keyboard button pressed
+
+    Parameters
+    ---
+    kb: Keyboard
+    glfw_key_state: tuple[int, int]
+        glfw keyboard key number and its state
+
+    Returns
+    ---
+    KeyState: Enum
+    '''
     key, state = glfw_key_state
     if key > 301:
         return KeyState.DEFAULT
@@ -507,8 +502,19 @@ def _mouse_get_previous(mouse: Mouse, key: int) -> int:
     return 0xFF & (mouse.states[key] >> 8)
 
 
-def mouse_state(mouse: Mouse, glfw_mouse_state: Tuple[int, int]) -> MouseState:
-    '''Mouse button pressed'''
+def mouse_state(mouse: Mouse, glfw_mouse_state: tuple[int, int]) -> MouseState:
+    '''Mouse button pressed
+
+    Parameters
+    ---
+    mouse: Mouse
+    glfw_mouse_state: tuple[int, int]
+        glfw mouse button number and its state
+
+    Returns
+    ---
+    MouseState: Enum
+    '''
     key, state = glfw_mouse_state
     if key > 3:
         return MouseState.DEFAULT
@@ -564,11 +570,12 @@ def main() -> None:
         vbo_add_data(vbo, cube.color)
 
         keyboard = Keyboard()
+        camera_s = 2.0
 
         mouse = Mouse()
         first_move = True
         last_mp = glm.Vec3()
-        mouse_rs = 0.2
+        mouse_speed = 0.2
 
         while not glwin_should_close(glwin):
             clock_update(clock)
@@ -593,13 +600,45 @@ def main() -> None:
             shader_set_m4(shader, 'projection', proj)
 
             # keyboard
-            ks = glwin_key_state(glwin, 65)     # 65=A
-            if key_state(keyboard, ks) == KeyState.PRESSED:
-                print('A pressed')
+            ks_w = glwin_key_state(glwin, glfw.KEY_W)
+            if key_state(keyboard, ks_w) == KeyState.HELD:
+                speed = camera_s * clock.delta
+                new_pos = glm.v3_scale(camera.front, speed)
+                camera.position = glm.v3_add(camera.position, new_pos)
+
+            ks_s = glwin_key_state(glwin, glfw.KEY_S)
+            if key_state(keyboard, ks_s) == KeyState.HELD:
+                speed = camera_s * clock.delta
+                new_pos = glm.v3_scale(camera.front, speed)
+                camera.position = glm.v3_sub(camera.position, new_pos)
+
+            ks_a = glwin_key_state(glwin, glfw.KEY_A)
+            if key_state(keyboard, ks_a) == KeyState.HELD:
+                speed = camera_s * clock.delta
+                new_pos = glm.v3_scale(camera.right, speed)
+                camera.position = glm.v3_add(camera.position, new_pos)
+
+            ks_d = glwin_key_state(glwin, glfw.KEY_D)
+            if key_state(keyboard, ks_d) == KeyState.HELD:
+                speed = camera_s * clock.delta
+                new_pos = glm.v3_scale(camera.right, speed)
+                camera.position = glm.v3_sub(camera.position, new_pos)
+
+            ks_space = glwin_key_state(glwin, glfw.KEY_Q)
+            if key_state(keyboard, ks_space) == KeyState.HELD:
+                speed = camera_s * clock.delta
+                new_pos = glm.v3_scale(camera.up, speed)
+                camera.position = glm.v3_add(camera.position, new_pos)
+
+            ks_ls = glwin_key_state(glwin, glfw.KEY_E)
+            if key_state(keyboard, ks_ls) == KeyState.HELD:
+                speed = camera_s * clock.delta
+                new_pos = glm.v3_scale(camera.up, speed)
+                camera.position = glm.v3_sub(camera.position, new_pos)
 
             # mouse move
-            ms = glwin_mouse_state(glwin, 0)
-            current_mp = glwin_mouse_pos(glwin)     # 0=LEFT
+            ms = glwin_mouse_state(glwin, glfw.MOUSE_BUTTON_LEFT)
+            current_mp = glwin_mouse_pos(glwin)
             if mouse_state(mouse, ms) == MouseState.HELD:
                 if first_move:
                     last_mp = current_mp
@@ -608,9 +647,8 @@ def main() -> None:
                     new_dir = glm.v3_sub(current_mp, last_mp)
                     last_mp = current_mp
 
-                    camera.yaw -= camera_yaw(new_dir.x) * mouse_rs
-                    camera.pitch += camera_pitch(new_dir.y) * mouse_rs
-
+                    camera.yaw -= camera_to_yaw(new_dir.x * mouse_speed)
+                    camera.pitch += camera_to_pitch(new_dir.y * mouse_speed)
                     camera_update(camera)
 
             # ---
