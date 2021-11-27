@@ -64,6 +64,11 @@ def lerp(start: float, end: float, by: float) -> float:
     return start + clamp(by, 0, 1) * (end - start)
 
 
+def normalize(val: float, low: float, high: float) -> float:
+    '''normalize value between low and high'''
+    return (val - low) / (high - low)
+
+
 def tan(val: float) -> float:
     return math.tan(val)
 
@@ -95,34 +100,43 @@ class Vec3:
     x: float = 0.0
     y: float = 0.0
     z: float = 0.0
-
+    
     def __getitem__(self, idx):
         match clamp(idx, 0, 3):
             case 0: return self.x
             case 1: return self.y
             case 2: return self.z
             case _: raise Vec3Error('out of range')
+    
+    def __add__(self, other):
+        if not isinstance(other, Vec3):
+            raise Vec3Error('not of type Vec3')
+        x: float = self.x + other.x
+        y: float = self.y + other.y
+        z: float = self.z + other.z
+        return Vec3(x, y, z)
+        
+    def __sub__(self, other):
+        if not isinstance(other, Vec3):
+            raise Vec3Error('not of type Vec3')
+        x: float = self.x - other.x
+        y: float = self.y - other.y
+        z: float = self.z - other.z
+        return Vec3(x, y, z)
+
+    def __mul__(self, other):
+        if not isinstance(other, Vec3):
+            raise Vec3Error('not of type Vec3')
+        
+        x: float = self.x * other.x
+        y: float = self.y * other.y
+        z: float = self.z * other.z
+        return Vec3(x, y, z)
 
 
 def v3_copy(v3: Vec3) -> Vec3:
     '''Return a copy of passed in V3'''
     return Vec3(v3.x, v3.y, v3.z)
-
-
-def v3_add(a: Vec3, b: Vec3) -> Vec3:
-    '''Add v3s'''
-    x: float = a.x + b.x
-    y: float = a.y + b.y
-    z: float = a.z + b.z
-    return Vec3(x, y, z)
-
-
-def v3_sub(a: Vec3, b: Vec3) -> Vec3:
-    '''Sub v3s'''
-    x: float = a.x - b.x
-    y: float = a.y - b.y
-    z: float = a.z - b.z
-    return Vec3(x, y, z)
 
 
 def v3_scale(v3: Vec3, by: float) -> Vec3:
@@ -143,18 +157,14 @@ def v3_cross(a: Vec3, b: Vec3) -> Vec3:
 
 def v3_length_sq(v3: Vec3) -> float:
     '''Get the length sqr of this v3'''
-    x2: float = sqr(v3.x)
-    y2: float = sqr(v3.y)
-    z2: float = sqr(v3.z)
-    return x2 + y2 + z2
+    v: Vec3 = v3 * v3
+    return v.x + v.y + v.z
 
 
 def v3_length(v3: Vec3) -> float:
     '''Get the length sqrt of this v3'''
-    x2: float = sqr(v3.x)
-    y2: float = sqr(v3.y)
-    z2: float = sqr(v3.z)
-    return sqrt(x2 + y2 + z2)
+    v: Vec3 = v3 * v3
+    return sqrt(v.x + v.y + v.z)
 
 
 def v3_unit(v3: Vec3) -> Vec3:
@@ -162,20 +172,13 @@ def v3_unit(v3: Vec3) -> Vec3:
     lsq = v3_length_sq(v3)
     if is_zero(lsq):
         return v3_copy(v3)
-
-    d: float = inv_sqrt(lsq)
-    x: float = v3.x * d
-    y: float = v3.y * d
-    z: float = v3.z * d
-    return Vec3(x, y, z)
+    return v3_scale(v3, inv_sqrt(lsq))
 
 
 def v3_dot(a: Vec3, b: Vec3) -> float:
     '''Get the dot product of two v3s'''
-    x: float = a.x * b.x
-    y: float = a.y * b.y
-    z: float = a.z * b.z
-    return x + y + z
+    d: Vec3 = a * b
+    return d.x + d.y + d.z
 
 
 def v3_is_unit(v3: Vec3) -> bool:
@@ -189,6 +192,18 @@ def v3_is_zero(v3: Vec3) -> bool:
         is_zero(v3.x) and
         is_zero(v3.y) and
         is_zero(v3.z))
+
+
+def v3_project(a: Vec3, b: Vec3) -> Vec3:
+    '''Return a vec3 project'''
+    by: float = v3_dot(a, b) / v3_length_sq(b)
+    return v3_scale(b, by)
+
+
+def v3_reject(a: Vec3, b: Vec3) -> Vec3:
+    '''Return a vec3 reject'''
+    proj = v3_project(a, b)
+    return v3_sub(a, proj)
 
 
 def v3_is_equil(a: Vec3, b: Vec3) -> bool:
@@ -247,14 +262,126 @@ class Mat4:
             case 14: return self.dz
             case 15: return self.dw
             case _: raise Mat4Error('out of range')
+    
+    def __add__(self, other):
+        if not isinstance(other, Mat4):
+            raise Mat4Error('not of type mat4')
 
+        ax: float = self.ax + other.ax
+        ay: float = self.ay + other.ay
+        az: float = self.az + other.az
+        aw: float = self.aw + other.aw
+        bx: float = self.bx + other.bx
+        by: float = self.by + other.by
+        bz: float = self.bz + other.bz
+        bw: float = self.bw + other.bw
+        cx: float = self.cx + other.cx
+        cy: float = self.cy + other.cy
+        cz: float = self.cz + other.cz
+        cw: float = self.cw + other.cw
+        dx: float = self.dx + other.dx
+        dy: float = self.dy + other.dy
+        dz: float = self.dz + other.dz
+        dw: float = self.dw + other.dw
 
+        return Mat4(
+            ax, ay, az, aw,
+            bx, by, bz, bw,
+            cx, cy, cz, cw,
+            dx, dy, dz, dw) 
+            
+    def __sub__(self, other):
+        if not isinstance(other, Mat4):
+            raise Mat4Error('not of type mat4')
+
+        ax: float = self.ax - other.ax
+        ay: float = self.ay - other.ay
+        az: float = self.az - other.az
+        aw: float = self.aw - other.aw
+        bx: float = self.bx - other.bx
+        by: float = self.by - other.by
+        bz: float = self.bz - other.bz
+        bw: float = self.bw - other.bw
+        cx: float = self.cx - other.cx
+        cy: float = self.cy - other.cy
+        cz: float = self.cz - other.cz
+        cw: float = self.cw - other.cw
+        dx: float = self.dx - other.dx
+        dy: float = self.dy - other.dy
+        dz: float = self.dz - other.dz
+        dw: float = self.dw - other.dw
+
+        return Mat4(
+            ax, ay, az, aw,
+            bx, by, bz, bw,
+            cx, cy, cz, cw,
+            dx, dy, dz, dw)
+    
+    def __mul__(self, other):
+        if not isinstance(other, Mat4):
+            raise Mat4Error('not of type Mat4')
+        ax = (self.ax * other.ax) + (self.ay * other.bx) + (self.az * other.cx) + (self.aw * other.dx)
+        ay = (self.ax * other.ay) + (self.ay * other.by) + (self.az * other.cy) + (self.aw * other.dy)
+        az = (self.ax * other.az) + (self.ay * other.bz) + (self.az * other.cz) + (self.aw * other.dz)
+        aw = (self.ax * other.aw) + (self.ay * other.bw) + (self.az * other.cw) + (self.aw * other.dw)
+        bx = (self.bx * other.ax) + (self.by * other.bx) + (self.bz * other.cx) + (self.bw * other.dx)
+        by = (self.bx * other.ay) + (self.by * other.by) + (self.bz * other.cy) + (self.bw * other.dy)
+        bz = (self.bx * other.az) + (self.by * other.bz) + (self.bz * other.cz) + (self.bw * other.dz)
+        bw = (self.bx * other.aw) + (self.by * other.bw) + (self.bz * other.cw) + (self.bw * other.dw)
+        cx = (self.cx * other.ax) + (self.cy * other.bx) + (self.cz * other.cx) + (self.cw * other.dx)
+        cy = (self.cx * other.ay) + (self.cy * other.by) + (self.cz * other.cy) + (self.cw * other.dy)
+        cz = (self.cx * other.az) + (self.cy * other.bz) + (self.cz * other.cz) + (self.cw * other.dz)
+        cw = (self.cx * other.aw) + (self.cy * other.bw) + (self.cz * other.cw) + (self.cw * other.dw)
+        dx = (self.dx * other.ax) + (self.dy * other.bx) + (self.dz * other.cx) + (self.dw * other.dx)
+        dy = (self.dx * other.ay) + (self.dy * other.by) + (self.dz * other.cy) + (self.dw * other.dy)
+        dz = (self.dx * other.az) + (self.dy * other.bz) + (self.dz * other.cz) + (self.dw * other.dz)
+        dw = (self.dx * other.aw) + (self.dy * other.bw) + (self.dz * other.cw) + (self.dw * other.dw)
+
+        return Mat4(
+            ax, ay, az, aw,
+            bx, by, bz, bw,
+            cx, cy, cz, cw,
+            dx, dy, dz, dw)
+     
+  
 def m4_copy(m4: Mat4) -> Mat4:
     return Mat4(
             m4.ax, m4.ay, m4.az, m4.aw,
             m4.bx, m4.by, m4.bz, m4.bw,
             m4.cx, m4.cy, m4.cz, m4.cw,
             m4.dx, m4.dy, m4.dz, m4.dw)
+
+
+def m4_row0(m4: Mat4) -> tuple[float, float, float, float]:
+    return (m4.ax, m4.ay, m4.az, m4.aw)
+
+
+def m4_row1(m4: Mat4) -> tuple[float, float, float, float]:
+    return (m4.bx, m4.by, m4.bz, m4.bw)
+
+
+def m4_row2(m4: Mat4) -> tuple[float, float, float, float]:
+    return (m4.cx, m4.cy, m4.cz, m4.cw)
+  
+
+def m4_row3(m4: Mat4) -> tuple[float, float, float, float]:
+    return (m4.dx, m4.dy, m4.dz, m4.dw)
+
+
+def m4_col0(m4: Mat4) -> tuple[float, float, float, float]:
+    return (m4.ax, m4.bx, m4.cx, m4.dx)
+
+
+def m4_col1(m4: Mat4) -> tuple[float, float, float, float]:
+    return (m4.ay, m4.by, m4.cy, m4.dy)
+
+
+def m4_col2(m4: Mat4) -> tuple[float, float, float, float]:
+    return (m4.az, m4.bz, m4.cz, m4.dz)
+  
+
+def m4_col3(m4: Mat4) -> tuple[float, float, float, float]:
+    return (m4.aw, m4.bw, m4.cw, m4.dw)
 
 
 def m4_init_scaler(v3: Vec3) -> Mat4:
@@ -268,82 +395,32 @@ def m4_init_translate(v3: Vec3) -> Mat4:
 
 
 def m4_init_rotation_x(angle_deg: float) -> Mat4:
-    '''Init a matrix 4x4's values for a rotation on the x axis'''
+    '''Return a matrix 4x4's values for a rotation on the x axis'''
     angle_rad: float = to_radians(angle_deg)
     c: float = cos(angle_rad)
     s: float = sin(angle_rad)
-
     return Mat4(ax=1.0, by=c, bz=-s, cy=s, cz=c, dw=1.0)
 
 
 def m4_init_rotation_y(angle_deg: float) -> Mat4:
-    '''Init a matrix 4x4's values for a rotation on the y axis'''
+    '''Return a matrix 4x4's values for a rotation on the y axis'''
     angle_rad: float = to_radians(angle_deg)
     c: float = cos(angle_rad)
     s: float = sin(angle_rad)
-
     return Mat4(ax=c, az=s, by=1.0, cx=-s, cz=c, dw=1.0)
 
 
 def m4_init_rotation_z(angle_deg: float) -> Mat4:
-    '''Init a matrix 4x4's values for a rotation on the z axis'''
+    '''Return a matrix 4x4's values for a rotation on the z axis'''
     angle_rad: float = to_radians(angle_deg)
     c: float = cos(angle_rad)
     s: float = sin(angle_rad)
-
     return Mat4(ax=c, ay=-s, bx=s, by=c, cz=1.0, dw=1.0)
 
 
-def m4_add(a: Mat4, b: Mat4) -> Mat4:
-    '''Add two matrix 4x4's together'''
-    ax: float = a.ax + b.ax
-    ay: float = a.ay + b.ay
-    az: float = a.az + b.az
-    aw: float = a.aw + b.aw
-    bx: float = a.bx + b.bx
-    by: float = a.by + b.by
-    bz: float = a.bz + b.bz
-    bw: float = a.bw + b.bw
-    cx: float = a.cx + b.cx
-    cy: float = a.cy + b.cy
-    cz: float = a.cz + b.cz
-    cw: float = a.cw + b.cw
-    dx: float = a.dx + b.dx
-    dy: float = a.dy + b.dy
-    dz: float = a.dz + b.dz
-    dw: float = a.dw + b.dw
-
-    return Mat4(
-        ax, ay, az, aw,
-        bx, by, bz, bw,
-        cx, cy, cz, cw,
-        dx, dy, dz, dw)
-
-
-def m4_sub(a: Mat4, b: Mat4) -> Mat4:
-    '''Subtract two matrix 4x4's'''
-    ax: float = a.ax - b.ax
-    ay: float = a.ay - b.ay
-    az: float = a.az - b.az
-    aw: float = a.aw - b.aw
-    bx: float = a.bx - b.bx
-    by: float = a.by - b.by
-    bz: float = a.bz - b.bz
-    bw: float = a.bw - b.bw
-    cx: float = a.cx - b.cx
-    cy: float = a.cy - b.cy
-    cz: float = a.cz - b.cz
-    cw: float = a.cw - b.cw
-    dx: float = a.dx - b.dx
-    dy: float = a.dy - b.dy
-    dz: float = a.dz - b.dz
-    dw: float = a.dw - b.dw
-
-    return Mat4(
-        ax, ay, az, aw,
-        bx, by, bz, bw,
-        cx, cy, cz, cw,
-        dx, dy, dz, dw)
+def m4_identity() -> Mat4:
+    '''Return a identity matrix'''
+    return Mat4(ax=1.0, by=1.0, cz=1.0, dw=1.0)
 
 
 def m4_scale(m4: Mat4, by: float) -> Mat4:
@@ -372,53 +449,19 @@ def m4_scale(m4: Mat4, by: float) -> Mat4:
         dx, dy, dz, dw)
 
 
-def m4_multiply(a: Mat4, b: Mat4) -> Mat4:
-    '''Multiply two matrix 4x4's'''
-    ax: float = (a.ax * b.ax) + (a.ay * b.bx) + (a.az * b.cx) + (a.aw * b.dx)
-    ay: float = (a.ax * b.ay) + (a.ay * b.by) + (a.az * b.cy) + (a.aw * b.dy)
-    az: float = (a.ax * b.az) + (a.ay * b.bz) + (a.az * b.cz) + (a.aw * b.dz)
-    aw: float = (a.ax * b.aw) + (a.ay * b.bw) + (a.az * b.cw) + (a.aw * b.dw)
-    bx: float = (a.bx * b.ax) + (a.by * b.bx) + (a.bz * b.cx) + (a.bw * b.dx)
-    by: float = (a.bx * b.ay) + (a.by * b.by) + (a.bz * b.cy) + (a.bw * b.dy)
-    bz: float = (a.bx * b.az) + (a.by * b.bz) + (a.bz * b.cz) + (a.bw * b.dz)
-    bw: float = (a.bx * b.aw) + (a.by * b.bw) + (a.bz * b.cw) + (a.bw * b.dw)
-    cx: float = (a.cx * b.ax) + (a.cy * b.bx) + (a.cz * b.cx) + (a.cw * b.dx)
-    cy: float = (a.cx * b.ay) + (a.cy * b.by) + (a.cz * b.cy) + (a.cw * b.dy)
-    cz: float = (a.cx * b.az) + (a.cy * b.bz) + (a.cz * b.cz) + (a.cw * b.dz)
-    cw: float = (a.cx * b.aw) + (a.cy * b.bw) + (a.cz * b.cw) + (a.cw * b.dw)
-    dx: float = (a.dx * b.ax) + (a.dy * b.bx) + (a.dz * b.cx) + (a.dw * b.dx)
-    dy: float = (a.dx * b.ay) + (a.dy * b.by) + (a.dz * b.cy) + (a.dw * b.dy)
-    dz: float = (a.dx * b.az) + (a.dy * b.bz) + (a.dz * b.cz) + (a.dw * b.dz)
-    dw: float = (a.dx * b.aw) + (a.dy * b.bw) + (a.dz * b.cw) + (a.dw * b.dw)
-
-    return Mat4(
-            ax, ay, az, aw,
-            bx, by, bz, bw,
-            cx, cy, cz, cw,
-            dx, dy, dz, dw)
-
-
-def m4_multiply_m4s(*args) -> Mat4:
-    if not len(args):
-        raise Mat4Error('cant multipy no m4s!!')
-
-    from functools import reduce
-    return reduce(m4_multiply, args)
-
-
 def m4_look_at(eye: Vec3, target: Vec3, up: Vec3) -> Mat4:
     '''Get matrix 4x4 look-at value'''
-    z: Vec3 = v3_unit(v3_sub(eye, target))
+    z: Vec3 = v3_unit(eye - target)
 
     if v3_is_zero(z):
-        return Mat4(ax=1.0, by=1.0, cz=1.0, dw=1.0)
+        return m4_identity()
 
     x: Vec3 = v3_unit(v3_cross(up, z))
     y: Vec3 = v3_unit(v3_cross(z, x))
 
-    dx: float = ((x.x * eye.x) + (x.y * eye.y) + (x.z * eye.z)) * -1.0
-    dy: float = ((y.x * eye.x) + (y.y * eye.y) + (y.z * eye.z)) * -1.0
-    dz: float = ((z.x * eye.x) + (z.y * eye.y) + (z.z * eye.z)) * -1.0
+    dx: float = v3_dot(x, eye) * -1.0
+    dy: float = v3_dot(y, eye) * -1.0
+    dz: float = v3_dot(z, eye) * -1.0
 
     return Mat4(
             x.x, y.x, z.x, 0.0,
@@ -429,42 +472,38 @@ def m4_look_at(eye: Vec3, target: Vec3, up: Vec3) -> Mat4:
 
 def m4_from_axis(angle_deg: float, axis: Vec3) -> Mat4:
     '''Get a matrix 4x4 angle axis value'''
-    x: float = axis.x
-    y: float = axis.y
-    z: float = axis.z
+    axis_cpy: Vec3 = v3_copy(axis)
 
-    if not v3_is_unit(axis):
-        inv: float = 1.0 / v3_length(axis)
-        x *= inv
-        y *= inv
-        z *= inv
+    if not v3_is_unit(axis_cpy):
+        inv: float = 1.0 / v3_length(axis_cpy)
+        axis_cpy = v3_scale(axis_cpy, inv)
 
     angle_rad: float = to_radians(angle_deg)
     c: float = cos(angle_rad)
     s: float = sin(angle_rad)
 
-    x2: float = sqr(x)
-    y2: float = sqr(y)
-    z2: float = sqr(z)
+    x2: float = sqr(axis_cpy.x)
+    y2: float = sqr(axis_cpy.y)
+    z2: float = sqr(axis_cpy.z)
     ww: float = 1.0 - c
 
     ax: float = c + x2 * ww
-    ay: float = x * y * ww - z * s
-    az: float = x * z * ww + y * s
+    ay: float = axis_cpy.x * axis_cpy.y * ww - axis_cpy.z * s
+    az: float = axis_cpy.x * axis_cpy.z * ww + axis_cpy.y * s
 
-    bx: float = y * x * ww + z * s
+    bx: float = axis_cpy.y * axis_cpy.x * ww + axis_cpy.z * s
     by: float = c + y2 * ww
-    bz: float = y * z * ww - x * s
+    bz: float = axis_cpy.y * axis_cpy.z * ww - axis_cpy.x * s
 
-    cx: float = z * x * ww - y * s
-    cy: float = z * y * ww + x * s
+    cx: float = axis_cpy.z * axis_cpy.x * ww - axis_cpy.y * s
+    cy: float = axis_cpy.z * axis_cpy.y * ww + axis_cpy.x * s
     cz: float = c + z2 * ww
 
     return Mat4(
-            ax, ay, az, 0.0,
-            bx, by, bz, 0.0,
-            cx, cy, cz, 0.0,
-            0.0, 0.0, 0.0, 1.0)
+        ax=ax, ay=ay, az=az,
+        bx=bx, by=by, bz=bz,
+        cx=cx, cy=cy, cz=cz,
+        dw=1.0)
 
 
 def m4_frustum(
@@ -475,23 +514,19 @@ def m4_frustum(
         far: float,
         near: float) -> Mat4:
     '''Return a frustum matrix 4x4'''
-    rlInv: float = 1.0 / (right - left)
-    tbInv: float = 1.0 / (top - bottom)
-    fnInv: float = 1.0 / (far - near)
+    rl_inv: float = 1.0 / (right - left)
+    tb_inv: float = 1.0 / (top - bottom)
+    fn_inv: float = 1.0 / (far - near)
 
-    x: float = 2.0 * near * rlInv
-    y: float = 2.0 * near * tbInv
+    x: float = 2.0 * near * rl_inv
+    y: float = 2.0 * near * tb_inv
     w: float = -1.0
-    a: float = (right + left) * rlInv
-    b: float = (top + bottom) * tbInv
-    c: float = -(far + near) * fnInv
-    d: float = -(2.0 * far * near) * fnInv
+    a: float = (right + left) * rl_inv
+    b: float = (top + bottom) * tb_inv
+    c: float = -(far + near) * fn_inv
+    d: float = -(2.0 * far * near) * fn_inv
 
-    return Mat4(
-            x, 0.0, 0.0, 0.0,
-            0.0, y, 0.0, 0.0,
-            a, b, c, w,
-            0.0, 0.0, d, 0.0)
+    return Mat4(ax=x, by=y, cx=a, cy=b, cz=c, cw=w, dz=d)
 
 
 def m4_projection(fov: float, aspect: float, near: float, far: float) -> Mat4:
@@ -554,12 +589,13 @@ def m4_determinant(m4: Mat4) -> float:
     b52: float = a10 * a01 * a22 * a33
     b53: float = a00 * a11 * a22 * a33
 
-    return (b00 - b01 - b02 + b03 +
-            b10 - b11 - b12 + b13 +
-            b20 - b21 - b22 + b23 +
-            b30 - b31 - b32 + b33 +
-            b40 - b41 - b42 + b43 +
-            b50 - b51 - b52 + b53)
+    return(
+        b00 - b01 - b02 + b03 +
+        b10 - b11 - b12 + b13 +
+        b20 - b21 - b22 + b23 +
+        b30 - b31 - b32 + b33 +
+        b40 - b41 - b42 + b43 +
+        b50 - b51 - b52 + b53)
 
 
 def m4_inverse(m4: Mat4) -> Mat4:
@@ -679,6 +715,33 @@ class Quaternion:
             case 3: return self.w
             case _: raise QuatError('out of range')
 
+    def __add_(self, other):
+        if not isinstance(other, Quaternion):
+            raise QuatError('not of type Quaternion')
+        x: float = self.x + other.x
+        y: float = self.y + other.y
+        z: float = self.z + other.z
+        w: float = self.w + other.w
+        return Quaternion(x, y, z, w)
+
+    def __sub_(self, other):
+        if not isinstance(other, Quaternion):
+            raise QuatError('not of type Quaternion')
+        x: float = self.x - other.x
+        y: float = self.y - other.y
+        z: float = self.z - other.z
+        w: float = self.w - other.w
+        return Quaternion(x, y, z, w)
+
+    def __mul_(self, other):
+        if not isinstance(other, Quaternion):
+            raise QuatError('not of type Quaternion')
+        x: float = self.x * other.x
+        y: float = self.y * other.y
+        z: float = self.z * other.z
+        w: float = self.w * other.w
+        return Quaternion(x, y, z, w)
+
 
 def qt_copy(qt: Quaternion) -> Quaternion:
     return Quaternion(qt.x, qt.y, qt.z, qt.z)
@@ -686,29 +749,28 @@ def qt_copy(qt: Quaternion) -> Quaternion:
 
 def qt_length_sq(qt: Quaternion) -> float:
     '''Return quaternion length squared'''
-    x2: float = sqr(qt.x)
-    y2: float = sqr(qt.y)
-    z2: float = sqr(qt.z)
-    w2: float = sqr(qt.w)
-    return x2 + y2 + z2 + w2
+    v: Quaternion = qt * qt
+    return v.x + v.y + v.z + v.w
 
 
 def qt_length(qt: Quaternion) -> float:
     '''Return quaternion length'''
-    x2: float = sqr(qt.x)
-    y2: float = sqr(qt.y)
-    z2: float = sqr(qt.z)
-    w2: float = sqr(qt.w)
-    return sqrt(x2 + y2 + z2 + w2)
+    v: Quaternion = qt * qt
+    return sqrt(v.x + v.y + v.z + v.w)
 
 
+def qt_scale(qt: Quaternion, by: float) -> Quaternion:
+    x = qt.x * by
+    y = qt.y * by
+    z = qt.z * by
+    w = qt.w * by
+    return Quaternion(x, y, z, w)
+ 
+ 
 def qt_dot(a: Quaternion, b: Quaternion) -> float:
     '''Return quaternion dot product'''
-    x: float = a.x * b.x
-    y: float = a.y * b.y
-    z: float = a.z * b.z
-    w: float = a.w * b.w
-    return x + y + z + w
+    d: Quaternion = a * b
+    return d.x + d.y + d.z + d.w
 
 
 def qt_unit(qt: Quaternion) -> Quaternion:
@@ -716,13 +778,7 @@ def qt_unit(qt: Quaternion) -> Quaternion:
     lsq: float = qt_length_sq(qt)
     if is_zero(lsq):
         return qt_copy(qt)
-
-    inv: float = inv_sqrt(lsq)
-    x = qt.x * inv
-    y = qt.y * inv
-    z = qt.z * inv
-    w = qt.w * inv
-    return Quaternion(x, y, z, w)
+    return qt_scale(qt, inv_sqrt(lsq))
 
 
 def qt_in_unit(qt: Quaternion) -> bool:
@@ -744,9 +800,9 @@ def qt_from_axis(angle_deg: float, axis: Vec3) -> Quaternion:
         y *= inv
         z *= inv
 
-    angle_rad: float = to_radians(angle_deg)
-    c: float = cos(angle_rad * 0.5)
-    s: float = sin(angle_rad * 0.5)
+    angle_rad: float = to_radians(angle_deg * 0.5)
+    c: float = cos(angle_rad)
+    s: float = sin(angle_rad)
 
     xs: float = x * s
     ys: float = y * s
@@ -777,10 +833,7 @@ def qt_slerp(start: Quaternion, end: Quaternion, by: float) -> Quaternion:
     dot: float = qt_dot(start_cpy, end_cpy)
 
     if dot < 0.0:
-        end_cpy.x *= -1.0
-        end_cpy.y *= -1.0
-        end_cpy.z *= -1.0
-        end_cpy.w *= -1.0
+        end_cpy = qt_scale(end_cpy, -1.0)
         dot *= -1.0
 
     if abs(dot) >= 1.0:
@@ -792,42 +845,49 @@ def qt_slerp(start: Quaternion, end: Quaternion, by: float) -> Quaternion:
     hs: float = sqrt(1.0 - sqr(dot))
 
     if abs(hs) < 0.001:
-        vals = [start_cpy[i] * 0.5 + end_cpy[i] * 0.5 for i in range(4)]
-        return Quaternion(*vals)
+        start_cpy = qt_scale(start_cpy, 0.5)
+        end_cpy = qt_scale(end_cpy, 0.5)
+        return start_cpy + end_cpy
 
     hc: float = arccos(dot)
     ra: float = sin((1.0 - by) * hc) / hs
     rb: float = sin(by * hc) / hs
 
-    vals: list[float] = [start_cpy[i] * ra + end_cpy[i] * rb for i in range(4)]
-    return Quaternion(*vals)
+    start_cpy = qt_scale(start_cpy, ra)
+    end_cpy = qt_scale(end_cpy, rb)
+    return start_cpy + end_cpy
 
 
 def qt_to_mat4(qt: Quaternion) -> Mat4:
-    unit: Quaternion = qt_unit(qt)
+    '''Convert a quaternion into a matrix 4x4'''
+    x2: float = sqr(qt.x)
+    y2: float = sqr(qt.y)
+    z2: float = sqr(qt.z)
+    w2: float = sqr(qt.w)
 
-    x2: float = sqr(unit.x)
-    y2: float = sqr(unit.y)
-    z2: float = sqr(unit.z)
-    w2: float = sqr(unit.w)
-
-    xy: float = unit.x * unit.y
-    zw: float = unit.z * unit.w
-
-    ax: float = x2 - y2 - z2 + w2
-    ay: float = 2.0 * (xy - zw)
-    az: float = 2.0 * (xy + zw)
-
-    bx: float = 2.0 * (xy + zw)
-    by: float = -x2 + y2 - z2 + w2
-    bz: float = 2.0 * (xy - zw)
-
-    cx: float = 2.0 * (xy - zw)
-    cy: float = 2.0 * (xy + zw)
-    cz: float = -x2 - y2 + z2 + w2
+    xy: float = qt.x * qt.y
+    xz: float = qt.x * qt.z
+    xw: float = qt.x * qt.w
+    
+    yz: float = qt.y * qt.z
+    yw: float = qt.y * qt.w
+    
+    zw: float = qt.z * qt.w
+    
+    s2: float = 2.0 / (x2 + y2 + z2 + w2)
+    
+    ax: float = 1.0 - (s2 * (y2 + z2))
+    ay: float = s2 * (xy + zw)
+    az: float = s2 * (xz - yw)
+    bx: float = s2 * (xy - zw)
+    by: float = 1.0 - (s2 * (x2 + z2))
+    bz: float = s2 * (yz + xw)
+    cx: float = s2 * (xz + yw)
+    cy: float = s2 * (yz - xw)
+    cz: float = 1.0 - (s2 * (x2 + y2))
 
     return Mat4(
-            ax, ay, az, 0.0,
-            bx, by, bz, 0.0,
-            cx, cy, cz, 0.0,
-            0.0, 0.0, 0.0, 1.0)
+        ax, ay, az, 0.0,
+        bx, by, bz, 0.0,
+        cx, cy, cz, 0.0,
+        0.0, 0.0, 0.0, 1.0)

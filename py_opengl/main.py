@@ -352,7 +352,7 @@ class Camera:
     right: glm.Vec3 = glm.Vec3(x=1.0)
     aspect: float = 1.0
 
-    fovy: float = glm.PIOVER2 * 0.5     # 45 deg
+    fovy: float = glm.PIOVER2
     yaw: float = glm.PIOVER2 * -1.0     # -90.0 deg
     pitch: float = 0.0
     znear: float = 0.01
@@ -366,7 +366,6 @@ def camera_update(cam: Camera) -> None:
     cam.front.z = glm.cos(cam.pitch) * glm.sin(cam.yaw)
 
     cam.front = glm.v3_unit(cam.front)
-
     cam.right = glm.v3_unit(glm.v3_cross(cam.front, glm.Vec3(y=1.0)))
     cam.up = glm.v3_unit(glm.v3_cross(cam.right, cam.front))
 
@@ -387,7 +386,7 @@ def camera_view_matrix(cam: Camera) -> glm.Mat4:
     '''Return Camera view matrix'''
     return glm.m4_look_at(
             cam.position,
-            glm.v3_add(cam.position, cam.front),
+            cam.position + cam.front,
             cam.up)
 
 
@@ -559,7 +558,8 @@ def main() -> None:
         camera = Camera(
                 position=glm.Vec3(z=3.0),
                 aspect=SCREEN_WIDTH/SCREEN_HEIGHT)
-
+        camera_s = 2.0
+        
         cube = Cube()
 
         shader: Shader = Shader()
@@ -570,12 +570,12 @@ def main() -> None:
         vbo_add_data(vbo, cube.color)
 
         keyboard = Keyboard()
-        camera_s = 2.0
 
         mouse = Mouse()
         first_move = True
         last_mp = glm.Vec3()
-        mouse_speed = 0.2
+        mouse_speed = 1.5
+        mouse_sensitivity = 0.2
 
         while not glwin_should_close(glwin):
             clock_update(clock)
@@ -591,52 +591,41 @@ def main() -> None:
             shader_use(shader)
             vbo_use(vbo)
 
-            model = glm.m4_from_axis(clock.ticks, glm.Vec3(x=0.5, y=0.5))
+            qt = glm.qt_from_axis(clock.ticks, glm.Vec3(x=0.1, y=0.5))
+            model = glm.qt_to_mat4(qt)
+            # model = glm.m4_from_axis(clock.ticks, glm.Vec3(x=0.1, y=0.5))
             view = camera_view_matrix(camera)
-            proj = camera_projection_matrix(camera)
-
+            projection = camera_projection_matrix(camera)
             shader_set_m4(shader, 'model', model)
             shader_set_m4(shader, 'view', view)
-            shader_set_m4(shader, 'projection', proj)
+            shader_set_m4(shader, 'projection', projection)
 
             # keyboard
             ks_w = glwin_key_state(glwin, glfw.KEY_W)
             if key_state(keyboard, ks_w) == KeyState.HELD:
-                speed = camera_s * clock.delta
-                new_pos = glm.v3_scale(camera.front, speed)
-                camera.position = glm.v3_add(camera.position, new_pos)
+                camera.position = camera.position + glm.v3_scale(camera.front, camera_s * clock.delta)
 
             ks_s = glwin_key_state(glwin, glfw.KEY_S)
             if key_state(keyboard, ks_s) == KeyState.HELD:
-                speed = camera_s * clock.delta
-                new_pos = glm.v3_scale(camera.front, speed)
-                camera.position = glm.v3_sub(camera.position, new_pos)
+                camera.position = camera.position - glm.v3_scale(camera.front, camera_s * clock.delta)
 
             ks_a = glwin_key_state(glwin, glfw.KEY_A)
             if key_state(keyboard, ks_a) == KeyState.HELD:
-                speed = camera_s * clock.delta
-                new_pos = glm.v3_scale(camera.right, speed)
-                camera.position = glm.v3_add(camera.position, new_pos)
+                camera.position = camera.position + glm.v3_scale(camera.right, camera_s * clock.delta)
 
             ks_d = glwin_key_state(glwin, glfw.KEY_D)
             if key_state(keyboard, ks_d) == KeyState.HELD:
-                speed = camera_s * clock.delta
-                new_pos = glm.v3_scale(camera.right, speed)
-                camera.position = glm.v3_sub(camera.position, new_pos)
+                camera.position = camera.position - glm.v3_scale(camera.right, camera_s * clock.delta)
 
             ks_space = glwin_key_state(glwin, glfw.KEY_Q)
             if key_state(keyboard, ks_space) == KeyState.HELD:
-                speed = camera_s * clock.delta
-                new_pos = glm.v3_scale(camera.up, speed)
-                camera.position = glm.v3_add(camera.position, new_pos)
+                camera.position = camera.position + glm.v3_scale(camera.up, camera_s * clock.delta)
 
             ks_ls = glwin_key_state(glwin, glfw.KEY_E)
             if key_state(keyboard, ks_ls) == KeyState.HELD:
-                speed = camera_s * clock.delta
-                new_pos = glm.v3_scale(camera.up, speed)
-                camera.position = glm.v3_sub(camera.position, new_pos)
+                camera.position = camera.position - glm.v3_scale(camera.up, camera_s * clock.delta)
 
-            # mouse move
+            # mouse
             ms = glwin_mouse_state(glwin, glfw.MOUSE_BUTTON_LEFT)
             current_mp = glwin_mouse_pos(glwin)
             if mouse_state(mouse, ms) == MouseState.HELD:
@@ -644,11 +633,11 @@ def main() -> None:
                     last_mp = current_mp
                     first_move = False
                 else:
-                    new_dir = glm.v3_sub(current_mp, last_mp)
+                    new_mp = current_mp - last_mp
                     last_mp = current_mp
 
-                    camera.yaw -= camera_to_yaw(new_dir.x * mouse_speed)
-                    camera.pitch += camera_to_pitch(new_dir.y * mouse_speed)
+                    camera.yaw = camera.yaw - camera_to_yaw(new_mp.x * mouse_sensitivity)
+                    camera.pitch = camera.pitch + camera_to_pitch(new_mp.y * mouse_sensitivity)
                     camera_update(camera)
 
             # ---
