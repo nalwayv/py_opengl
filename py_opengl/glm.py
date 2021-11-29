@@ -810,13 +810,29 @@ class Quaternion:
         w: float = self.w - other.w
         return Quaternion(x, y, z, w)
 
-    def __mul_(self, other):
+    def __mul__(self, other):
         if not isinstance(other, Quaternion):
             raise QuatError('not of type Quaternion')
-        x: float = self.x * other.x
-        y: float = self.y * other.y
-        z: float = self.z * other.z
-        w: float = self.w * other.w
+        w: float = (
+                (self.w * other.w) -
+                (self.x * other.x) -
+                (self.y * other.y) -
+                (self.z * other.z))
+        x: float = (
+                (self.x * other.w) +
+                (self.w * other.x) +
+                (self.y * other.z) -
+                (self.z * other.y))
+        y: float = (
+                (self.y * other.w) +
+                (self.w * other.y) +
+                (self.z * other.x) -
+                (self.x * other.z))
+        z: float = (
+                (self.z * other.w) +
+                (self.w * other.z) +
+                (self.x * other.y) -
+                (self.y * other.x))
         return Quaternion(x, y, z, w)
 
 
@@ -836,11 +852,23 @@ def qt_length(qt: Quaternion) -> float:
     return sqrt(v.x + v.y + v.z + v.w)
 
 
+def qt_conjugate(qt: Quaternion) -> Quaternion:
+    return Quaternion(-qt.x, -qt.y, -qt.z, qt.w)
+
+
 def qt_scale(qt: Quaternion, by: float) -> Quaternion:
     x = qt.x * by
     y = qt.y * by
     z = qt.z * by
     w = qt.w * by
+    return Quaternion(x, y, z, w)
+
+
+def qt_scale_v3(qt: Quaternion, v3: Vec3) -> Quaternion:
+    w: float = -(qt.x * v3.x) - (qt.y * v3.y) - (qt.z * v3.z)
+    x: float = (qt.w * v3.x) - (qt.y * v3.z) - (qt.z * v3.y)
+    y: float = (qt.w * v3.y) - (qt.z * v3.x) - (qt.x * v3.z)
+    z: float = (qt.w * v3.z) - (qt.x * v3.y) - (qt.y * v3.x)
     return Quaternion(x, y, z, w)
 
 
@@ -858,7 +886,7 @@ def qt_unit(qt: Quaternion) -> Quaternion:
     return qt_scale(qt, inv_sqrt(lsq))
 
 
-def qt_in_unit(qt: Quaternion) -> bool:
+def qt_is_unit(qt: Quaternion) -> bool:
     return is_one(qt_length_sq(qt))
 
 

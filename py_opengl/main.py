@@ -48,7 +48,7 @@ class Clock:
 
 
 def clock_update(clock: Clock) -> None:
-    '''Update clock '''
+    '''Update clock'''
     current_time_step: float = glfw.get_time()
     elapsed: float = current_time_step - clock.last_time_step
     clock.last_time_step = current_time_step
@@ -66,7 +66,7 @@ def clock_update(clock: Clock) -> None:
 class Transform:
     position: glm.Vec3 = glm.Vec3()
     scale: glm.Vec3 = glm.Vec3(1.0, 1.0, 1.0)
-    rotation: glm.Quaternion = glm.Quaternion()
+    rotation: glm.Quaternion = glm.Quaternion(w=1.0)
 
 
 def tr_get_translation(tr: Transform) -> glm.Mat4:
@@ -150,24 +150,23 @@ def shader_default(shader: Shader) -> None:
     layout (location = 0) in vec3 a_position;
     layout (location = 1) in vec3 a_color;
 
-    out vec3 b_col;
+    out vec3 b_color;
 
     uniform mat4 mvp;
 
     void main() {
-        b_col = a_color;
+        b_color = a_color;
 
         gl_Position = mvp * vec4(a_position, 1.0);
     }
     '''
 
     frag: str = '''#version 430 core
-
-    in vec3 b_col;
-    out vec4 c_col;
+    in vec3 b_color;
+    out vec4 c_color;
 
     void main () {
-        c_col = vec4(b_col, 1.0);
+        c_color = vec4(b_color, 1.0);
     }
     '''
 
@@ -569,6 +568,11 @@ def main() -> None:
         return
 
     try:
+        glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
+        glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
+        glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+        glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, gl.GL_TRUE)
+
         glwin = GlWindow(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
         glfw.make_context_current(glwin.window)
         glwin_center_screen_position(glwin)
