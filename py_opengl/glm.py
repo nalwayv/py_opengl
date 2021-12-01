@@ -59,9 +59,9 @@ def clamp(
     return max(low, min(val, high))
 
 
-def lerp(start: float, end: float, by: float) -> float:
+def lerp(start: float, end: float, weight: float) -> float:
     '''Lerp value between start and end'''
-    return start + clamp(by, 0, 1) * (end - start)
+    return start + clamp(weight, 0, 1) * (end - start)
 
 
 def normalize(val: float, low: float, high: float) -> float:
@@ -83,6 +83,14 @@ def cos(val: float) -> float:
 
 def arccos(val: float) -> float:
     return math.acos(val)
+
+
+def arctan2(y: float, x: float) -> float:
+    return math.atan2(y, x)
+
+
+def arcsin(val: float) -> float:
+    return math.asin(val)
 
 
 # --- VECTOR3(X, Y, Z)
@@ -127,7 +135,6 @@ class Vec3:
     def __mul__(self, other):
         if not isinstance(other, Vec3):
             raise Vec3Error('not of type Vec3')
-
         x: float = self.x * other.x
         y: float = self.y * other.y
         z: float = self.z * other.z
@@ -161,14 +168,18 @@ def v3_cross(a: Vec3, b: Vec3) -> Vec3:
 
 def v3_length_sq(v3: Vec3) -> float:
     '''Get the length sqr of this v3'''
-    v: Vec3 = v3 * v3
-    return v.x + v.y + v.z
+    x2: float = sqr(v3.x)
+    y2: float = sqr(v3.y)
+    z2: float = sqr(v3.z)
+    return x2 + y2 + z2
 
 
 def v3_length(v3: Vec3) -> float:
     '''Get the length sqrt of this v3'''
-    v: Vec3 = v3 * v3
-    return sqrt(v.x + v.y + v.z)
+    x2: float = sqr(v3.x)
+    y2: float = sqr(v3.y)
+    z2: float = sqr(v3.z)
+    return sqrt(x2 + y2 + z2)
 
 
 def v3_unit(v3: Vec3) -> Vec3:
@@ -181,8 +192,10 @@ def v3_unit(v3: Vec3) -> Vec3:
 
 def v3_dot(a: Vec3, b: Vec3) -> float:
     '''Get the dot product of two v3s'''
-    d: Vec3 = a * b
-    return d.x + d.y + d.z
+    x: float = a.x * b.x
+    y: float = a.y * b.y
+    z: float = a.z * b.z
+    return x + y + z
 
 
 def v3_is_unit(v3: Vec3) -> bool:
@@ -536,9 +549,9 @@ def m4_look_at(eye: Vec3, target: Vec3, up: Vec3) -> Mat4:
     x: Vec3 = v3_unit(v3_cross(up, z))
     y: Vec3 = v3_unit(v3_cross(z, x))
 
-    dx: float = v3_dot(x, eye) * -1.0
-    dy: float = v3_dot(y, eye) * -1.0
-    dz: float = v3_dot(z, eye) * -1.0
+    dx: float = -v3_dot(x, eye)
+    dy: float = -v3_dot(y, eye)
+    dz: float = -v3_dot(z, eye)
 
     return Mat4(
             x.x, y.x, z.x, 0.0,
@@ -552,7 +565,7 @@ def m4_from_axis(angle_deg: float, axis: Vec3) -> Mat4:
     axis_cpy: Vec3 = v3_copy(axis)
 
     if not v3_is_unit(axis_cpy):
-        inv: float = 1.0 / v3_length(axis_cpy)
+        inv: float = inv_sqrt(v3_length_sq(axis_cpy))
         axis_cpy = v3_scale(axis_cpy, inv)
 
     angle_rad: float = to_radians(angle_deg)
@@ -606,8 +619,8 @@ def m4_frustum(
     return Mat4(ax=x, by=y, cx=a, cy=b, cz=c, cw=w, dz=d)
 
 
-def m4_projection(fov: float, aspect: float, near: float, far: float) -> Mat4:
-    '''Get a projection matrix 4x4'''
+def m4_perspective(fov: float, aspect: float, near: float, far: float) -> Mat4:
+    '''Get a perspective matrix 4x4'''
     if fov <= 0.0 or fov >= PI:
         raise Mat4Error('m4 projection fov out of range')
 
@@ -618,7 +631,6 @@ def m4_projection(fov: float, aspect: float, near: float, far: float) -> Mat4:
     bottom: float = top * -1.0
     left: float = bottom * aspect
     right: float = top * aspect
-
     return m4_frustum(left, right, bottom, top, far, near)
 
 
@@ -813,28 +825,30 @@ class Quaternion:
     def __mul__(self, other):
         if not isinstance(other, Quaternion):
             raise QuatError('not of type Quaternion')
-        w: float = (
-                (self.w * other.w) -
-                (self.x * other.x) -
-                (self.y * other.y) -
-                (self.z * other.z))
-        x: float = (
-                (self.x * other.w) +
-                (self.w * other.x) +
-                (self.y * other.z) -
-                (self.z * other.y))
-        y: float = (
-                (self.y * other.w) +
-                (self.w * other.y) +
-                (self.z * other.x) -
-                (self.x * other.z))
-        z: float = (
-                (self.z * other.w) +
-                (self.w * other.z) +
-                (self.x * other.y) -
-                (self.y * other.x))
-        return Quaternion(x, y, z, w)
+            
+        x1: float = self.x
+        y1: float = self.y
+        z1: float = self.z
+        w1: float = self.w
 
+        x2: float = other.x
+        y2: float = other.y
+        z2: float = other.z
+        w2: float = other.w
+        
+        cx: float = y1 * z2 - z1 * y2
+        cy: float = z1 * x2 - x1 * z2
+        cz: float = x1 * y2 - y1 * x2
+        
+        dt: float = x1 * x2 + y1 * y2 + z1 * z2
+        
+        x: float = x1 * w2 + x2 * w1 + cx
+        y: float = y1 * w2 + y2 * w1 + cy
+        z: float = z1 * w2 + z2 * w1 + cz
+        w: float = w1 * w2 - dt
+
+        return Quaternion(x, y, z, w)
+        
 
 def qt_copy(qt: Quaternion) -> Quaternion:
     return Quaternion(qt.x, qt.y, qt.z, qt.z)
@@ -842,18 +856,35 @@ def qt_copy(qt: Quaternion) -> Quaternion:
 
 def qt_length_sq(qt: Quaternion) -> float:
     '''Return quaternion length squared'''
-    v: Quaternion = qt * qt
-    return v.x + v.y + v.z + v.w
+    x2: float = sqr(qt.x)
+    y2: float = sqr(qt.y)
+    z2: float = sqr(qt.z)
+    w2: float = sqr(qt.w)
+    return x2 + y2 + z2 + w2
 
 
 def qt_length(qt: Quaternion) -> float:
     '''Return quaternion length'''
-    v: Quaternion = qt * qt
-    return sqrt(v.x + v.y + v.z + v.w)
+    x2: float = sqr(qt.x)
+    y2: float = sqr(qt.y)
+    z2: float = sqr(qt.z)
+    w2: float = sqr(qt.w)
+    return sqrt(x2 + y2 + z2 + w2)
 
 
 def qt_conjugate(qt: Quaternion) -> Quaternion:
+    '''Return a conjugate of this Quaternion'''
     return Quaternion(-qt.x, -qt.y, -qt.z, qt.w)
+
+
+def qt_inverse(qt: Quaternion) -> Quaternion:
+    '''Return the inverse of this Quaternion'''
+    inv: float = 1.0 / qt_length_sq(qt)
+    x: float = -qt.x * inv
+    y: float = -qt.y * inv
+    x: float = -qt.z * inv
+    w: float = qt.w * inv
+    return Quaternion(x, y, z, w)
 
 
 def qt_scale(qt: Quaternion, by: float) -> Quaternion:
@@ -864,18 +895,26 @@ def qt_scale(qt: Quaternion, by: float) -> Quaternion:
     return Quaternion(x, y, z, w)
 
 
-def qt_scale_v3(qt: Quaternion, v3: Vec3) -> Quaternion:
-    w: float = -(qt.x * v3.x) - (qt.y * v3.y) - (qt.z * v3.z)
-    x: float = (qt.w * v3.x) - (qt.y * v3.z) - (qt.z * v3.y)
-    y: float = (qt.w * v3.y) - (qt.z * v3.x) - (qt.x * v3.z)
-    z: float = (qt.w * v3.z) - (qt.x * v3.y) - (qt.y * v3.x)
-    return Quaternion(x, y, z, w)
-
-
 def qt_dot(a: Quaternion, b: Quaternion) -> float:
     '''Return quaternion dot product'''
-    d: Quaternion = a * b
-    return d.x + d.y + d.z + d.w
+    return (
+        (a.x * b.x) +
+        (a.y * b.y) +
+        (a.z * b.z) +
+        (a.w * b.w))
+
+
+def qt_get_angle(qt: Quaternion) -> float:
+    return 2.0 * arccos(qt.w)
+
+
+def qt_is_equil(a: Quaternion, b: Quaternion) -> bool:
+    '''Check if Quaternion a is equil to Quaternion b'''
+    return (
+        is_equil(a.x, b.x) and
+        is_equil(a.y, b.y) and
+        is_equil(a.z, b.z) and
+        is_equil(a.w, b.w))
 
 
 def qt_unit(qt: Quaternion) -> Quaternion:
@@ -917,72 +956,121 @@ def qt_from_axis(angle_deg: float, axis: Vec3) -> Quaternion:
     if is_zero(lsq):
         return Quaternion(w=1.0)
 
-    x: float = axis.x
-    y: float = axis.y
-    z: float = axis.z
+    ax: float = axis.x
+    ay: float = axis.y
+    az: float = axis.z
 
     if not v3_is_unit(axis):
-        inv = 1.0 / v3_length(axis)
-        x *= inv
-        y *= inv
-        z *= inv
+        inv = inv_sqrt(v3_length_sq(axis))
+        ax *= inv
+        ay *= inv
+        az *= inv
 
     angle_rad: float = to_radians(angle_deg * 0.5)
     c: float = cos(angle_rad)
     s: float = sin(angle_rad)
 
-    xs: float = x * s
-    ys: float = y * s
-    zs: float = z * s
+    x: float = ax * s
+    y: float = ay * s
+    z: float = az * s
+    w: float = c
 
-    return Quaternion(xs, ys, zs, c)
-
-
-def qt_lerp(start: Quaternion, end: Quaternion, by: float) -> Quaternion:
-    '''Return a lerped quaternion'''
-    x: float = lerp(start.x, end.x, by)
-    y: float = lerp(start.y, end.y, by)
-    z: float = lerp(start.z, end.z, by)
-    w: float = lerp(start.w, end.w, by)
     return Quaternion(x, y, z, w)
 
 
-def qt_nlerp(start: Quaternion, end: Quaternion, by: float) -> Quaternion:
-    '''Return a nlerp quaternion'''
-    return qt_unit(qt_lerp(start, end, by))
+def qt_lerp(start: Quaternion, end: Quaternion, weight: float) -> Quaternion:
+    '''Return a lerped quaternion'''
+
+    t: float = weight
+    t1: float = 1.0 - t
+
+    dot = qt_dot(start, end)
+
+    x, y, z, w = 0.0, 0.0, 0.0, 0.0
+    if is_zero(dot):
+        x = t1 * start.x + t * end.x
+        y = t1 * start.y + t * end.y
+        z = t1 * start.z + t * end.z
+        w = t1 * start.w + t * end.w
+    else:
+        x = t1 * start.x - t * end.x
+        y = t1 * start.y - t * end.y
+        z = t1 * start.z - t * end.z
+        w = t1 * start.w - t * end.w
+
+    return qt_unit(Quaternion(x, y, z, w))
 
 
-def qt_slerp(start: Quaternion, end: Quaternion, by: float) -> Quaternion:
+def qt_slerp(start: Quaternion, end: Quaternion, weight: float) -> Quaternion:
     '''Return a slerp quaternion'''
-    start_cpy: Quaternion = qt_copy(start)
-    end_cpy: Quaternion = qt_copy(end)
 
+    t = weight
     dot: float = qt_dot(start_cpy, end_cpy)
+    flip: bool = False
 
     if dot < 0.0:
-        end_cpy = qt_scale(end_cpy, -1.0)
+        flip = True
         dot *= -1.0
 
-    if abs(dot) >= 1.0:
-        return start_cpy
+    s1, s2 = 0.0, 0.0
+    if dot > (1.0 - EPSILON):
+        s1 = 1.0 - t
+        s2 = -t if flip else t
+    else:
+        o: float = arccos(dot)
+        inv: float = 1.0 / sin(o)
+        s1 = sin((1.0 - t) * o) * inv
+        s2 = -sin(t * o) * inv if flip else sin(t * o) * inv
 
-    if dot > 0.95:
-        return qt_nlerp(start_cpy, end_cpy, by)
+    x: float = s1 * start.x + s2 * end.x
+    y: float = s1 * start.y + s2 * end.y
+    z: float = s1 * start.z + s2 * end.z
+    w: float = s1 * start.w + s2 * end.w
 
-    hs: float = sqrt(1.0 - sqr(dot))
+    return Quaternion(x, y, z, w)
 
-    if abs(hs) < 0.001:
-        start_cpy = qt_scale(start_cpy, 0.5)
-        end_cpy = qt_scale(end_cpy, 0.5)
-        return start_cpy + end_cpy
 
-    hc: float = arccos(dot)
-    ra: float = sin((1.0 - by) * hc) / hs
-    rb: float = sin(by * hc) / hs
+def qt_to_euler(qt: Quaternion) -> Vec3:
+    threshold: float = 0.4999995
 
-    start_cpy = qt_scale(start_cpy, ra)
-    end_cpy = qt_scale(end_cpy, rb)
-    return start_cpy + end_cpy
+    w2: float = sqr(qt.w)
+    x2: float = sqr(qt.x)
+    y2: float = sqr(qt.y)
+    z2: float = sqr(qt.z)
+
+    len_sq: float = x2 + y2 + z2 + w2
+    test: float = (qt.x * qt.z) + (qt.w * qt.y)
+
+    if test > threshold * len_sq:
+        return Vec3(0.0, PIOVER2, 2.0 * arctan2(qt.x, qt.y))
+
+    if test < -threshold * len_sq:
+        return Vec3(0.0, -PIOVER2, -2.0 * arctan2(qt.x, qt.w))
+
+    x: float = arctan2(2.0 * ((qt.w * qt.x) - (qt.y * qt.z)), w2 - x2 - y2 + z2)
+    y: float = arcsin(2.0 * test / len_sq)
+    z: float = arctan2(2.0 * ((qt.w * qt.z) - (qt.z * qt.y)), w2 + x2 - y2 - z2)
+
+    return Vec3(x, y, z)
+
+
+def qt_to_axis(qt: Quaternion) -> Vec3:
+    qt_cpy = qt_copy(qt)
+
+    if qt_cpy.w > 1.0:
+        qt_cpy = qt_unit(qt_cpy)
+
+    scl = sqrt(1.0 - sqr(qt_cpy.w))
+
+    if is_zero(scl):
+        return Vec3(qt_cpy.x, qt_cpy.y, qt_cpy.z)
+
+    d = 1.0 / scl
+    x = qt.x * d
+    y = qt.y * d
+    z = qt.z * d
+
+    return Vec3(x, y, z)
 
 
 def qt_to_mat4(qt: Quaternion) -> Mat4:

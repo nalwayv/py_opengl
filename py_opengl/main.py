@@ -380,6 +380,7 @@ class Camera:
 
 def camera_update(cam: Camera) -> None:
     '''Update camera'''
+
     cam.front.x = glm.cos(cam.pitch) * glm.cos(cam.yaw)
     cam.front.y = glm.sin(cam.pitch)
     cam.front.z = glm.cos(cam.pitch) * glm.sin(cam.yaw)
@@ -409,9 +410,9 @@ def camera_view_matrix(cam: Camera) -> glm.Mat4:
             cam.up)
 
 
-def camera_projection_matrix(cam: Camera) -> glm.Mat4:
+def camera_perspective_matrix(cam: Camera) -> glm.Mat4:
     '''Return camera projection matrix'''
-    return glm.m4_projection(cam.fovy, cam.aspect, cam.znear, cam.zfar)
+    return glm.m4_perspective(cam.fovy, cam.aspect, cam.znear, cam.zfar)
 
 
 # --- KEYBOARD
@@ -614,12 +615,12 @@ def main() -> None:
 
             shader_use(shader)
             vbo_use(vbo)
-
+            
             tr.rotation = glm.qt_from_axis(clock.ticks, glm.Vec3(x=0.1, y=0.5))
 
             model = tr_get_translation(tr)
             view = camera_view_matrix(camera)
-            projection = camera_projection_matrix(camera)
+            projection = camera_perspective_matrix(camera)
 
             mvp = model * view * projection
             shader_set_m4(shader, 'mvp', mvp)
