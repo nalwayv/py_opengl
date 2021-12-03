@@ -65,32 +65,42 @@ def lerp(start: float, end: float, weight: float) -> float:
 
 
 def normalize(val: float, low: float, high: float) -> float:
-    '''normalize value between low and high'''
+    '''Normalize value between low and high'''
     return (val - low) / (high - low)
 
 
 def tan(val: float) -> float:
+    '''Return tan value'''
     return math.tan(val)
 
 
 def sin(val: float) -> float:
+    '''Return sin value'''
     return math.sin(val)
 
 
 def cos(val: float) -> float:
+    '''Return cos value'''
     return math.cos(val)
 
 
 def arccos(val: float) -> float:
+    '''Return arccos value
+    value has to be between -1 and 1
+    '''
     return math.acos(val)
 
 
-def arctan2(y: float, x: float) -> float:
-    return math.atan2(y, x)
-
-
 def arcsin(val: float) -> float:
+    '''Return arcsin value
+    value has to be between -1 and 1
+    '''
     return math.asin(val)
+    
+ 
+def arctan2(y: float, x: float) -> float:
+    '''Return arctan2 angle'''
+    return math.atan2(y, x)
 
 
 # --- VECTOR3(X, Y, Z)
@@ -147,6 +157,7 @@ def v3_copy(v3: Vec3) -> Vec3:
 
 
 def v3_one() -> Vec3:
+    '''Return a v3 with all values set to one'''
     return Vec3(1.0, 1.0, 1.0)
 
 
@@ -596,42 +607,26 @@ def m4_from_axis(angle_deg: float, axis: Vec3) -> Mat4:
         dw=1.0)
 
 
-def m4_frustum(
-        left: float,
-        right: float,
-        bottom: float,
-        top: float,
-        far: float,
-        near: float) -> Mat4:
-    '''Return a frustum matrix 4x4'''
-    rl_inv: float = 1.0 / (right - left)
-    tb_inv: float = 1.0 / (top - bottom)
-    fn_inv: float = 1.0 / (far - near)
-
-    x: float = 2.0 * near * rl_inv
-    y: float = 2.0 * near * tb_inv
-    w: float = -1.0
-    a: float = (right + left) * rl_inv
-    b: float = (top + bottom) * tb_inv
-    c: float = -(far + near) * fn_inv
-    d: float = -(2.0 * far * near) * fn_inv
-
-    return Mat4(ax=x, by=y, cx=a, cy=b, cz=c, cw=w, dz=d)
-
-
-def m4_perspective(fov: float, aspect: float, near: float, far: float) -> Mat4:
-    '''Get a perspective matrix 4x4'''
+def m4_perspective_fov(
+        fov: float,
+        aspect: float,
+        near: float,
+        far: float) -> Mat4:
+    '''Get a perspective fov matrix 4x4'''
     if fov <= 0.0 or fov >= PI:
-        raise Mat4Error('m4 projection fov out of range')
+        raise Mat4Error('m4 perspective fov out of range')
 
-    if aspect <= 0.0 or near <= 0.0 or far <= 0.0:
-        raise Mat4Error('m4 projection aspect out of range')
+    if near <= 0.0 or far <= 0.0 or near >= far:
+        raise Mat4Error('m4 perspective aspect out of range')
 
-    top: float = near * tan(0.5 * fov)
-    bottom: float = top * -1.0
-    left: float = bottom * aspect
-    right: float = top * aspect
-    return m4_frustum(left, right, bottom, top, far, near)
+    ys: float = 1.0 / tan(fov * 0.5)
+    xs: float = ys / aspect
+    sx: float = xs
+    sy: float = ys
+    sz: float = far / (near - far)
+    sw: float = near * far / (near - far)
+
+    return Mat4(ax=sx, by=sy, cz=sz, cw=-1, dz=sw)
 
 
 def m4_determinant(m4: Mat4) -> float:
@@ -825,7 +820,7 @@ class Quaternion:
     def __mul__(self, other):
         if not isinstance(other, Quaternion):
             raise QuatError('not of type Quaternion')
-            
+
         x1: float = self.x
         y1: float = self.y
         z1: float = self.z
@@ -835,22 +830,23 @@ class Quaternion:
         y2: float = other.y
         z2: float = other.z
         w2: float = other.w
-        
+
         cx: float = y1 * z2 - z1 * y2
         cy: float = z1 * x2 - x1 * z2
         cz: float = x1 * y2 - y1 * x2
-        
+
         dt: float = x1 * x2 + y1 * y2 + z1 * z2
-        
+
         x: float = x1 * w2 + x2 * w1 + cx
         y: float = y1 * w2 + y2 * w1 + cy
         z: float = z1 * w2 + z2 * w1 + cz
         w: float = w1 * w2 - dt
 
         return Quaternion(x, y, z, w)
-        
+
 
 def qt_copy(qt: Quaternion) -> Quaternion:
+    '''Return a copy of this quaternion'''
     return Quaternion(qt.x, qt.y, qt.z, qt.z)
 
 
@@ -873,21 +869,22 @@ def qt_length(qt: Quaternion) -> float:
 
 
 def qt_conjugate(qt: Quaternion) -> Quaternion:
-    '''Return a conjugate of this Quaternion'''
+    '''Return a conjugate of this quaternion'''
     return Quaternion(-qt.x, -qt.y, -qt.z, qt.w)
 
 
 def qt_inverse(qt: Quaternion) -> Quaternion:
-    '''Return the inverse of this Quaternion'''
+    '''Return the inverse of this quaternion'''
     inv: float = 1.0 / qt_length_sq(qt)
     x: float = -qt.x * inv
     y: float = -qt.y * inv
-    x: float = -qt.z * inv
+    z: float = -qt.z * inv
     w: float = qt.w * inv
     return Quaternion(x, y, z, w)
 
 
 def qt_scale(qt: Quaternion, by: float) -> Quaternion:
+    '''Return a scaled quaternion by float value'''
     x = qt.x * by
     y = qt.y * by
     z = qt.z * by
@@ -926,6 +923,7 @@ def qt_unit(qt: Quaternion) -> Quaternion:
 
 
 def qt_is_unit(qt: Quaternion) -> bool:
+    '''Check if this quaternion is of unit length'''
     return is_one(qt_length_sq(qt))
 
 
@@ -1005,7 +1003,7 @@ def qt_slerp(start: Quaternion, end: Quaternion, weight: float) -> Quaternion:
     '''Return a slerp quaternion'''
 
     t = weight
-    dot: float = qt_dot(start_cpy, end_cpy)
+    dot: float = qt_dot(start, end)
     flip: bool = False
 
     if dot < 0.0:
@@ -1047,9 +1045,13 @@ def qt_to_euler(qt: Quaternion) -> Vec3:
     if test < -threshold * len_sq:
         return Vec3(0.0, -PIOVER2, -2.0 * arctan2(qt.x, qt.w))
 
-    x: float = arctan2(2.0 * ((qt.w * qt.x) - (qt.y * qt.z)), w2 - x2 - y2 + z2)
+    x: float = arctan2(
+            2.0 * ((qt.w * qt.x) - (qt.y * qt.z)),
+            w2 - x2 - y2 + z2)
     y: float = arcsin(2.0 * test / len_sq)
-    z: float = arctan2(2.0 * ((qt.w * qt.z) - (qt.z * qt.y)), w2 + x2 - y2 - z2)
+    z: float = arctan2(
+            2.0 * ((qt.w * qt.z) - (qt.z * qt.y)),
+            w2 + x2 - y2 - z2)
 
     return Vec3(x, y, z)
 

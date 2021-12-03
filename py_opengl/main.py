@@ -1,15 +1,16 @@
 '''
 '''
-import glfw
 import ctypes
+import glfw
 
+from dataclasses import dataclass, field
+from enum import Enum
 from loguru import logger
-from py_opengl import glm
 from OpenGL import GL as gl
 from OpenGL.GL.shaders import compileShader, compileProgram
-from dataclasses import dataclass, field
+from pathlib import Path
+from py_opengl import glm
 from typing import Any, Final
-from enum import Enum
 
 
 # --- GLOBALS
@@ -144,36 +145,25 @@ class Shader:
 
 
 def shader_default(shader: Shader) -> None:
-    '''Simple Shader'''
-
-    vert: str = '''#version 430 core
-    layout (location = 0) in vec3 a_position;
-    layout (location = 1) in vec3 a_color;
-
-    out vec3 b_color;
-
-    uniform mat4 mvp;
-
-    void main() {
-        b_color = a_color;
-
-        gl_Position = mvp * vec4(a_position, 1.0);
-    }
+    '''Simple shader
     '''
+    p = Path('./py_opengl')
+    vp = p / 'default.vert'
+    fp = p / 'default.frag'
 
-    frag: str = '''#version 430 core
-    in vec3 b_color;
-    out vec4 c_color;
+    if not vp.exists() or not fp.exists():
+        raise FileNotFoundError('ever frag or vert files were not found')
 
-    void main () {
-        c_color = vec4(b_color, 1.0);
-    }
-    '''
+    with (
+            vp.open(mode='rb') as v,
+            fp.open(mode='rb') as f):
+        vert = v.read()
+        frag = f.read()
 
-    shader.program_id = compileProgram(
-        compileShader(vert, gl.GL_VERTEX_SHADER),
-        compileShader(frag, gl.GL_FRAGMENT_SHADER)
-    )
+        shader.program_id = compileProgram(
+            compileShader(vert, gl.GL_VERTEX_SHADER),
+            compileShader(frag, gl.GL_FRAGMENT_SHADER)
+        )
 
 
 def shader_clean(shader: Shader) -> None:
@@ -412,7 +402,7 @@ def camera_view_matrix(cam: Camera) -> glm.Mat4:
 
 def camera_perspective_matrix(cam: Camera) -> glm.Mat4:
     '''Return camera projection matrix'''
-    return glm.m4_perspective(cam.fovy, cam.aspect, cam.znear, cam.zfar)
+    return glm.m4_perspective_fov(cam.fovy, cam.aspect, cam.znear, cam.zfar)
 
 
 # --- KEYBOARD
@@ -615,7 +605,7 @@ def main() -> None:
 
             shader_use(shader)
             vbo_use(vbo)
-            
+
             tr.rotation = glm.qt_from_axis(clock.ticks, glm.Vec3(x=0.1, y=0.5))
 
             model = tr_get_translation(tr)
