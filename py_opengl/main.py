@@ -95,43 +95,110 @@ class Cube:
     data_size: int = 108
     components: int = 3
 
-    def __post_init__(self):
-        wp: float = self.width / 2.0
-        hp: float = self.height / 2.0
-        dp: float = self.depth / 2.0
 
-        wn: float = wp * -1.0
-        hn: float = hp * -1.0
-        dn: float = dp * -1.0
+def cube_init(c: Cube) -> None:
+    wp: float = c.width * 0.5
+    hp: float = c.height * 0.5
+    dp: float = c.depth * 0.5
 
-        self.verts = [
-                wp, hn, dp, wp, hn, dn, wp, hp, dn,
-                wp, hn, dp, wp, hp, dn, wp, hp, dp,
-                wn, hn, dn, wn, hn, dp, wn, hp, dp,
-                wn, hn, dn, wn, hp, dp, wn, hp, dn,
-                wn, hp, dp, wp, hp, dp, wp, hp, dn,
-                wn, hp, dp, wp, hp, dn, wn, hp, dn,
-                wn, hn, dn, wp, hn, dn, wp, hn, dp,
-                wn, hn, dn, wp, hn, dp, wn, hn, dp,
-                wn, hn, dp, wp, hn, dp, wp, hp, dp,
-                wn, hn, dp, wp, hp, dp, wn, hp, dp,
-                wp, hn, dn, wn, hn, dn, wn, hp, dn,
-                wp, hn, dn, wn, hp, dn, wp, hp, dn]
+    wn: float = wp * -1.0
+    hn: float = hp * -1.0
+    dn: float = dp * -1.0
 
-        self.color = [
-            1.0, 0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 0.5, 0.5,
-            1.0, 0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 0.5, 0.5,
-            0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0,
-            0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0,
-            0.5, 1.0, 0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 0.5,
-            0.5, 1.0, 0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 0.5,
-            0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.5, 0.0,
-            0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.5, 0.0,
-            0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 0.5, 0.5, 1.0,
-            0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 0.5, 0.5, 1.0,
-            0.0, 0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.5,
-            0.0, 0.0, 0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.5]
+    c.verts = [
+            wp, hn, dp, wp, hn, dn, wp, hp, dn,
+            wp, hn, dp, wp, hp, dn, wp, hp, dp,
+            wn, hn, dn, wn, hn, dp, wn, hp, dp,
+            wn, hn, dn, wn, hp, dp, wn, hp, dn,
+            wn, hp, dp, wp, hp, dp, wp, hp, dn,
+            wn, hp, dp, wp, hp, dn, wn, hp, dn,
+            wn, hn, dn, wp, hn, dn, wp, hn, dp,
+            wn, hn, dn, wp, hn, dp, wn, hn, dp,
+            wn, hn, dp, wp, hn, dp, wp, hp, dp,
+            wn, hn, dp, wp, hp, dp, wn, hp, dp,
+            wp, hn, dn, wn, hn, dn, wn, hp, dn,
+            wp, hn, dn, wn, hp, dn, wp, hp, dn]
 
+    c.color = [
+        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+        0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0,
+        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+        0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0,
+        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+        0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0,
+        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+        0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0,
+        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+        0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0,
+        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+        0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0]
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Sphere:
+    radius: float = 1.0
+    r_segments: int = 32
+    h_segments: int = 16
+    data_size: int = 1
+    components: int = 3
+    verts: list[float] = field(default_factory=list)
+    color: list[float] = field(default_factory=list)
+
+
+def sphere_init(s: Sphere) -> None:
+    ''' '''
+    ustart: float = 0
+    uend: float = glm.TAU
+    ures: float = s.r_segments
+    vstart: float = -glm.PIOVER2
+    vend: float = glm.PIOVER2
+    vres: float = s.h_segments
+
+    udelta: float = (uend - ustart) / ures
+    vdelta: float = (vend - vstart) / vres
+
+    c1, c2, c3 = [1, 0, 0], [0, 1, 0], [0, 0, 1]
+    c4, c5, c6 = [0, 1, 1], [1, 0, 1], [1, 1, 0]
+
+    p = []
+    for i in range(ures+1):
+        a = []
+        for j in range(vres+1):
+            u: float = ustart + i * udelta
+            v: float = vstart + j * vdelta
+
+            cu: float = glm.cos(u)
+            cv: float = glm.cos(v)
+            su: float = glm.sin(u)
+            sv: float = glm.sin(v)
+            res = [
+                    s.radius * su * cv,
+                    s.radius * sv,
+                    s.radius * cu * cv]
+            a.append(res)
+        p.append(a)
+
+    for i in range(ures):
+        for j in range(vres):
+            a = p[i+0][j+0]
+            b = p[i+1][j+0]
+            d = p[i+0][j+1]
+            c = p[i+1][j+1]
+
+            s.verts += a
+            s.verts += b
+            s.verts += c
+            s.verts += a
+            s.verts += c
+            s.verts += d
+
+            s.color += c1
+            s.color += c2
+            s.color += c3
+            s.color += c4
+            s.color += c5
+            s.color += c6
+    s.data_size = len(s.verts)
 
 # --- SHADER
 
@@ -575,15 +642,20 @@ def main() -> None:
                 aspect=SCREEN_WIDTH/SCREEN_HEIGHT)
         camera_s = 2.0
 
-        cube = Cube()
+        # shape = Cube()
+        # cube_init(cube)
+
+        shape = Sphere()
+        sphere_init(shape)
+
         tr = Transform()
 
         shader: Shader = Shader()
         shader_default(shader)
 
-        vbo: Vbo = Vbo(data_size=cube.data_size)
-        vbo_add_data(vbo, cube.verts)
-        vbo_add_data(vbo, cube.color)
+        vbo: Vbo = Vbo(data_size=shape.data_size)
+        vbo_add_data(vbo, shape.verts)
+        vbo_add_data(vbo, shape.color)
 
         keyboard = Keyboard()
 
@@ -606,7 +678,8 @@ def main() -> None:
             shader_use(shader)
             vbo_use(vbo)
 
-            tr.rotation = glm.qt_from_axis(clock.ticks, glm.Vec3(x=0.1, y=0.5))
+            tr.rotation = glm.qt_from_axis(
+                    clock.ticks, glm.Vec3(x=0.1, y=0.5, z=0.2))
 
             model = tr_get_translation(tr)
             view = camera_view_matrix(camera)
