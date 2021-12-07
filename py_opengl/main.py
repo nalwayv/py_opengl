@@ -8,7 +8,6 @@ from enum import Enum
 from loguru import logger
 from OpenGL import GL as gl
 from OpenGL.GL.shaders import compileShader, compileProgram
-from pathlib import Path
 from py_opengl import glm
 from typing import Any, Final
 
@@ -23,7 +22,7 @@ SCREEN_HEIGHT: Final[int] = 500
 # --- HELPERS
 
 
-def to_c_array(arr: list[float]):
+def c_array(arr: list[float]):
     ''' '''
     # Example:
     # create c type array and unpack data into it
@@ -31,11 +30,19 @@ def to_c_array(arr: list[float]):
     return (gl.GLfloat * len(arr))(*arr)
 
 
+def c_cast(offset: int):
+    ''' '''
+    # cast(3 * sizeof(float), void*)
+    return ctypes.cast(offset, ctypes.c_void_p)
+
+
 # --- C TYPES
 
 
 NULL_PTR = ctypes.c_void_p(0)
-FLOAT_SIZE = ctypes.sizeof(gl.GLfloat)
+FLOAT_SIZE = ctypes.sizeof(ctypes.c_float)
+UINT_SIZE = ctypes.sizeof(ctypes.c_uint16)
+
 
 # --- CLOCK
 
@@ -81,248 +88,91 @@ def tr_get_translation(tr: Transform) -> glm.Mat4:
     return t
 
 
-# --- CUBE
+# --- SQUARE
 
-
+# TODO()
 @dataclass(eq=False, repr=False, slots=True)
-class Cube:
-    width: float = 1.0
-    height: float = 1.0
-    depth: float = 1.0
-    verts: list[float] = field(default_factory=list)
-    color: list[float] = field(default_factory=list)
-    points: int = 8
-    data_size: int = 108
-    components: int = 3
+class Square:
+    verts: list[gl.GL_FLOAT] = field(default_factory=list)
+    VAO: int = 0
+    VBO: int = 0
+    shader: int = 0
 
 
-def cube_init(c: Cube) -> None:
-    wp: float = c.width * 0.5
-    hp: float = c.height * 0.5
-    dp: float = c.depth * 0.5
-
-    wn: float = wp * -1.0
-    hn: float = hp * -1.0
-    dn: float = dp * -1.0
-
-    c.verts = [
-            wp, hn, dp, wp, hn, dn, wp, hp, dn,
-            wp, hn, dp, wp, hp, dn, wp, hp, dp,
-            wn, hn, dn, wn, hn, dp, wn, hp, dp,
-            wn, hn, dn, wn, hp, dp, wn, hp, dn,
-            wn, hp, dp, wp, hp, dp, wp, hp, dn,
-            wn, hp, dp, wp, hp, dn, wn, hp, dn,
-            wn, hn, dn, wp, hn, dn, wp, hn, dp,
-            wn, hn, dn, wp, hn, dp, wn, hn, dp,
-            wn, hn, dp, wp, hn, dp, wp, hp, dp,
-            wn, hn, dp, wp, hp, dp, wn, hp, dp,
-            wp, hn, dn, wn, hn, dn, wn, hp, dn,
-            wp, hn, dn, wn, hp, dn, wp, hp, dn]
-
-    c.color = [
-        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0,
-        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0,
-        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0,
-        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0,
-        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0,
-        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0]
-
-
-@dataclass(eq=False, repr=False, slots=True)
-class Sphere:
-    radius: float = 1.0
-    r_segments: int = 32
-    h_segments: int = 16
-    data_size: int = 1
-    components: int = 3
-    verts: list[float] = field(default_factory=list)
-    color: list[float] = field(default_factory=list)
-
-
-def sphere_init(s: Sphere) -> None:
+def sq_init(sq: Square) -> None:
     ''' '''
-    ustart: float = 0
-    uend: float = glm.TAU
-    ures: float = s.r_segments
-    vstart: float = -glm.PIOVER2
-    vend: float = glm.PIOVER2
-    vres: float = s.h_segments
+    sq.shader = gl.glCreateProgram()
 
-    udelta: float = (uend - ustart) / ures
-    vdelta: float = (vend - vstart) / vres
+    vertex_src = '''
+    # version 430
+    layout(location = 0) in vec3 a_pos;
+    layout(location = 1) in vec3 a_col;
 
-    c1, c2, c3 = [1, 0, 0], [0, 1, 0], [0, 0, 1]
-    c4, c5, c6 = [0, 1, 1], [1, 0, 1], [1, 1, 0]
+    out vec3 b_col;
 
-    p = []
-    for i in range(ures+1):
-        a = []
-        for j in range(vres+1):
-            u: float = ustart + i * udelta
-            v: float = vstart + j * vdelta
-
-            cu: float = glm.cos(u)
-            cv: float = glm.cos(v)
-            su: float = glm.sin(u)
-            sv: float = glm.sin(v)
-            res = [
-                    s.radius * su * cv,
-                    s.radius * sv,
-                    s.radius * cu * cv]
-            a.append(res)
-        p.append(a)
-
-    for i in range(ures):
-        for j in range(vres):
-            a = p[i+0][j+0]
-            b = p[i+1][j+0]
-            d = p[i+0][j+1]
-            c = p[i+1][j+1]
-
-            s.verts += a
-            s.verts += b
-            s.verts += c
-            s.verts += a
-            s.verts += c
-            s.verts += d
-
-            s.color += c1
-            s.color += c2
-            s.color += c3
-            s.color += c4
-            s.color += c5
-            s.color += c6
-    s.data_size = len(s.verts)
-
-# --- SHADER
-
-
-@dataclass(eq=False, repr=False, slots=True)
-class Shader:
-    program_id: int = 0
-
-    def __post_init__(self):
-        self.program_id = gl.glCreateProgram()
-
-
-def shader_default(shader: Shader) -> None:
-    '''Simple shader
+    void main()
+    {
+        gl_Position = vec4(a_pos, 1.0);
+        b_col = a_col;
+    }
     '''
-    p = Path('./py_opengl')
-    vp = p / 'default.vert'
-    fp = p / 'default.frag'
 
-    if not vp.exists() or not fp.exists():
-        raise FileNotFoundError('ever frag or vert files were not found')
+    fragment_src = '''
+    # version 430
 
-    with (
-            vp.open(mode='rb') as v,
-            fp.open(mode='rb') as f):
-        vert = v.read()
-        frag = f.read()
+    in vec3 b_col;
+    out vec4 c_col;
 
-        shader.program_id = compileProgram(
-            compileShader(vert, gl.GL_VERTEX_SHADER),
-            compileShader(frag, gl.GL_FRAGMENT_SHADER)
-        )
+    void main()
+    {
+        c_col = vec4(b_col, 1.0);
+    }
+    '''
+    sq.shader = compileProgram(
+            compileShader(vertex_src, gl.GL_VERTEX_SHADER),
+            compileShader(fragment_src, gl.GL_FRAGMENT_SHADER))
 
+    sq.verts = [
+            -0.5, -0.5, 0.0, 1.0, 0.0, 0.0,
+            0.5, -0.5, 0.0, 0.0, 1.0, 0.0,
+            -0.5,  0.5, 0.0, 0.0, 0.0, 1.0,
+            0.5,  0.5, 0.0, 1.0, 1.0, 1.0]
 
-def shader_clean(shader: Shader) -> None:
-    '''Delete shader program id'''
-    gl.glDeleteProgram(shader.program_id)
+    vlen = len(sq.verts) * FLOAT_SIZE
+    stride = 6 * FLOAT_SIZE
+    step = 3 * FLOAT_SIZE
 
+    sq.VAO = gl.glGenVertexArrays(1)
+    sq.VBO = gl.glGenBuffers(1)
 
-def shader_use(shader: Shader) -> None:
-    '''Use shader program id'''
-    gl.glUseProgram(shader.program_id)
+    gl.glBindBuffer(gl.GL_ARRAY_BUFFER, sq.VBO)
+    gl.glBindVertexArray(sq.VAO)
+    gl.glBufferData(gl.GL_ARRAY_BUFFER, vlen, c_array(sq.verts), gl.GL_STATIC_DRAW)
 
-
-def shader_set_vec3(shader: Shader, var_name: str, data: glm.Vec3) -> None:
-    '''Set a global uniform vec3 variable within shader program'''
-    location_id = gl.glGetUniformLocation(shader.program_id, var_name)
-
-    gl.glUniform3f(location_id, data.x, data.y, data.z)
-
-
-def shader_set_m4(shader: Shader, var_name: str, data: glm.Mat4) -> None:
-    '''Set a global uniform mat4 variable within shader program'''
-    location_id = gl.glGetUniformLocation(shader.program_id, var_name)
-
-    gl.glUniformMatrix4fv(
-            location_id,
-            1,
-            gl.GL_FALSE,
-            glm.m4_to_multi_array(data))
+    gl.glEnableVertexAttribArray(0)
+    gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, stride, c_cast(0))
+    gl.glEnableVertexAttribArray(1)
+    gl.glVertexAttribPointer(1, 3, gl.GL_FLOAT, gl.GL_FALSE, stride, c_cast(step))
 
 
-# --- VBO
-
-@dataclass(eq=False, repr=False, slots=True)
-class Vbo:
-    vao: int = 0
-    data_size: int = 1   # len of data passed in
-    components: int = 3     # x y z
-    normalized: bool = False
-    vbos: list[int] = field(default_factory=list)
-
-    def __post_init__(self):
-        self.vao = gl.glGenVertexArrays(1)
+def sq_draw(sq: Square) -> None:
+    ''' '''
+    gl.glUseProgram(sq.shader)
+    gl.glBindVertexArray(sq.VAO)
+    gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)
 
 
-def vbo_clean(vbo: Vbo) -> None:
-    '''Clean vbo'''
-    gl.glDeleteVertexArrays(1, vbo.vao)
-    for v in vbo.vbos:
-        gl.glDeleteBuffers(1, v)
-
-
-def vbo_add_data(vbo: Vbo, arr: list[float]) -> None:
-    '''Add data to vbo'''
-    v_buffer = gl.glGenBuffers(1)
-    gl.glBindBuffer(gl.GL_ARRAY_BUFFER, v_buffer)
-    gl.glBindVertexArray(vbo.vao)
-
-    vbo.vbos.append(v_buffer)
-
-    normal = gl.GL_TRUE if vbo.normalized else gl.GL_FALSE
-
-    gl.glBufferData(
-            gl.GL_ARRAY_BUFFER,
-            len(arr) * FLOAT_SIZE,
-            to_c_array(arr),
-            gl.GL_STATIC_DRAW
-    )
-
-    gl.glVertexAttribPointer(
-            len(vbo.vbos) - 1,
-            vbo.components,
-            gl.GL_FLOAT,
-            normal,
-            0,
-            NULL_PTR
-    )
-
-    gl.glEnableVertexAttribArray(len(vbo.vbos) - 1)
-
-
-def vbo_use(vbo: Vbo) -> None:
-    '''Bind vbo to vertex Array'''
-
-    count = vbo.data_size // vbo.components
-    if count <= 0:
-        return
-
-    gl.glBindVertexArray(vbo.vao)
-    gl.glDrawArrays(gl.GL_TRIANGLES, 0, count)
+def sq_clean(sq: Square) -> None:
+    gl.glDeleteProgram(sq.shader)
+    gl.glDeleteVertexArrays(1, sq.VAO)
+    gl.glDeleteBuffers(1, sq.VBO)
 
 
 # --- GL WINDOW
+
+
+def cb_window_resize(window, width, height):
+    gl.glViewport(0, 0, width, height)
 
 
 class GlWindowError(Exception):
@@ -350,6 +200,10 @@ class GlWindow:
 
         if not self.window:
             raise GlWindowError('failed to init glfw window')
+
+
+def glwin_set_window_callback(glwin: GlWindow, cb_func):
+    glfw.set_window_size_callback(glwin.window, cb_func)
 
 
 def glwin_should_close(glwin: GlWindow) -> bool:
@@ -634,6 +488,7 @@ def main() -> None:
         glwin = GlWindow(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
         glfw.make_context_current(glwin.window)
         glwin_center_screen_position(glwin)
+        glwin_set_window_callback(glwin, cb_window_resize)
 
         clock = Clock()
 
@@ -642,20 +497,10 @@ def main() -> None:
                 aspect=SCREEN_WIDTH/SCREEN_HEIGHT)
         camera_s = 2.0
 
-        # shape = Cube()
-        # cube_init(cube)
+        sq = Square()
+        sq_init(sq)
 
-        shape = Sphere()
-        sphere_init(shape)
-
-        tr = Transform()
-
-        shader: Shader = Shader()
-        shader_default(shader)
-
-        vbo: Vbo = Vbo(data_size=shape.data_size)
-        vbo_add_data(vbo, shape.verts)
-        vbo_add_data(vbo, shape.color)
+        # tr = Transform()
 
         keyboard = Keyboard()
 
@@ -675,18 +520,17 @@ def main() -> None:
             gl.glDepthMask(gl.GL_TRUE)
             # ---
 
-            shader_use(shader)
-            vbo_use(vbo)
+            sq_draw(sq)
 
-            tr.rotation = glm.qt_from_axis(
-                    clock.ticks, glm.Vec3(x=0.1, y=0.5, z=0.2))
+            # tr.rotation = glm.qt_from_axis(
+            #        clock.ticks, glm.Vec3(x=0.1, y=0.5, z=0.2))
 
-            model = tr_get_translation(tr)
-            view = camera_view_matrix(camera)
-            projection = camera_perspective_matrix(camera)
+            # model = tr_get_translation(tr)
+            # view = camera_view_matrix(camera)
+            # projection = camera_perspective_matrix(camera)
 
-            mvp = model * view * projection
-            shader_set_m4(shader, 'mvp', mvp)
+            # mvp = model * view * projection
+            # shader_set_m4(shader, 'mvp', mvp)
 
             # keyboard
             ks_w = glwin_key_state(glwin, glfw.KEY_W)
@@ -758,8 +602,9 @@ def main() -> None:
 
     finally:
         logger.debug('CLOSED')
-        vbo_clean(vbo)
-        shader_clean(shader)
+
+        sq_clean(sq)
+
         glfw.terminate()
 
 
