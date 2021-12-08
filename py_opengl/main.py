@@ -19,27 +19,19 @@ SCREEN_WIDTH: Final[int] = 500
 SCREEN_HEIGHT: Final[int] = 500
 
 
-# --- HELPERS
+# --- C HELPERS
 
 
 def c_array(arr: list[float]):
-    ''' '''
-    # Example:
-    # create c type array and unpack data into it
-    # arr = (ctypes.c_float * 3) = [0, 0, 0]
+    ''''''
     return (gl.GLfloat * len(arr))(*arr)
 
 
 def c_cast(offset: int):
-    ''' '''
-    # cast(3 * sizeof(float), void*)
-    return ctypes.cast(offset, ctypes.c_void_p)
+    '''(void*)(offset)'''
+    return ctypes.c_void_p(offset)
 
 
-# --- C TYPES
-
-
-NULL_PTR = ctypes.c_void_p(0)
 FLOAT_SIZE = ctypes.sizeof(ctypes.c_float)
 UINT_SIZE = ctypes.sizeof(ctypes.c_uint16)
 
@@ -93,15 +85,15 @@ def tr_get_translation(tr: Transform) -> glm.Mat4:
 # TODO()
 @dataclass(eq=False, repr=False, slots=True)
 class Square:
-    verts: list[gl.GL_FLOAT] = field(default_factory=list)
+    verts: list[float] = field(default_factory=list)
     VAO: int = 0
     VBO: int = 0
-    shader: int = 0
+    shader_id: int = 0
 
 
 def sq_init(sq: Square) -> None:
     ''' '''
-    sq.shader = gl.glCreateProgram()
+    sq.shader_id = gl.glCreateProgram()
 
     vertex_src = '''
     # version 430
@@ -110,9 +102,11 @@ def sq_init(sq: Square) -> None:
 
     out vec3 b_col;
 
+    uniform mat4 mvp;
+
     void main()
     {
-        gl_Position = vec4(a_pos, 1.0);
+        gl_Position = mvp * vec4(a_pos, 1.0);
         b_col = a_col;
     }
     '''
@@ -128,15 +122,17 @@ def sq_init(sq: Square) -> None:
         c_col = vec4(b_col, 1.0);
     }
     '''
-    sq.shader = compileProgram(
+
+    sq.shader_id = compileProgram(
             compileShader(vertex_src, gl.GL_VERTEX_SHADER),
             compileShader(fragment_src, gl.GL_FRAGMENT_SHADER))
 
     sq.verts = [
+            # verts          cols
             -0.5, -0.5, 0.0, 1.0, 0.0, 0.0,
-            0.5, -0.5, 0.0, 0.0, 1.0, 0.0,
+             0.5, -0.5, 0.0, 0.0, 1.0, 0.0,
             -0.5,  0.5, 0.0, 0.0, 0.0, 1.0,
-            0.5,  0.5, 0.0, 1.0, 1.0, 1.0]
+             0.5,  0.5, 0.0, 1.0, 1.0, 1.0]
 
     vlen = len(sq.verts) * FLOAT_SIZE
     stride = 6 * FLOAT_SIZE
@@ -144,11 +140,9 @@ def sq_init(sq: Square) -> None:
 
     sq.VAO = gl.glGenVertexArrays(1)
     sq.VBO = gl.glGenBuffers(1)
-
     gl.glBindBuffer(gl.GL_ARRAY_BUFFER, sq.VBO)
     gl.glBindVertexArray(sq.VAO)
     gl.glBufferData(gl.GL_ARRAY_BUFFER, vlen, c_array(sq.verts), gl.GL_STATIC_DRAW)
-
     gl.glEnableVertexAttribArray(0)
     gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, stride, c_cast(0))
     gl.glEnableVertexAttribArray(1)
@@ -157,15 +151,36 @@ def sq_init(sq: Square) -> None:
 
 def sq_draw(sq: Square) -> None:
     ''' '''
-    gl.glUseProgram(sq.shader)
-    gl.glBindVertexArray(sq.VAO)
+    gl.glUseProgram(sq.shader_id)
     gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)
 
 
 def sq_clean(sq: Square) -> None:
-    gl.glDeleteProgram(sq.shader)
+    gl.glDeleteProgram(sq.shader_id)
     gl.glDeleteVertexArrays(1, sq.VAO)
     gl.glDeleteBuffers(1, sq.VBO)
+    sq.VAO = sq.VBO = 0
+
+
+# --- SHADER
+
+
+def shader_set_vec3(shader_id: int, var_name: str, data: glm.Vec3) -> None:
+    '''Set a global uniform vec3 variable within shader program'''
+    location_id = gl.glGetUniformLocation(shader_id, var_name)
+
+    gl.glUniform3f(location_id, data.x, data.y, data.z)
+
+
+def shader_set_m4(shader_id: int, var_name: str, data: glm.Mat4) -> None:
+    '''Set a global uniform mat4 variable within shader program'''
+    location_id = gl.glGetUniformLocation(shader_id, var_name)
+
+    gl.glUniformMatrix4fv(
+            location_id,
+            1,
+            gl.GL_FALSE,
+            glm.m4_multi_array(data))
 
 
 # --- GL WINDOW
@@ -499,8 +514,8 @@ def main() -> None:
 
         sq = Square()
         sq_init(sq)
-
-        # tr = Transform()
+        tr = Transform()
+        tr = Transform()
 
         keyboard = Keyboard()
 
@@ -522,15 +537,15 @@ def main() -> None:
 
             sq_draw(sq)
 
-            # tr.rotation = glm.qt_from_axis(
-            #        clock.ticks, glm.Vec3(x=0.1, y=0.5, z=0.2))
+            tr.rotation = glm.qt_from_axis(
+                    clock.ticks, glm.Vec3(x=0.1, y=0.5, z=0.2))
 
-            # model = tr_get_translation(tr)
-            # view = camera_view_matrix(camera)
-            # projection = camera_perspective_matrix(camera)
+            model = tr_get_translation(tr)
+            view = camera_view_matrix(camera)
+            projection = camera_perspective_matrix(camera)
 
-            # mvp = model * view * projection
-            # shader_set_m4(shader, 'mvp', mvp)
+            mvp = model * view * projection
+            shader_set_m4(sq.shader_id, 'mvp', mvp)
 
             # keyboard
             ks_w = glwin_key_state(glwin, glfw.KEY_W)

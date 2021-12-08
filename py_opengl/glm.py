@@ -96,8 +96,8 @@ def arcsin(val: float) -> float:
     value has to be between -1 and 1
     '''
     return math.asin(val)
-    
- 
+
+
 def arctan2(y: float, x: float) -> float:
     '''Return arctan2 angle'''
     return math.atan2(y, x)
@@ -756,7 +756,7 @@ def m4_unit(m4: Mat4) -> Mat4:
     return m4_scale(m4, 1.0 / det)
 
 
-def m4_to_array(m4: Mat4) -> list[float]:
+def m4_array(m4: Mat4) -> list[float]:
     '''Mat4x4 to list[float]'''
     return [
             m4.ax, m4.ay, m4.az, m4.aw,
@@ -765,7 +765,7 @@ def m4_to_array(m4: Mat4) -> list[float]:
             m4.dx, m4.dy, m4.dz, m4.dw]
 
 
-def m4_to_multi_array(m4: Mat4) -> list[list[float]]:
+def m4_multi_array(m4: Mat4) -> list[list[float]]:
     '''Mat4x4 to list[list[float]]'''
     return [
             [m4.ax, m4.ay, m4.az, m4.aw],
