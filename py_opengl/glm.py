@@ -629,6 +629,13 @@ def m4_create_rotation_z(angle_deg: float) -> Mat4:
     return Mat4(ax=c, ay=-s, bx=s, by=c, cz=1.0, dw=1.0)
 
 
+def m4_create_rotation(v3: Vec3) -> Mat4:
+    return (
+            m4_create_rotation_z(v3.z) *
+            m4_create_rotation_y(v3.y) *
+            m4_create_rotation_x(v3.x))
+
+
 def m4_create_identity() -> Mat4:
     '''Return a identity matrix'''
     return Mat4(ax=1.0, by=1.0, cz=1.0, dw=1.0)
@@ -800,11 +807,11 @@ def m4_projection(
         aspect: float,
         znear: float,
         zfar: float) -> Mat4:
-    #if fov <= 0.0 or fov >= PI:
-    #    raise Mat4Error('m4 projection fov out of range')
+    if fov <= 0.0 or fov >= PI:
+        raise Mat4Error('m4 projection fov out of range')
 
-    #if znear <= 0.0 or zfar <= 0.0 or znear >= zfar:
-    #    raise Mat4Error('m4 projection aspect out of range')
+    if znear <= 0.0 or zfar <= 0.0 or znear >= zfar:
+        raise Mat4Error('m4 projection aspect out of range')
 
     fovy: float = 1.0 / tan(fov * 0.5)
     fovx: float = fovy / aspect
@@ -1292,3 +1299,8 @@ def qt_to_mat4(qt: Quaternion) -> Mat4:
         bx, by, bz, 0.0,
         cx, cy, cz, 0.0,
         0.0, 0.0, 0.0, 1.0)
+
+
+def qt_create_mat4_rotation(v3: Vec3) -> Mat4:
+    '''Create Mat4 rotation from quaternion euler angles'''
+    return qt_to_mat4(qt_from_euler(v3))
