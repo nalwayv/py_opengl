@@ -1,4 +1,4 @@
-'''
+'''PY OPENGL
 '''
 import ctypes
 import glfw
@@ -6,7 +6,7 @@ import glfw
 from dataclasses import dataclass, field
 from enum import Enum
 from loguru import logger
-from OpenGL import GL as gl
+from OpenGL import GL
 from OpenGL.GL.shaders import compileShader, compileProgram
 from py_opengl import glm
 from typing import Any, Final
@@ -23,18 +23,18 @@ SCREEN_HEIGHT: Final[int] = 500
 
 
 def c_array(arr: list[float]):
-    ''''''
-    return (gl.GLfloat * len(arr))(*arr)
+    '''Convert list to ctype array'''
+    # return (gl.GLfloat * len(arr))(*arr)
+    return (ctypes.c_float * len(arr))(*arr)
 
 
 def c_cast(offset: int):
-    '''(void*)(offset)'''
+    '''Cast to ctype void pointer (void*)(offset)'''
     return ctypes.c_void_p(offset)
 
 
-FLOAT_SIZE = ctypes.sizeof(ctypes.c_float)
-UINT_SIZE = ctypes.sizeof(ctypes.c_uint16)
-
+FLOAT_SIZE = 4
+UINT_SIZE = 4
 
 # --- CLOCK
 
@@ -69,7 +69,7 @@ class Transform:
     rotation: glm.Quaternion = glm.Quaternion(w=1.0)
 
 
-def tr_get_translation(tr: Transform) -> glm.Mat4:
+def trans_get_transform(tr: Transform) -> glm.Mat4:
     '''Get mat4 transform'''
 
     t = glm.m4_create_identity()
@@ -79,42 +79,140 @@ def tr_get_translation(tr: Transform) -> glm.Mat4:
 
     return t
 
+# --- SHADER
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Shader:
+    program_id: int = 0
+
+    def __post_init__(self):
+        self.program_id = GL.glCreateProgram()
+
+
+def shader_compile(shader: Shader, v_filepath: str, f_filepath: str) -> None:
+    '''Simple shader'''
+    shader.program_id = compileProgram(
+            compileShader(v_filepath, GL.GL_VERTEX_SHADER),
+            compileShader(f_filepath, GL.GL_FRAGMENT_SHADER))
+
+
+def shader_clean(shader: Shader) -> None:
+    '''Delete shader program id'''
+    GL.glDeleteProgram(shader.program_id)
+
+
+def shader_use(shader: Shader) -> None:
+    '''Use shader program id'''
+    GL.glUseProgram(shader.program_id)
+
+
+def shader_set_vec3(shader: Shader, var_name: str, data: glm.Vec3) -> None:
+    '''Set a global uniform vec3 variable within shader program'''
+    location_id = GL.glGetUniformLocation(shader.program_id, var_name)
+    GL.glUniform3f(location_id, data.x, data.y, data.z)
+
+
+def shader_set_m4(shader: Shader, var_name: str, data: glm.Mat4) -> None:
+    '''Set a global uniform mat4 variable within shader program'''
+    location_id = GL.glGetUniformLocation(shader.program_id, var_name)
+    GL.glUniformMatrix4fv(
+            location_id,
+            1,
+            GL.GL_FALSE,
+            glm.m4_multi_array(data))
+
+
+# --- VBO
+
+@dataclass(eq=False, repr=False, slots=True)
+class Vbo:
+    vao: int = 0
+    components: int = 3     # x y z
+    normalized: bool = False
+    vbos: list[int] = field(default_factory=list)
+
+    def __post_init__(self):
+        self.vao = GL.glGenVertexArrays(1)
+
+
+def vbo_draw(vbo: Vbo) -> None:
+    '''Bind vbo to vertex Array'''
+    GL.glBindVertexArray(vbo.vao)
+    GL.glDrawArrays(GL.GL_TRIANGLES, 0, vbo.components)
+
+
+def vbo_clean(vbo: Vbo) -> None:
+    '''Clean vbo'''
+    GL.glDeleteVertexArrays(1, vbo.vao)
+    for v in vbo.vbos:
+        GL.glDeleteBuffers(1, v)
+
+
+def vbo_add_data(vbo: Vbo, arr: list[float]) -> None:
+    '''Add data to vbo'''
+    v_buffer = GL.glGenBuffers(1)
+    GL.glBindBuffer(GL.GL_ARRAY_BUFFER, v_buffer)
+    GL.glBindVertexArray(vbo.vao)
+    vbo.vbos.append(v_buffer)
+
+    normal: bool = GL.GL_TRUE if vbo.normalized else GL.GL_FALSE
+    size_of: int = len(arr) * FLOAT_SIZE
+
+    GL.glBufferData(GL.GL_ARRAY_BUFFER, size_of, c_array(arr), GL.GL_STATIC_DRAW)
+
+    at = len(vbo.vbos) - 1
+    GL.glVertexAttribPointer(at, vbo.components, GL.GL_FLOAT, normal, 0, c_cast(0))
+    GL.glEnableVertexAttribArray(at)
+
 
 # --- SQUARE
 
+
 # TODO()
 @dataclass(eq=False, repr=False, slots=True)
-class Square:
-    verts: list[float] = field(default_factory=list)
-    VAO: int = 0
-    VBO: int = 0
-    shader_id: int = 0
+class Triangle:
+    vbo: Any = None
+    shader: Any = None
+
+    def __post_init__(self):
+        self.vbo = Vbo()
+        self.shader = Shader()
 
 
-def sq_init(sq: Square) -> None:
-    ''' '''
-    sq.shader_id = gl.glCreateProgram()
+def tri_init(tri: Triangle) -> None:
+    '''Initialize triangle
+    Parameters
+    ---
+    tri: Triangle
 
-    vertex_src = '''
-    # version 430
-    layout(location = 0) in vec3 a_pos;
-    layout(location = 1) in vec3 a_col;
+    Returns
+    ---
+    None
+    '''
+
+    vert_src = '''
+    # version 430 core
+
+    layout (location = 0) in vec3 a_pos;
+    layout (location = 1) in vec3 a_col;
 
     out vec3 b_col;
 
     uniform mat4 mvp;
 
-    void main()
+    void main(void)
     {
-        gl_Position = mvp * vec4(a_pos, 1.0);
         b_col = a_col;
+        gl_Position = mvp * vec4(a_pos, 1.0);
     }
     '''
 
-    fragment_src = '''
-    # version 430
+    frag_src = '''
+    # version 430 core
 
     in vec3 b_col;
+
     out vec4 c_col;
 
     void main()
@@ -123,71 +221,40 @@ def sq_init(sq: Square) -> None:
     }
     '''
 
-    sq.shader_id = compileProgram(
-            compileShader(vertex_src, gl.GL_VERTEX_SHADER),
-            compileShader(fragment_src, gl.GL_FRAGMENT_SHADER))
+    shader_compile(tri.shader, vert_src, frag_src)
 
-    sq.verts = [
-            # verts          cols
-            -0.5, -0.5, 0.0, 1.0, 0.0, 0.0,
-             0.5, -0.5, 0.0, 0.0, 1.0, 0.0,
-            -0.5,  0.5, 0.0, 0.0, 0.0, 1.0,
-             0.5,  0.5, 0.0, 1.0, 1.0, 1.0]
+    verts = [
+            0.5, -0.5, 0.0,
+            -0.5, -0.5, 0.0,
+            0.0, 0.5, 0.0]
 
-    vlen = len(sq.verts) * FLOAT_SIZE
-    stride = 6 * FLOAT_SIZE
-    step = 3 * FLOAT_SIZE
+    color = [
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0]
 
-    sq.VAO = gl.glGenVertexArrays(1)
-    sq.VBO = gl.glGenBuffers(1)
-    gl.glBindBuffer(gl.GL_ARRAY_BUFFER, sq.VBO)
-    gl.glBindVertexArray(sq.VAO)
-    gl.glBufferData(gl.GL_ARRAY_BUFFER, vlen, c_array(sq.verts), gl.GL_STATIC_DRAW)
-    gl.glEnableVertexAttribArray(0)
-    gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, stride, c_cast(0))
-    gl.glEnableVertexAttribArray(1)
-    gl.glVertexAttribPointer(1, 3, gl.GL_FLOAT, gl.GL_FALSE, stride, c_cast(step))
+    vbo_add_data(tri.vbo, verts)
+    vbo_add_data(tri.vbo, color)
 
 
-def sq_draw(sq: Square) -> None:
-    ''' '''
-    gl.glUseProgram(sq.shader_id)
-    gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)
+def tri_draw(tri: Triangle) -> None:
+    '''Render triangle to screen'''
+    shader_use(tri.shader)
+    vbo_draw(tri.vbo)
 
 
-def sq_clean(sq: Square) -> None:
-    gl.glDeleteProgram(sq.shader_id)
-    gl.glDeleteVertexArrays(1, sq.VAO)
-    gl.glDeleteBuffers(1, sq.VBO)
-    sq.VAO = sq.VBO = 0
-
-
-# --- SHADER
-
-
-def shader_set_vec3(shader_id: int, var_name: str, data: glm.Vec3) -> None:
-    '''Set a global uniform vec3 variable within shader program'''
-    location_id = gl.glGetUniformLocation(shader_id, var_name)
-
-    gl.glUniform3f(location_id, data.x, data.y, data.z)
-
-
-def shader_set_m4(shader_id: int, var_name: str, data: glm.Mat4) -> None:
-    '''Set a global uniform mat4 variable within shader program'''
-    location_id = gl.glGetUniformLocation(shader_id, var_name)
-
-    gl.glUniformMatrix4fv(
-            location_id,
-            1,
-            gl.GL_FALSE,
-            glm.m4_multi_array(data))
+def tri_clean(tri: Triangle) -> None:
+    '''Clean up triangle shader and vbo'''
+    shader_clean(tri.shader)
+    vbo_clean(tri.vbo)
 
 
 # --- GL WINDOW
 
 
 def cb_window_resize(window, width, height):
-    gl.glViewport(0, 0, width, height)
+    ''' '''
+    GL.glViewport(0, 0, width, height)
 
 
 class GlWindowError(Exception):
@@ -218,6 +285,7 @@ class GlWindow:
 
 
 def glwin_set_window_callback(glwin: GlWindow, cb_func):
+    ''' '''
     glfw.set_window_size_callback(glwin.window, cb_func)
 
 
@@ -237,7 +305,17 @@ def glwin_center_screen_position(glwin: GlWindow) -> None:
 
 
 def glwin_mouse_pos(glwin: GlWindow) -> glm.Vec3:
-    '''Get current cursor possition on current window'''
+    '''Get current cursor possition on current window
+
+    Parameters
+    ---
+    glwin: GlWindow
+        glfw window
+
+    Returns
+    ---
+    Vec3: vec3(x, y, z)
+    '''
     cx, cy = glfw.get_cursor_pos(glwin.window)
     return glm.Vec3(x=cx, y=cy)
 
@@ -248,7 +326,7 @@ def glwin_mouse_state(glwin: GlWindow, button: int) -> tuple[int, int]:
     Parameters
     ---
     glwin: GlWindow
-        glfw iwndow
+        glfw window
     button: int
         glfw mouse button macro number
         left: 0
@@ -288,7 +366,6 @@ def glwin_key_state(glwin: GlWindow, key: int) -> tuple[int, int]:
 
 # --- CAMERA
 
-
 @dataclass(eq=False, repr=False, slots=True)
 class Camera:
     position: glm.Vec3 = glm.Vec3()
@@ -305,8 +382,16 @@ class Camera:
 
 
 def camera_update(cam: Camera) -> None:
-    '''Update camera'''
+    '''Update camera
 
+    Parameters
+    ---
+    cam: Camera
+
+    Returns
+    ---
+    None
+    '''
     cam.front.x = glm.cos(cam.pitch) * glm.cos(cam.yaw)
     cam.front.y = glm.sin(cam.pitch)
     cam.front.z = glm.cos(cam.pitch) * glm.sin(cam.yaw)
@@ -316,20 +401,78 @@ def camera_update(cam: Camera) -> None:
     cam.up = glm.v3_unit(glm.v3_cross(cam.right, cam.front))
 
 
-def camera_to_yaw(val: float) -> float:
+def camera_yaw(val: float) -> float:
+    '''Helper function for camera yaw
+
+    Parameters
+    ---
+    val: float
+        value in degrees,
+        will be converted into radians within function
+
+    Example:
+    ---
+    camera.yaw += camera_yaw(45.5)
+
+    Returns
+    ---
+    float: yaw value in radians
+    '''
     return glm.to_radians(val)
 
 
-def camera_to_pitch(val: float) -> float:
+def camera_pitch(val: float) -> float:
+    '''Helper function for camera pitch
+
+    Parameters
+    ---
+    val: float
+        value in degrees,
+        will be converted into radians within function
+
+    Example
+    ---
+    camera.pitch += camera_pitch(45.5)
+
+    Returns
+    ---
+    float: pitch value in radians
+    '''
+
     return glm.to_radians(glm.clamp(val, -89.0, 89.0))
 
 
-def camera_to_fovy(val: float) -> float:
+def camera_fovy(val: float) -> float:
+    '''Helper function for camera fovy
+
+    Parameters
+    ---
+    val: float
+        value in degrees,
+        will be converted into radians within function
+
+    Example
+    ---
+    camera.fovy += camera_fovy(45.5)
+
+    Returns
+    ---
+    float: fovy value in radians
+    '''
     return glm.to_radians(glm.clamp(val, 1.0, 45.0))
 
 
 def camera_view_matrix(cam: Camera) -> glm.Mat4:
-    '''Return Camera view matrix'''
+    '''Return Camera view matrix
+
+    Parameters
+    ---
+    cam: Camera
+
+    Returns
+    ---
+    Mat4: camera view matrix 4x4
+    '''
     return glm.m4_look_at(
             cam.position,
             cam.position + cam.front,
@@ -337,8 +480,18 @@ def camera_view_matrix(cam: Camera) -> glm.Mat4:
 
 
 def camera_perspective_matrix(cam: Camera) -> glm.Mat4:
-    '''Return camera projection matrix'''
-    return glm.m4_perspective_fov(cam.fovy, cam.aspect, cam.znear, cam.zfar)
+    '''Return camera projection matrix
+
+    Parameters
+    ---
+    cam: Camera
+
+    Returns
+    ---
+    Mat4: camera projection matrix 4x4
+    '''
+    return glm.m4_projection(cam.fovy, cam.aspect, cam.znear, cam.zfar)
+#    return glm.m4_perspective_fov(cam.fovy, cam.aspect, cam.znear, cam.zfar)
 
 
 # --- KEYBOARD
@@ -360,18 +513,22 @@ class Keyboard:
 
 
 def _keyboard_set_current_at(kb: Keyboard, key: int, value: int) -> None:
+    ''' '''
     kb.states[key] = (kb.states[key] & 0xFFFFFF00) | value
 
 
 def _keyboard_set_previous_at(kb: Keyboard, key: int, value: int) -> None:
+    ''' '''
     kb.states[key] = (kb.states[key] & 0xFFFF00FF) | (value << 8)
 
 
 def _keyboard_get_current_at(kb: Keyboard, key: int) -> int:
+    ''' '''
     return 0xFF & kb.states[key]
 
 
 def _keyboard_get_previous_at(kb: Keyboard, key: int) -> int:
+    ''' '''
     return 0xFF & (kb.states[key] >> 8)
 
 
@@ -432,18 +589,22 @@ class Mouse:
 
 
 def _mouse_set_current(mouse: Mouse, key: int, value: int) -> None:
+    ''' '''
     mouse.states[key] = (mouse.states[key] & 0xFFFFFF00) | value
 
 
 def _mouse_set_previous(mouse: Mouse, key: int, value: int) -> None:
+    ''' '''
     mouse.states[key] = (mouse.states[key] & 0xFFFF00FF) | (value << 8)
 
 
 def _mouse_get_current(mouse: Mouse, key: int) -> int:
+    ''' '''
     return 0xFF & mouse.states[key]
 
 
 def _mouse_get_previous(mouse: Mouse, key: int) -> int:
+    ''' '''
     return 0xFF & (mouse.states[key] >> 8)
 
 
@@ -498,7 +659,7 @@ def main() -> None:
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
         glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-        glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, gl.GL_TRUE)
+        glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
 
         glwin = GlWindow(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
         glfw.make_context_current(glwin.window)
@@ -507,15 +668,14 @@ def main() -> None:
 
         clock = Clock()
 
-        camera = Camera(
-                position=glm.Vec3(z=3.0),
-                aspect=SCREEN_WIDTH/SCREEN_HEIGHT)
-        camera_s = 2.0
+        camera = Camera(position=glm.Vec3(z=3.0), aspect=SCREEN_WIDTH/SCREEN_HEIGHT)
 
-        sq = Square()
-        sq_init(sq)
-        tr = Transform()
-        tr = Transform()
+        camera_speed = 2.0
+
+        tri = Triangle()
+        tri_init(tri)
+
+        transform = Transform()
 
         keyboard = Keyboard()
 
@@ -527,66 +687,51 @@ def main() -> None:
         while not glwin_should_close(glwin):
             clock_update(clock)
 
-            gl.glClearColor(0.10, 0.10, 0.10, 1.0)
-            gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+            GL.glClearColor(0.2, 0.3, 0.3, 1.0)
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
-            gl.glDisable(gl.GL_BLEND)
-            gl.glEnable(gl.GL_DEPTH_TEST)
-            gl.glDepthMask(gl.GL_TRUE)
             # ---
 
-            sq_draw(sq)
+            tri_draw(tri)
 
-            tr.rotation = glm.qt_from_axis(
-                    clock.ticks, glm.Vec3(x=0.1, y=0.5, z=0.2))
+            transform.rotation = glm.qt_from_axis(clock.ticks, glm.Vec3(x=0.1, y=0.5, z=0.1))
 
-            model = tr_get_translation(tr)
+            model = trans_get_transform(transform)
             view = camera_view_matrix(camera)
             projection = camera_perspective_matrix(camera)
 
             mvp = model * view * projection
-            shader_set_m4(sq.shader_id, 'mvp', mvp)
+            shader_set_m4(tri.shader, 'mvp', mvp)
 
             # keyboard
             ks_w = glwin_key_state(glwin, glfw.KEY_W)
             if key_state(keyboard, ks_w) == KeyState.HELD:
-                camera.position = camera.position + glm.v3_scale(
-                        camera.front,
-                        camera_s * clock.delta)
+                camera.position = camera.position + glm.v3_scale(camera.front, camera_speed * clock.delta)
 
             ks_s = glwin_key_state(glwin, glfw.KEY_S)
             if key_state(keyboard, ks_s) == KeyState.HELD:
-                camera.position = camera.position - glm.v3_scale(
-                        camera.front,
-                        camera_s * clock.delta)
+                camera.position = camera.position - glm.v3_scale(camera.front, camera_speed * clock.delta)
 
             ks_a = glwin_key_state(glwin, glfw.KEY_A)
             if key_state(keyboard, ks_a) == KeyState.HELD:
-                camera.position = camera.position + glm.v3_scale(
-                        camera.right,
-                        camera_s * clock.delta)
+                camera.position = camera.position + glm.v3_scale(camera.right, camera_speed * clock.delta)
 
             ks_d = glwin_key_state(glwin, glfw.KEY_D)
             if key_state(keyboard, ks_d) == KeyState.HELD:
-                camera.position = camera.position - glm.v3_scale(
-                        camera.right,
-                        camera_s * clock.delta)
+                camera.position = camera.position - glm.v3_scale(camera.right, camera_speed * clock.delta)
 
             ks_space = glwin_key_state(glwin, glfw.KEY_Q)
             if key_state(keyboard, ks_space) == KeyState.HELD:
-                camera.position = camera.position + glm.v3_scale(
-                        camera.up,
-                        camera_s * clock.delta)
+                camera.position = camera.position + glm.v3_scale(camera.up, camera_speed * clock.delta)
 
             ks_ls = glwin_key_state(glwin, glfw.KEY_E)
             if key_state(keyboard, ks_ls) == KeyState.HELD:
-                camera.position = camera.position - glm.v3_scale(
-                        camera.up,
-                        camera_s * clock.delta)
+                camera.position = camera.position - glm.v3_scale(camera.up, camera_speed * clock.delta)
 
             # mouse
             ms = glwin_mouse_state(glwin, glfw.MOUSE_BUTTON_LEFT)
             current_mp = glwin_mouse_pos(glwin)
+
             if mouse_state(mouse, ms) == MouseState.HELD:
                 if first_move:
                     last_mp = current_mp
@@ -595,11 +740,8 @@ def main() -> None:
                     new_mp = current_mp - last_mp
                     last_mp = current_mp
 
-                    camera.yaw = camera.yaw - camera_to_yaw(
-                            new_mp.x * mouse_sensitivity)
-
-                    camera.pitch = camera.pitch + camera_to_pitch(
-                            new_mp.y * mouse_sensitivity)
+                    camera.yaw -= camera_yaw(new_mp.x * mouse_sensitivity)
+                    camera.pitch += camera_pitch(new_mp.y * mouse_sensitivity)
 
                     camera_update(camera)
 
@@ -618,7 +760,7 @@ def main() -> None:
     finally:
         logger.debug('CLOSED')
 
-        sq_clean(sq)
+        tri_clean(tri)
 
         glfw.terminate()
 

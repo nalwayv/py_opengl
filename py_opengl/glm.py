@@ -102,6 +102,116 @@ def arctan2(y: float, x: float) -> float:
     '''Return arctan2 angle'''
     return math.atan2(y, x)
 
+# --- VECTOR2(X, Y)
+
+
+class Vec2Error(Exception):
+    '''Custom error for Vec2'''
+
+    def __init__(self, msg: str):
+        super().__init__(msg)
+
+
+@dataclass(eq=False, slots=True)
+class Vec2:
+    x: float = 0.0
+    y: float = 0.0
+
+    def __getitem__(self, idx):
+        match clamp(idx, 0, 2):
+            case 0: return self.x
+            case 1: return self.y
+            case _: raise Vec3Error('out of range')
+
+    def __add__(self, other):
+        if not isinstance(other, Vec2):
+            raise Vec2Error('not of type Vec2')
+        x: float = self.x + other.x
+        y: float = self.y + other.y
+        return Vec2(x, y)
+
+    def __sub__(self, other):
+        if not isinstance(other, Vec2):
+            raise Vec2Error('not of type Vec2')
+        x: float = self.x - other.x
+        y: float = self.y - other.y
+        return Vec2(x, y)
+
+    def __mul__(self, other):
+        if not isinstance(other, Vec2):
+            raise Vec2Error('not of type Vec2')
+        x: float = self.x * other.x
+        y: float = self.y * other.y
+        return Vec2(x, y)
+
+
+def v2_copy(v2: Vec2) -> Vec2:
+    '''Return a copy of passed in V2'''
+    return Vec2(v2.x, v2.y)
+
+
+def v2_one() -> Vec2:
+    '''Return a v3 with all values set to one'''
+    return Vec2(1.0, 1.0)
+
+
+def v2_scale(v2: Vec2, by: float) -> Vec2:
+    '''Scale v2 by value'''
+    x: float = v2.x * by
+    y: float = v2.y * by
+    return Vec2(x, y)
+
+
+def v2_cross(a: Vec2, b: Vec2) -> float:
+    '''Get the cross product of two v2s'''
+    return (a.x * b.y) - (a.y * b.x)
+
+
+def v2_length_sq(v2: Vec2) -> float:
+    '''Get the length sqr of this v2'''
+    x2: float = sqr(v2.x)
+    y2: float = sqr(v2.y)
+    return x2 + y2
+
+
+def v2_length(v2: Vec2) -> float:
+    '''Get the length sqrt of this v2'''
+    x2: float = sqr(v2.x)
+    y2: float = sqr(v2.y)
+    return sqrt(x2 + y2)
+
+
+def v2_unit(v2: Vec2) -> Vec2:
+    '''Return a cpy of this v2 with a unit length'''
+    lsq = v2_length_sq(v2)
+    if is_zero(lsq):
+        return v2_copy(v2)
+    return v2_scale(v2, inv_sqrt(lsq))
+
+
+def v2_dot(a: Vec2, b: Vec2) -> float:
+    '''Get the dot product of two v3s'''
+    x: float = a.x * b.x
+    y: float = a.y * b.y
+    return x + y
+
+
+def v2_is_unit(v2: Vec2) -> bool:
+    '''Check if this v2 has a unit length'''
+    return is_one(v2_length_sq(v2))
+
+
+def v2_is_zero(v2: Vec2) -> bool:
+    '''Check if this v2 has a length of zero'''
+    return (
+        is_zero(v2.x) and
+        is_zero(v2.y))
+
+
+def v2_is_equil(a: Vec2, b: Vec2) -> bool:
+    '''Check if v2 a is equil to v2 b'''
+    return (is_equil(a.x, b.x) and is_equil(a.y, b.y))
+
 
 # --- VECTOR3(X, Y, Z)
 
@@ -252,7 +362,7 @@ class Mat4Error(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq=False, slots=True)
+@dataclass(eq=False, repr=True, slots=True)
 class Mat4:
     ax: float = 0.0
     ay: float = 0.0
@@ -550,6 +660,31 @@ def m4_scale(m4: Mat4, by: float) -> Mat4:
         dx, dy, dz, dw)
 
 
+def m4_transpose(m4: Mat4) -> Mat4:
+    ax: float = m4.ax
+    ay: float = m4.bx
+    az: float = m4.cx
+    aw: float = m4.dx
+    bx: float = m4.ay
+    by: float = m4.by
+    bz: float = m4.cy
+    bw: float = m4.dy
+    cx: float = m4.az
+    cy: float = m4.bz
+    cz: float = m4.cz
+    cw: float = m4.dz
+    dx: float = m4.aw
+    dy: float = m4.bw
+    dz: float = m4.cw
+    dw: float = m4.dw
+
+    return Mat4(
+        ax, ay, az, aw,
+        bx, by, bz, bw,
+        cx, cy, cz, cw,
+        dx, dy, dz, dw)
+
+
 def m4_look_at(eye: Vec3, target: Vec3, up: Vec3) -> Mat4:
     '''Get matrix 4x4 look-at value'''
     z: Vec3 = v3_unit(eye - target)
@@ -607,26 +742,75 @@ def m4_from_axis(angle_deg: float, axis: Vec3) -> Mat4:
         dw=1.0)
 
 
-def m4_perspective_fov(
-        fov: float,
-        aspect: float,
+def m4_frustum(
+        left: float,
+        right: float,
+        bottom: float,
+        top: float,
+        far: float,
+        near: float) -> Mat4:
+    ''' '''
+    rl: float = 1.0 / (right - left)
+    tb: float = 1.0 / (top - bottom)
+    fn: float = 1.0 / (far - near)
+
+    x: float = 2.0 * near * rl
+    y: float = 2.0 * near * tb
+    a: float = (right + left) * rl
+    b: float = (top + bottom) * tb
+    c: float = -(far + near) * fn
+    d: float = -(2.0 * far * near) * fn
+
+    return Mat4(
+            ax=x,
+            by=y,
+            cx=a, cy=b, cz=c, cw=-1.0,
+            dz=d, dw=0.0)
+
+
+def m4_ortho(
+        left: float,
+        right: float,
+        bottom: float,
+        top: float,
         near: float,
         far: float) -> Mat4:
-    '''Get a perspective fov matrix 4x4'''
-    if fov <= 0.0 or fov >= PI:
-        raise Mat4Error('m4 perspective fov out of range')
+    ''' '''
+    lr: float = 1.0 / (left - right)
+    bt: float = 1.0 / (bottom - top)
+    nf: float = 1.0 / (near - far)
 
-    if near <= 0.0 or far <= 0.0 or near >= far:
-        raise Mat4Error('m4 perspective aspect out of range')
+    x: float = -2.0 * lr
+    y: float = -2.0 * bt
+    z: float = 2.0 * nf
 
-    ys: float = 1.0 / tan(fov * 0.5)
-    xs: float = ys / aspect
-    sx: float = xs
-    sy: float = ys
-    sz: float = far / (near - far)
-    sw: float = near * far / (near - far)
+    a: float = (right + left) * lr
+    b: float = (top + bottom) * bt
+    c: float = (far + near) * nf
 
-    return Mat4(ax=sx, by=sy, cz=sz, cw=-1, dz=sw)
+    return Mat4(
+            ax=x,
+            by=y,
+            cz=z,
+            dx=a, dy=b, dz=c, dw=1.0)
+
+
+def m4_projection(
+        fov: float,
+        aspect: float,
+        znear: float,
+        zfar: float) -> Mat4:
+    #if fov <= 0.0 or fov >= PI:
+    #    raise Mat4Error('m4 projection fov out of range')
+
+    #if znear <= 0.0 or zfar <= 0.0 or znear >= zfar:
+    #    raise Mat4Error('m4 projection aspect out of range')
+
+    fovy: float = 1.0 / tan(fov * 0.5)
+    fovx: float = fovy / aspect
+    zrange: float = zfar / (zfar - znear)
+
+    return Mat4(ax=fovx, by=fovy, cz=zrange, cw=-1.0, dz=znear*zrange)
 
 
 def m4_determinant(m4: Mat4) -> float:
