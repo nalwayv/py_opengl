@@ -12,42 +12,42 @@ NEGATIVE_INFINITY: float = float('-inf')
 
 
 def is_zero(val: float) -> bool:
-    '''Is float value zero'''
+    '''Check if value is zero'''
     return abs(val) <= EPSILON
 
 
 def is_one(val: float) -> bool:
-    '''Is float value one'''
+    '''Check if float value is one'''
     return is_zero(val - 1.0)
 
 
 def is_equil(x: float, y: float) -> bool:
-    '''Are float values similar'''
+    '''Check if x and y float values are similar'''
     return abs(x - y) <= EPSILON
 
 
 def to_radians(val: float) -> float:
-    '''Convert to radians'''
+    '''Convert value to radians'''
     return val * 0.01745329251994329577
 
 
 def to_degreese(val: float) -> float:
-    '''Convert to degreese'''
+    '''Convert value to degreese'''
     return val * 57.2957795130823208768
 
 
 def sqr(val: float) -> float:
-    '''Sqr float'''
+    '''Return Sqr float value'''
     return val * val
 
 
 def sqrt(val: float) -> float:
-    '''Sqrt float'''
+    '''Return Sqrt float value'''
     return math.sqrt(val)
 
 
 def inv_sqrt(val: float) -> float:
-    '''Inverse sqrt'''
+    '''Return Inverse Sqrt float value'''
     return 1.0 / sqrt(val)
 
 
@@ -585,12 +585,17 @@ def m4_col3(m4: Mat4) -> tuple[float, float, float, float]:
     return (m4.aw, m4.bw, m4.cw, m4.dw)
 
 
-def m4_create_scaler(v3: Vec3) -> Mat4:
-    '''Init a matrix 4x4's values for a scaler matrix'''
+def m4_create_scaleV3(v3: Vec3) -> Mat4:
+    '''Create a scale matrix by a vec3'''
     x: float = v3.x
     y: float = v3.y
     z: float = v3.z
     return Mat4(ax=x, by=y, cz=z, dw=1.0)
+
+
+def m4_create_scaleF(scale: float) -> Mat4:
+    '''Create a scale matrix with a float value'''
+    return Mat4(ax=scale, by=scale, cz=scale, dw=1.0)
 
 
 def m4_create_translation(v3: Vec3) -> Mat4:
@@ -627,13 +632,6 @@ def m4_create_rotation_z(angle_deg: float) -> Mat4:
     c: float = cos(angle_rad)
     s: float = sin(angle_rad)
     return Mat4(ax=c, ay=-s, bx=s, by=c, cz=1.0, dw=1.0)
-
-
-def m4_create_rotation(v3: Vec3) -> Mat4:
-    return (
-            m4_create_rotation_z(v3.z) *
-            m4_create_rotation_y(v3.y) *
-            m4_create_rotation_x(v3.x))
 
 
 def m4_create_identity() -> Mat4:
@@ -1299,8 +1297,3 @@ def qt_to_mat4(qt: Quaternion) -> Mat4:
         bx, by, bz, 0.0,
         cx, cy, cz, 0.0,
         0.0, 0.0, 0.0, 1.0)
-
-
-def qt_create_mat4_rotation(v3: Vec3) -> Mat4:
-    '''Create Mat4 rotation from quaternion euler angles'''
-    return qt_to_mat4(qt_from_euler(v3))
