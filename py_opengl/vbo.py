@@ -14,32 +14,37 @@ class Vbo:
     def __post_init__(self):
         self.vao = GL.glGenVertexArrays(1)
 
+    def draw(self) -> None:
+        """Bind vbo
+        """
+        GL.glBindVertexArray(self.vao)
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.components)
 
-def vbo_draw(vbo: Vbo) -> None:
-    '''Bind vbo to vertex Array'''
-    GL.glBindVertexArray(vbo.vao)
-    GL.glDrawArrays(GL.GL_TRIANGLES, 0, vbo.components)
+    def clean(self) -> None:
+        """Clean vbo of currently stored vbo's
+        """
+        GL.glDeleteVertexArrays(1, self.vao)
+        for v in self.vbos:
+            GL.glDeleteBuffers(1, v)
 
+    def add_data(self, arr: list[float]) -> None:
+        """Add data to the vbo's list
 
-def vbo_clean(vbo: Vbo) -> None:
-    '''Clean vbo'''
-    GL.glDeleteVertexArrays(1, vbo.vao)
-    for v in vbo.vbos:
-        GL.glDeleteBuffers(1, v)
+        Parameters
+        ----------
+        arr : list[float]
+            list of float values
+        """
+        v_buffer = GL.glGenBuffers(1)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, v_buffer)
+        GL.glBindVertexArray(self.vao)
+        self.vbos.append(v_buffer)
 
+        normal: bool = GL.GL_TRUE if self.normalized else GL.GL_FALSE
+        size_of: int = len(arr) * utils.FLOAT_SIZE
 
-def vbo_add_data(vbo: Vbo, arr: list[float]) -> None:
-    '''Add data to vbo'''
-    v_buffer = GL.glGenBuffers(1)
-    GL.glBindBuffer(GL.GL_ARRAY_BUFFER, v_buffer)
-    GL.glBindVertexArray(vbo.vao)
-    vbo.vbos.append(v_buffer)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, size_of, utils.c_array(arr), GL.GL_STATIC_DRAW)
 
-    normal: bool = GL.GL_TRUE if vbo.normalized else GL.GL_FALSE
-    size_of: int = len(arr) * utils.FLOAT_SIZE
-
-    GL.glBufferData(GL.GL_ARRAY_BUFFER, size_of, utils.c_array(arr), GL.GL_STATIC_DRAW)
-
-    at = len(vbo.vbos) - 1
-    GL.glVertexAttribPointer(at, vbo.components, GL.GL_FLOAT, normal, 0, utils.c_cast(0))
-    GL.glEnableVertexAttribArray(at)
+        at = len(self.vbos) - 1
+        GL.glVertexAttribPointer(at, self.components, GL.GL_FLOAT, normal, 0, utils.c_cast(0))
+        GL.glEnableVertexAttribArray(at)

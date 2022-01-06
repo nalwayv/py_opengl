@@ -23,13 +23,14 @@ class Clock:
     accumalate: float = 0.0
 
 
-def clock_update_time(clock: Clock) -> None:
-    '''Update clock'''
-    current_time_step: float = glfw.get_time()
-    elapsed: float = current_time_step - clock.last_time_step
-    clock.last_time_step = current_time_step
-    clock.accumalate += elapsed
+    def update(self) -> None:
+        """Update clock
+        """
+        current_time_step: float = glfw.get_time()
+        elapsed: float = current_time_step - self.last_time_step
+        self.last_time_step = current_time_step
+        self.accumalate += elapsed
 
-    while clock.accumalate >= clock.delta:
-        clock.accumalate -= clock.delta
-        clock.ticks += 1.0
+        while self.accumalate >= self.delta:
+            self.accumalate -= self.delta
+            self.ticks += 1.0
