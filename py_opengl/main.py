@@ -25,7 +25,12 @@ class Transform:
     rotation: glm.Quaternion = glm.Quaternion(w=1.0)
 
     def get_matrix(self) -> glm.Mat4:
-        '''Get mat4 transform'''
+        """Return transform matrix
+
+        Returns
+        ---
+        glm.Mat4
+        """
         return (
             glm.Mat4.create_translation(self.position) *
             self.rotation.to_mat4() * 
@@ -91,13 +96,15 @@ class Triangle:
 
 
     def draw(self) -> None:
-        '''Render triangle to screen'''
+        """Draw to screen
+        """
         self.shader_program.use()
         self.vbo_program.draw()
 
 
     def clean(self) -> None:
-        '''Clean up triangle shader and vbo'''
+        """Clean up shader ans vbo
+        """
         self.shader_program.clean()
         self.vbo_program.clean()
 
@@ -106,14 +113,28 @@ class Triangle:
 
 
 class GlWindowError(Exception):
-    '''Custom error for gl window'''
+    """Gl Window Error
 
+    Parameters
+    ---
+    Exception
+    """
     def __init__(self, msg: str):
         super().__init__(msg)
 
 
 def cb_window_resize(window, width, height):
-    ''' '''
+    """Window callback resize function
+
+    Parameters
+    ---
+    window : GLFWwindow*
+        glfw window
+    width : float
+        its width
+    height : float
+        its height
+    """
     GL.glViewport(0, 0, width, height)
 
 
@@ -138,17 +159,28 @@ class GlWindow:
 
 
     def set_window_callback(self, cb_func) -> None:
-        ''' '''
+        """Set window callback
+
+        Parameters
+        ---
+        cb_func : function (window, width, height)
+        """
         glfw.set_window_size_callback(self.window, cb_func)
 
 
     def should_close(self) -> bool:
-        '''Close window'''
+        """Close window
+
+        Returns
+        ---
+        bool
+        """
         return True if glfw.window_should_close(self.window) else False
 
 
     def center_screen_position(self) -> None:
-        '''Center glwindow to center of screen'''
+        """Center glfw window
+        """
         video = glfw.get_video_mode(glfw.get_primary_monitor())
 
         x: float = (video.size.width // 2) - (self.width // 2)
@@ -158,54 +190,53 @@ class GlWindow:
 
 
     def get_mouse_pos(self) -> glm.Vec3:
-        '''Get current cursor possition on current window
+        """Returtn current mouse screen position
 
         Returns
         ---
-        Vec3: vec3(x, y, z)
-        '''
+        glm.Vec3
+        """
         cx, cy = glfw.get_cursor_pos(self.window)
         return glm.Vec3(x=cx, y=cy)
 
 
     def get_mouse_state(self, button: int) -> tuple[int, int]:
-        '''Get glfw mouse button state
+        """Get glfw mouse button state
 
         Parameters
         ---
-        button: int
-            glfw mouse button macro number
-            left: 0
-            right: 1
-            middle: 2
+        button : int
+            glfw mouse button
 
         Returns
         ---
-        tuple[int, int]:
-            buttoncode: int
-            keystate: int
-                GLFW_RELEASE: 0
-                GLFW_PRESS: 1
-        '''
+        tuple[int, int]
+            mouse button passed and its current glfw state
+
+            GLFW_RELEASE = 0
+
+            GLFW_PRESS = 1
+        """
         return (button, glfw.get_mouse_button(self.window, button))
 
 
     def get_key_state(self, key: int) -> tuple[int, int]:
-        '''Get glfw keybutton state
+        """Return glfw key state
 
         Parameters
         ---
-        key: int
-            glfw keyboard macro number
+        key : int
+            glfw key
 
         Returns
         ---
-        tuple[int, int]:
-            keycode: int
-            keystate: int
-                GLFW_RELEASE: 0
-                GLFW_PRESS: 1
-        '''
+        tuple[int, int]
+            key passed and its current glfw state
+
+            GLFW_RELEASE = 0
+
+            GLFW_PRESS = 1
+        """
         return (key, glfw.get_key(self.window, key))
 
 
@@ -230,10 +261,6 @@ def main() -> None:
         glwin.set_window_callback(cb_window_resize)
 
         time = clock.Clock()
-
-        tri = Triangle()
-
-        model = Transform()
         cam = camera.Camera(position=glm.Vec3(z=3.0), aspect=utils.SCREEN_WIDTH/utils.SCREEN_HEIGHT)
 
         kb = keyboard.Keyboard()
@@ -241,6 +268,9 @@ def main() -> None:
         first_move = True
         last_mp = glm.Vec3()
         mouse_sensitivity = 0.2
+
+        tri = Triangle()
+        model = Transform()
 
         while not glwin.should_close():
             time.update()
@@ -261,25 +291,19 @@ def main() -> None:
 
             # keyboard
             if kb.get_state(glwin.get_key_state(glfw.KEY_W)) == keyboard.KeyState.HELD:
-                cam.position = cam.position + cam.front * (cam.speed * time.delta)
-
+                cam.move(camera.CameraDir.IN, time.delta)
             if kb.get_state(glwin.get_key_state(glfw.KEY_S)) == keyboard.KeyState.HELD:
-                cam.position = cam.position - cam.front * (cam.speed * time.delta)
-
+                cam.move(camera.CameraDir.OUT, time.delta)
             if kb.get_state(glwin.get_key_state(glfw.KEY_A)) == keyboard.KeyState.HELD:
-                cam.position = cam.position + cam.right * (cam.speed * time.delta)
-
+                cam.move(camera.CameraDir.LEFT, time.delta)
             if kb.get_state(glwin.get_key_state(glfw.KEY_D)) == keyboard.KeyState.HELD:
-                cam.position = cam.position - cam.right * (cam.speed * time.delta)
-
-            if kb.get_state(glwin.get_key_state(glfw.KEY_Q)) == keyboard.KeyState.HELD:
-                cam.position = cam.position + cam.up * (cam.speed * time.delta)
-
+                cam.move(camera.CameraDir.RIGHT, time.delta)
             if kb.get_state(glwin.get_key_state(glfw.KEY_E)) == keyboard.KeyState.HELD:
-                cam.position = cam.position - cam.up * (cam.speed * time.delta)
+                cam.move(camera.CameraDir.UP, time.delta)
+            if kb.get_state(glwin.get_key_state(glfw.KEY_Q)) == keyboard.KeyState.HELD:
+                cam.move(camera.CameraDir.DOWN, time.delta)
 
             # mouse
-   
             current_mp = glwin.get_mouse_pos()
             if ms.get_state(glwin.get_mouse_state(glfw.MOUSE_BUTTON_LEFT)) == mouse.MouseState.HELD:
                 if first_move:

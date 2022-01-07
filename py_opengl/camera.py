@@ -5,6 +5,25 @@ A perspective camera
 '''
 from dataclasses import dataclass
 from py_opengl import glm
+from enum import Enum
+
+
+class CameraError(Exception):
+    '''Custom error for camera 4x4'''
+
+    def __init__(self, msg: str):
+        super().__init__(msg)
+
+
+class CameraDir(Enum):
+    UP = 0
+    DOWN = 1
+    LEFT = 2
+    RIGHT = 3
+    IN = 4
+    OUT = 5
+    DEFAULT = 6
+
 
 @dataclass(eq=False, repr=False, slots=True)
 class Camera:
@@ -89,6 +108,31 @@ class Camera:
             float value in radians
         """
         return glm.to_radians(glm.clamp(value, 1.0, 45.0))
+
+    def move(self, dir: CameraDir, dt: float):
+        """Move camera
+
+        Parameters
+        ----
+        dir : CameraDir
+            move direction
+        dt : float
+            delta time to scale move by
+
+        Raises
+        ---
+        CameraError
+            not a valid move direction
+        """
+        match dir:
+            case CameraDir.UP: self.position = self.position - self.up * (self.speed * dt)
+            case CameraDir.DOWN: self.position = self.position + self.up * (self.speed * dt)
+            case CameraDir.RIGHT: self.position = self.position - self.right * (self.speed * dt)
+            case CameraDir.LEFT: self.position = self.position + self.right * (self.speed * dt)
+            case CameraDir.OUT: self.position = self.position - self.front * (self.speed * dt)
+            case CameraDir.IN: self.position = self.position + self.front * (self.speed * dt)
+            case _: raise CameraError('unknown camera direction')
+
 
     def update(self) -> None:
         """Update camera's up, right and front fields
