@@ -8,10 +8,10 @@ Classes
 Vec3 :
     a vec3 class (x, y, z)
 
-Mat4 : 
+Mat4 :
     a matrix 4x4 class
 
-Quaternion : 
+Quaternion :
     a quaternion class
 """
 import math
@@ -391,15 +391,10 @@ class Vec3:
         ---
         Vec3
             a copy byt with a normalized length
-
-        Raises
-        ---
-        Vec3Error
-            if current length is zero
         """
         lsq: float = self.length_sqr()
         if is_zero(lsq):
-            raise Vec3Error('length of this vec3 was zero')
+            return self.copy()
         return self * inv_sqrt(lsq)
 
     def copy(self) -> 'Vec3':
@@ -580,7 +575,8 @@ class Mat4:
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
-            dx, dy, dz, dw)
+            dx, dy, dz, dw
+        )
 
     def __sub__(self, other):
         if not isinstance(other, Mat4):
@@ -607,7 +603,8 @@ class Mat4:
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
-            dx, dy, dz, dw)
+            dx, dy, dz, dw
+        )
 
     def __mul__(self, other):
         if not isinstance(other, Mat4):
@@ -696,7 +693,8 @@ class Mat4:
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
-            dx, dy, dz, dw)
+            dx, dy, dz, dw
+        )
 
     @staticmethod
     def identity() -> 'Mat4':
@@ -811,7 +809,8 @@ class Mat4:
             ax=ax, ay=ay, az=az,
             bx=bx, by=by, bz=bz,
             cx=cx, cy=cy, cz=cz,
-            dw=1.0)
+            dw=1.0
+        )
 
     @staticmethod
     def look_at(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
@@ -834,10 +833,11 @@ class Mat4:
         dz: float = -z.dot(eye)
 
         return Mat4(
-                x.x, y.x, z.x, 0.0,
-                x.y, y.y, z.y, 0.0,
-                x.z, y.z, z.z, 0.0,
-                dx, dy, dz, 1.0)
+            x.x, y.x, z.x, 0.0,
+            x.y, y.y, z.y, 0.0,
+            x.z, y.z, z.z, 0.0,
+            dx, dy, dz, 1.0
+        )
 
     @staticmethod
     def frustum(left: float, right: float, bottom: float, top: float, far: float, near: float) -> 'Mat4':
@@ -859,10 +859,11 @@ class Mat4:
         d: float = -(2.0 * far * near) * fn
 
         return Mat4(
-                ax=x,
-                by=y,
-                cx=a, cy=b, cz=c, cw=-1.0,
-                dz=d, dw=0.0)
+            ax=x,
+            by=y,
+            cx=a, cy=b, cz=c, cw=-1.0,
+            dz=d, dw=0.0
+        )
 
     @staticmethod
     def ortho(left: float, right: float, bottom: float, top: float, near: float, far: float) -> 'Mat4':
@@ -897,11 +898,12 @@ class Mat4:
         Raises
         ---
         Mat4Error
-            if fov is below zero or fov if aboue or equil to pi
+            if fov is below zero or fov more then PI
         Mat4Error
             if znear or zfar are less or equil to zero or znear is more or equil to zfar
         """
-        if fov <= 0.0 or fov >= PI:
+
+        if fov <= 0.0 or fov > PI:
             raise Mat4Error('m4 projection fov out of range')
 
         if znear <= 0.0 or zfar <= 0.0 or znear >= zfar:
@@ -954,7 +956,8 @@ class Mat4:
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
-            dx, dy, dz, dw)
+            dx, dy, dz, dw
+        )
 
     def transpose(self) -> 'Mat4':
         """Return a transposed copy of self
@@ -984,7 +987,8 @@ class Mat4:
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
-            dx, dy, dz, dw)
+            dx, dy, dz, dw
+        )
 
     def inverse(self) -> 'Mat4':
         """Return the inverse of self
@@ -1024,10 +1028,11 @@ class Mat4:
         b11: float = a22 * a33 - a23 * a32
 
         det: float = (
-                b00 * b11 - b01 *
-                b10 + b02 * b09 +
-                b03 * b08 - b04 *
-                b07 + b05 * b06)
+            b00 * b11 - b01 *
+            b10 + b02 * b09 +
+            b03 * b08 - b04 *
+            b07 + b05 * b06
+        )
 
         inv: float = 1.0 / det
 
@@ -1049,10 +1054,11 @@ class Mat4:
         dw: float = (a20 * b03 - a21 * b01 + a22 * b00) * inv
 
         return Mat4(
-                ax, ay, az, aw,
-                bx, by, bz, bw,
-                cx, cy, cz, cw,
-                dx, dy, dz, dw)
+            ax, ay, az, aw,
+            bx, by, bz, bw,
+            cx, cy, cz, cw,
+            dx, dy, dz, dw
+        )
 
     def to_unit(self) -> None:
         """Normalize the length of self
@@ -1229,7 +1235,8 @@ class Mat4:
             b20 - b21 - b22 + b23 +
             b30 - b31 - b32 + b33 +
             b40 - b41 - b42 + b43 +
-            b50 - b51 - b52 + b53)
+            b50 - b51 - b52 + b53
+        )
 
     def array(self) -> list[float]:
         """Return self as a list of floats
@@ -1239,10 +1246,11 @@ class Mat4:
         list[float]
         """
         return [
-                self.ax, self.ay, self.az, self.aw,
-                self.bx, self.by, self.bz, self.bw,
-                self.cx, self.cy, self.cz, self.cw,
-                self.dx, self.dy, self.dz, self.dw]
+            self.ax, self.ay, self.az, self.aw,
+            self.bx, self.by, self.bz, self.bw,
+            self.cx, self.cy, self.cz, self.cw,
+            self.dx, self.dy, self.dz, self.dw
+        ]
 
     def multi_array(self) -> list[list[float]]:
         """Return self as a list of list floats
@@ -1252,10 +1260,11 @@ class Mat4:
         list[list[float]]
         """
         return [
-                [self.ax, self.ay, self.az, self.aw],
-                [self.bx, self.by, self.bz, self.bw],
-                [self.cx, self.cy, self.cz, self.cw],
-                [self.dx, self.dy, self.dz, self.dw]]
+            [self.ax, self.ay, self.az, self.aw],
+            [self.bx, self.by, self.bz, self.bw],
+            [self.cx, self.cy, self.cz, self.cw],
+            [self.dx, self.dy, self.dz, self.dw]
+        ]
 
 
 # --- Quaternion
@@ -1473,11 +1482,7 @@ class Quaternion:
         Quaternion
         """
         inv: float = 1.0 / self.length_sqr()
-        x: float = -self.x * inv
-        y: float = -self.y * inv
-        z: float = -self.z * inv
-        w: float = self.w * inv
-        return Quaternion(x, y, z, w)
+        return Quaternion(-self.x * inv, -self.y * inv, -self.z * inv, self.q * inv)
 
     def to_unit(self) -> None:
         """Normalize the length of self
@@ -1647,7 +1652,8 @@ class Quaternion:
             (self.x * other.x) +
             (self.y * other.y) +
             (self.z * other.z) +
-            (self.w * other.w))
+            (self.w * other.w)
+        )
 
     def angle(self) -> float:
         """Return the current angle of self in radians
@@ -1673,7 +1679,8 @@ class Quaternion:
             is_equil(self.x, other.x) and
             is_equil(self.y, other.y) and
             is_equil(self.z, other.z) and
-            is_equil(self.w, other.w))
+            is_equil(self.w, other.w)
+        )
 
     def is_unit(self) -> bool:
         """Check if the length of self is one

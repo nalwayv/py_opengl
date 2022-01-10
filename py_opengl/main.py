@@ -1,10 +1,12 @@
-'''PY OPENGL
-'''
-import glfw
-
+"""PY OPENGL
+"""
 from dataclasses import dataclass
+from textwrap import dedent
+
+import glfw
 from loguru import logger
 from OpenGL import GL
+
 from py_opengl import utils
 from py_opengl import glm
 from py_opengl import clock
@@ -13,28 +15,9 @@ from py_opengl import vbo
 from py_opengl import keyboard
 from py_opengl import mouse
 from py_opengl import camera
-from typing import Any
-
-# --- TRANSFORM
-
-
-@dataclass(eq=False, repr=False, slots=True)
-class Transform:
-    position: glm.Vec3 = glm.Vec3()
-    scale: float = 1.0
-    rotation: glm.Quaternion = glm.Quaternion(w=1.0)
-
-    def get_matrix(self) -> glm.Mat4:
-        """Return transform matrix
-
-        Returns
-        ---
-        glm.Mat4
-        """
-        return (
-            glm.Mat4.create_translation(self.position) *
-            self.rotation.to_mat4() * 
-            glm.Mat4.create_scaler(glm.Vec3(self.scale, self.scale, self.scale)))
+from py_opengl import transform
+from py_opengl import window
+from py_opengl import texture
 
 
 # --- SHAPE
@@ -42,85 +25,104 @@ class Transform:
 
 @dataclass(eq=False, repr=False, slots=True)
 class Triangle:
-    vbo_program: Any= None
-    shader_program: Any = None
+    _created: bool = False
+    vbo_: vbo.Vbo = None
+    shader_: shader.Shader = None
+    texture_: texture.Texture = None
+    transform_: transform.Transform = None
 
     def __post_init__(self):
-        self.vbo_program = vbo.Vbo()
-        self.shader_program = shader.Shader()
+        self.vbo_ = vbo.Vbo()
+        self.shader_ = shader.Shader()
+        self.texture_ = texture.Texture()
+        self.transform_ = transform.Transform()
 
-        vert_src = '''
+
+        vert_src = dedent("""
         # version 430 core
 
         layout (location = 0) in vec3 a_pos;
         layout (location = 1) in vec3 a_col;
+        layout (location = 2) in vec3 a_texture;
 
         out vec3 b_col;
+        out vec2 b_texture;
 
         uniform mat4 mvp;
 
         void main(void)
         {
             b_col = a_col;
+            b_texture = vec2(a_texture.x, a_texture.y);
+
             gl_Position = mvp * vec4(a_pos, 1.0);
         }
-        '''
+        """)
 
-        frag_src = '''
+        frag_src = dedent("""
         # version 430 core
 
         in vec3 b_col;
+        in vec2 b_texture;
 
         out vec4 c_col;
 
-        void main()
-        {
-            c_col = vec4(b_col, 1.0);
-        }
-        '''
-        self.shader_program.compile(vert_src, frag_src)
+        uniform sampler2D c_texture;
 
+        void main(void)
+        {
+            c_col = texture(c_texture, b_texture) * vec4(b_col, 1.0);
+        }
+        """)
+
+        texture_src: str = 'wall.jpg'
+
+        self.texture_.compile(texture_src)     
+        self.shader_.compile(vert_src, frag_src)
 
         verts = [
-                0.5, -0.5, 0.0,
-                -0.5, -0.5, 0.0,
-                0.0, 0.5, 0.0]
+            0.5, -0.5, 0.0,
+            -0.5, -0.5, 0.0,
+            0.0, 0.5, 0.0
+        ]
 
         color = [
-                1.0, 0.0, 0.0,
-                0.0, 1.0, 0.0,
-                0.0, 0.0, 1.0]
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0
+        ]
 
-        self.vbo_program.add_data(verts)
-        self.vbo_program.add_data(color)
+        tex = [
+            0.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            0.5, 1.0, 0.0,
+        ]
+
+        self.vbo_.add_data(verts)
+        self.vbo_.add_data(color)
+        self.vbo_.add_data(tex)
+        self._created = True
 
 
     def draw(self) -> None:
         """Draw to screen
         """
-        self.shader_program.use()
-        self.vbo_program.draw()
+        if self._created:
+            self.texture_.use()
+            self.shader_.use()
+            self.vbo_.draw()
 
 
     def clean(self) -> None:
-        """Clean up shader ans vbo
+        """Clean up
         """
-        self.shader_program.clean()
-        self.vbo_program.clean()
+        if self._created:
+            self.shader_.clean()
+            self.texture_.clean()
+            self.vbo_.clean()
 
 
-# --- GL WINDOW
-
-
-class GlWindowError(Exception):
-    """Gl Window Error
-
-    Parameters
-    ---
-    Exception
-    """
-    def __init__(self, msg: str):
-        super().__init__(msg)
+# --- CALLBACKS
 
 
 def cb_window_resize(window, width, height):
@@ -138,113 +140,12 @@ def cb_window_resize(window, width, height):
     GL.glViewport(0, 0, width, height)
 
 
-@dataclass(eq=False, repr=False, slots=True)
-class GlWindow:
-    window: Any = None
-    width: int = 0
-    height: int = 0
-    title: str = "glfw_window"
-
-    def __post_init__(self):
-        self.window = glfw.create_window(
-                self.width,
-                self.height,
-                self.title,
-                None,
-                None
-        )
-
-        if not self.window:
-            raise GlWindowError('failed to init glfw window')
-
-
-    def set_window_callback(self, cb_func) -> None:
-        """Set window callback
-
-        Parameters
-        ---
-        cb_func : function (window, width, height)
-        """
-        glfw.set_window_size_callback(self.window, cb_func)
-
-
-    def should_close(self) -> bool:
-        """Close window
-
-        Returns
-        ---
-        bool
-        """
-        return True if glfw.window_should_close(self.window) else False
-
-
-    def center_screen_position(self) -> None:
-        """Center glfw window
-        """
-        video = glfw.get_video_mode(glfw.get_primary_monitor())
-
-        x: float = (video.size.width // 2) - (self.width // 2)
-        y: float = (video.size.height // 2) - (self.height // 2)
-
-        glfw.set_window_pos(self.window, x, y)
-
-
-    def get_mouse_pos(self) -> glm.Vec3:
-        """Returtn current mouse screen position
-
-        Returns
-        ---
-        glm.Vec3
-        """
-        cx, cy = glfw.get_cursor_pos(self.window)
-        return glm.Vec3(x=cx, y=cy)
-
-
-    def get_mouse_state(self, button: int) -> tuple[int, int]:
-        """Get glfw mouse button state
-
-        Parameters
-        ---
-        button : int
-            glfw mouse button
-
-        Returns
-        ---
-        tuple[int, int]
-            mouse button passed and its current glfw state
-
-            GLFW_RELEASE = 0
-
-            GLFW_PRESS = 1
-        """
-        return (button, glfw.get_mouse_button(self.window, button))
-
-
-    def get_key_state(self, key: int) -> tuple[int, int]:
-        """Return glfw key state
-
-        Parameters
-        ---
-        key : int
-            glfw key
-
-        Returns
-        ---
-        tuple[int, int]
-            key passed and its current glfw state
-
-            GLFW_RELEASE = 0
-
-            GLFW_PRESS = 1
-        """
-        return (key, glfw.get_key(self.window, key))
-
-
 # --- MAIN
 
 
 def main() -> None:
-    ''' '''
+    """Main
+    """
     if not glfw.init():
         logger.error('failed to init glfw')
         return
@@ -255,10 +156,10 @@ def main() -> None:
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
 
-        glwin = GlWindow(width=utils.SCREEN_WIDTH, height=utils.SCREEN_HEIGHT)
+        glwin = window.GlWindow(width=utils.SCREEN_WIDTH, height=utils.SCREEN_HEIGHT)
         glfw.make_context_current(glwin.window)
         glwin.center_screen_position()
-        glwin.set_window_callback(cb_window_resize)
+        glwin.set_window_resize_callback(cb_window_resize)
 
         time = clock.Clock()
         cam = camera.Camera(position=glm.Vec3(z=3.0), aspect=utils.SCREEN_WIDTH/utils.SCREEN_HEIGHT)
@@ -267,10 +168,9 @@ def main() -> None:
         ms = mouse.Mouse()
         first_move = True
         last_mp = glm.Vec3()
-        mouse_sensitivity = 0.2
+        mouse_sensitivity: float = 0.2
 
         tri = Triangle()
-        model = Transform()
 
         while not glwin.should_close():
             time.update()
@@ -282,39 +182,44 @@ def main() -> None:
 
             tri.draw()
 
-            model.rotation = glm.Quaternion.from_axis(time.ticks, glm.Vec3(x=1.0, y=0.5))
-            m = model.get_matrix()
-            v = cam.view_matrix()
-            p = cam.perspective_matrix()
-            mvp = m*v*p
-            tri.shader_program.set_m4('mvp', mvp)
+            tri.transform_.rotation = glm.Quaternion.from_axis(time.ticks, glm.Vec3(x=1.0, y=0.5))
+            m: glm.Mat4 = tri.transform_.get_matrix()
+            v: glm.Mat4 = cam.view_matrix()
+            p: glm.Mat4 = cam.perspective_matrix()
+            mvp: glm.Mat4 = m * v * p
+            tri.shader_.set_m4('mvp', mvp)
 
             # keyboard
             if kb.get_state(glwin.get_key_state(glfw.KEY_W)) == keyboard.KeyState.HELD:
-                cam.move(camera.CameraDir.IN, time.delta)
+                cam.move_by(camera.CameraDir.IN, 1.4, time.delta)
             if kb.get_state(glwin.get_key_state(glfw.KEY_S)) == keyboard.KeyState.HELD:
-                cam.move(camera.CameraDir.OUT, time.delta)
+                cam.move_by(camera.CameraDir.OUT, 1.4, time.delta)
             if kb.get_state(glwin.get_key_state(glfw.KEY_A)) == keyboard.KeyState.HELD:
-                cam.move(camera.CameraDir.LEFT, time.delta)
+                cam.move_by(camera.CameraDir.LEFT, 1.4, time.delta)
             if kb.get_state(glwin.get_key_state(glfw.KEY_D)) == keyboard.KeyState.HELD:
-                cam.move(camera.CameraDir.RIGHT, time.delta)
+                cam.move_by(camera.CameraDir.RIGHT, 1.4, time.delta)
             if kb.get_state(glwin.get_key_state(glfw.KEY_E)) == keyboard.KeyState.HELD:
-                cam.move(camera.CameraDir.UP, time.delta)
+                cam.move_by(camera.CameraDir.UP, 1.4, time.delta)
             if kb.get_state(glwin.get_key_state(glfw.KEY_Q)) == keyboard.KeyState.HELD:
-                cam.move(camera.CameraDir.DOWN, time.delta)
+                cam.move_by(camera.CameraDir.DOWN, 1.4, time.delta)
+
+            if kb.get_state(glwin.get_key_state(glfw.KEY_Z)) == keyboard.KeyState.HELD:
+                cam.rotate_by(camera.CameraRot.FOV, 0.8, time.delta)
 
             # mouse
-            current_mp = glwin.get_mouse_pos()
+
             if ms.get_state(glwin.get_mouse_state(glfw.MOUSE_BUTTON_LEFT)) == mouse.MouseState.HELD:
                 if first_move:
-                    last_mp = current_mp
+                    mx, my = glwin.get_mouse_pos()
+                    last_mp = glm.Vec3(x=mx, y=my)
                     first_move = False
                 else:
-                    new_mp = current_mp - last_mp
-                    last_mp = current_mp
-
-                    cam.yaw -= camera.Camera.to_yaw(new_mp.x * mouse_sensitivity)
-                    cam.pitch += camera.Camera.to_pitch(new_mp.y * mouse_sensitivity)
+                    mx, my = glwin.get_mouse_pos()
+                    tmp = glm.Vec3(x=mx, y=my)
+                    new_mp = tmp - last_mp
+                    last_mp = tmp
+                    cam.rotate_by(camera.CameraRot.YAW, new_mp.x, 0.2)
+                    cam.rotate_by(camera.CameraRot.PITCH, new_mp.y, 0.2)
 
             cam.update()
 
@@ -322,19 +227,21 @@ def main() -> None:
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
-    except GlWindowError as window_err:
-        logger.error(f'ERROR: {window_err}')
-        glfw.terminate()
+    except (glm.Vec3Error, glm.Mat4Error, glm.QuatError) as math_err:
+        logger.error(f'MATH ERROR: {math_err}')
 
-    except glm.Mat4Error as mat4_err:
-        logger.error(f'ERROR: {mat4_err}')
-        glfw.terminate()
+    except texture.TextureError as texture_err:
+        logger.error(f'TEXTURE ERROR: {texture_err}')
+
+    except camera.CameraError as camera_err:
+        logger.error(f'CAMERA ERROR: {camera_err}')
+
+    except window.GlWindowError as window_err:
+        logger.error(f'WINDOW ERROR: {window_err}')
 
     finally:
         logger.debug('CLOSED')
-
         tri.clean()
-
         glfw.terminate()
 
 

@@ -6,24 +6,24 @@ from py_opengl import utils
 
 @dataclass(eq=False, repr=False, slots=True)
 class Vbo:
-    vao: int = 0
+    vao_id: int = 0
     components: int = 3     # x y z
     normalized: bool = False
     vbos: list[int] = field(default_factory=list)
 
     def __post_init__(self):
-        self.vao = GL.glGenVertexArrays(1)
+        self.vao_id = GL.glGenVertexArrays(1)
 
     def draw(self) -> None:
         """Bind vbo
         """
-        GL.glBindVertexArray(self.vao)
+        GL.glBindVertexArray(self.vao_id)
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.components)
 
     def clean(self) -> None:
         """Clean vbo of currently stored vbo's
         """
-        GL.glDeleteVertexArrays(1, self.vao)
+        GL.glDeleteVertexArrays(1, self.vao_id)
         for v in self.vbos:
             GL.glDeleteBuffers(1, v)
 
@@ -37,7 +37,7 @@ class Vbo:
         """
         v_buffer = GL.glGenBuffers(1)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, v_buffer)
-        GL.glBindVertexArray(self.vao)
+        GL.glBindVertexArray(self.vao_id)
         self.vbos.append(v_buffer)
 
         normal: bool = GL.GL_TRUE if self.normalized else GL.GL_FALSE
