@@ -49,5 +49,3 @@ def c_cast(offset: int):
         void pointer cast
     """
     return ctypes.c_void_p(offset)
-
-

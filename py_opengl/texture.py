@@ -69,6 +69,3 @@ class Texture:
         """
         GL.glActiveTexture(GL.GL_TEXTURE0)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self.texture_id)
-
-
-
