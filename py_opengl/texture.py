@@ -6,6 +6,8 @@ from pathlib import Path
 from OpenGL import GL
 from PIL import Image
 
+# pillow api ref
+# https://pillow.readthedocs.io/en/stable/reference/index.html
 
 class TextureError(Exception):
     '''Custom error for Texture'''

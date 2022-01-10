@@ -1,7 +1,7 @@
 """
 GL MATH
 ---
-Contains helper functions and classes for 3D math
+
 
 Classes
 ---
@@ -315,6 +315,197 @@ def arctan2(y: float, x: float) -> float:
     return math.atan2(y, x)
 
 
+# --- VECTOR2(X, Y)
+
+
+class Vec2Error(Exception):
+    '''Custom error for Vec2'''
+
+    def __init__(self, msg: str):
+        super().__init__(msg)
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Vec2:
+    x: float = 0.0
+    y: float = 0.0
+
+    def __getitem__(self, idx):
+        match clamp(idx, 0, 1):
+            case 0: return self.x
+            case 1: return self.y
+            case _: raise Vec2Error('out of range')
+
+    def __add__(self, other):
+        if not isinstance(other, Vec2):
+            raise Vec2Error('not of type Vec2')
+        x: float = self.x + other.x
+        y: float = self.y + other.y
+        return Vec2(x, y)
+
+    def __sub__(self, other):
+        if not isinstance(other, Vec2):
+            raise Vec2Error('not of type Vec2')
+        x: float = self.x - other.x
+        y: float = self.y - other.y
+        return Vec2(x, y)
+
+    def __mul__(self, other):
+        if not isinstance(other, (float, int)):
+            raise Vec2Error('other was not of type float or int')
+        x: float = self.x * other
+        y: float = self.y * other
+        return Vec2(x, y)
+
+    @staticmethod
+    def one() -> 'Vec2':
+        return Vec2(1.0, 1.0)
+
+    def to_unit(self) -> None:
+        """Normalize length
+
+        Raises
+        ---
+        Vec2Error
+            if current length is zero
+        """
+        lsq: float = self.length_sqr()
+
+        if is_zero(lsq):
+            raise Vec2Error('length of this vec2 was zero')
+
+        inv = inv_sqrt(lsq)
+        self.x *= inv
+        self.y *= inv
+
+    def unit(self) -> 'Vec2':
+        """Return a copy of self with a normal length
+
+        Returns
+        ---
+        Vec2
+            a copy byt with a normalized length
+        """
+        lsq: float = self.length_sqr()
+        if is_zero(lsq):
+            return self.copy()
+        return self * inv_sqrt(lsq)
+
+    def copy(self) -> 'Vec2':
+        """Return a copy of the self
+
+        Returns
+        ---
+        Vec2
+            a copy
+        """ 
+        return Vec2(self.x, self.y)
+
+    def cross(self, other: 'Vec2') -> float:
+        """Return the cross product between self and another vec2
+
+        Returns
+        ---
+        float
+            cross product between self and other
+        """
+        return (self.y * other.z) - (self.z * other.y)
+
+    def project(self, other: 'Vec2') -> 'Vec2':
+        """Return the projection between self and other vec3
+
+        Returns
+        ---
+        Vec2
+        """
+        return other * (self.dot(other) / other.length_sqr())
+
+    def reject(self, other: 'Vec2') -> 'Vec2':
+        """Return the reject between self and other vec3
+
+        Returns
+        ---
+        Vec2
+        """
+        return self - self.project(other)
+
+    def length_sqr(self) -> float:
+        """Return the squared length
+
+        Returns
+        ---
+        float
+        """
+        return sqr(self.x) + sqr(self.y) + sqr(self.z)
+
+    def length_sqrt(self) -> float:
+        """Return the square root length
+
+        Returns
+        ---
+        float
+        """
+        return sqrt(self.length_sqr())
+
+    def distance(self, other: 'Vec2') -> float:
+        """Return the distance between self and other vec2
+
+        Parameters
+        ---
+        other : Vec2
+
+        Returns
+        ---
+        float
+        """
+        dir: Vec2 = other - self
+        return dir.length_sqrt()
+
+    def dot(self, other: 'Vec2') -> float:
+        """Return the dot product between self and other vec3
+
+        Parameters
+        ---
+        other : Vec2
+
+        Returns
+        ---
+        float
+        """
+        return (self.x * other.x) + (self.y * other.y)
+
+    def is_unit(self) -> bool:
+        """Check if the current length of self is normalized
+
+        Returns
+        ---
+        bool
+        """
+        return is_one(self.length_sqr())
+
+    def is_zero(self) -> bool:
+        """Check if the current *x, y* components of self are zero in value
+
+        Returns
+        ---
+        bool
+        """
+        return is_zero(self.x) and is_zero(self.y)
+
+    def is_equil(self, other: 'Vec2') -> bool:
+        """Check if self and other have the same *x, y* component values
+
+        Parameters
+        ---
+        other : Vec2
+
+        Returns
+        ---
+        bool
+        """
+        return is_equil(self.x, other.x) and is_equil(self.y, other.y)
+
+
 # --- VECTOR3(X, Y, Z)
 
 
@@ -332,7 +523,7 @@ class Vec3:
     z: float = 0.0
 
     def __getitem__(self, idx):
-        match clamp(idx, 0, 3):
+        match clamp(idx, 0, 2):
             case 0: return self.x
             case 1: return self.y
             case 2: return self.z
@@ -365,6 +556,10 @@ class Vec3:
     @staticmethod
     def one() -> 'Vec3':
         return Vec3(1.0, 1.0, 1.0)
+
+    @staticmethod
+    def from_v2(v2: Vec2) -> 'Vec3':
+        return Vec3(x=v2.x, y=v2.y)
 
     def to_unit(self) -> None:
         """Normalize length
@@ -456,6 +651,20 @@ class Vec3:
         """
         return sqrt(self.length_sqr())
 
+    def distance(self, other: 'Vec3') -> float:
+        """Return the distance between self and other vec3
+
+        Parameters
+        ---
+        other : Vec3
+
+        Returns
+        ---
+        float
+        """
+        dir: Vec3 = other - self
+        return dir.length_sqrt()
+
     def dot(self, other: 'Vec3') -> float:
         """Return the dot product between self and other vec3
 
@@ -501,7 +710,192 @@ class Vec3:
         return is_equil(self.x, other.x) and is_equil(self.y, other.y) and is_equil(self.z, other.z)
 
 
-# --- Matrix 4x4
+# --- VECTOR4(X, Y, Z, W)
+
+
+class Vec4Error(Exception):
+    '''Custom error for Vec4'''
+
+    def __init__(self, msg: str):
+        super().__init__(msg)
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Vec4:
+    x: float = 0.0
+    y: float = 0.0
+    z: float = 0.0
+    w: float = 0.0
+
+    def __getitem__(self, idx):
+        match clamp(idx, 0, 3):
+            case 0: return self.x
+            case 1: return self.y
+            case 2: return self.z
+            case 3: return self.w
+            case _: raise Vec4Error('out of range')
+
+    def __add__(self, other):
+        if not isinstance(other, Vec4):
+            raise Vec4Error('not of type Vec4')
+        x: float = self.x + other.x
+        y: float = self.y + other.y
+        z: float = self.z + other.z
+        w: float = self.w + other.w
+        return Vec4(x, y, z, w)
+
+    def __sub__(self, other):
+        if not isinstance(other, Vec4):
+            raise Vec4Error('not of type Vec4')
+        x: float = self.x - other.x
+        y: float = self.y - other.y
+        z: float = self.z - other.z
+        w: float = self.w - other.w
+        return Vec4(x, y, z, w)
+
+    def __mul__(self, other):
+        if not isinstance(other, (float, int)):
+            raise Vec4Error('other was not of type float or int')
+        x: float = self.x * other
+        y: float = self.y * other
+        z: float = self.z * other
+        w: float = self.w * other
+        return Vec4(x, y, z, w)
+
+    @staticmethod
+    def one() -> 'Vec4':
+        return Vec4(1.0, 1.0, 1.0, 1.0)
+
+    def copy(self) -> 'Vec4':
+        """Return a copy of the vec4
+
+        Returns
+        ---
+        Vec4
+            a copy
+        """ 
+        return Vec4(self.x, self.y, self.z, self.w)
+
+    def to_unit(self) -> None:
+        """Normalize length
+
+        Raises
+        ---
+        Vec4Error
+            if current length is zero
+        """
+        lsq: float = self.length_sqr()
+
+        if is_zero(lsq):
+            raise Vec4Error('length of this vec4 was zero')
+
+        inv = inv_sqrt(lsq)
+        self.x *= inv
+        self.y *= inv
+        self.z *= inv
+        self.w *= inv
+
+    def unit(self) -> 'Vec4':
+        """Return a copy of this vec4 with a normal length
+
+        Returns
+        ---
+        Vec4
+            a copy with a normalized length
+        """
+        lsq: float = self.length_sqr()
+        if is_zero(lsq):
+            return self.copy()
+        return self * inv_sqrt(lsq)
+
+    def length_sqr(self) -> float:
+        """Return the squared length
+
+        Returns
+        ---
+        float
+        """
+        return sqr(self.x) + sqr(self.y) + sqr(self.z) + sqr(self.w)
+
+    def length_sqrt(self) -> float:
+        """Return the square root length
+
+        Returns
+        ---
+        float
+        """
+        return sqrt(self.length_sqr())
+
+    def distance(self, other: 'Vec4') -> float:
+        """Return the distance between self and other vec4
+
+        Parameters
+        ---
+        other : Vec4
+
+        Returns
+        ---
+        float
+        """
+        dir: Vec4 = other - self
+        return dir.length_sqrt()
+
+    def dot(self, other: 'Vec4') -> float:
+        """Return the dot product between self and other vec4
+
+        Parameters
+        ---
+        other : Vec4
+
+        Returns
+        ---
+        float
+        """
+        return (
+            (self.x * other.x) +
+            (self.y * other.y) +
+            (self.z * other.z) +
+            (self.w * other.w)
+        )
+
+    def is_unit(self) -> bool:
+        """Check if the current length of self is normalized
+
+        Returns
+        ---
+        bool
+        """
+        return is_one(self.length_sqr())
+
+    def is_zero(self) -> bool:
+        """Check if the current *x, y, z* components of self are zero in value
+
+        Returns
+        ---
+        bool
+        """
+        return is_zero(self.x) and is_zero(self.y) and is_zero(self.z)
+
+    def is_equil(self, other: 'Vec4') -> bool:
+        """Check if self and other have the same *x, y, z, w* component values
+
+        Parameters
+        ---
+        other : Vec4
+
+        Returns
+        ---
+        bool
+        """
+        return (
+            is_equil(self.x, other.x) and
+            is_equil(self.y, other.y) and
+            is_equil(self.z, other.z) and
+            is_equil(self.w, other.w)
+        )
+
+
+# --- MATRIX4
 
 
 class Mat4Error(Exception):
@@ -1267,7 +1661,124 @@ class Mat4:
         ]
 
 
-# --- Quaternion
+# --- PLAIN
+
+
+class PlainError(Exception):
+    '''Custom error for plain'''
+
+    def __init__(self, msg: str):
+        super().__init__(msg)
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Plain:
+    normal: Vec3 = Vec3()
+    direction: float = 0.0
+
+    def __post_init__(self):
+        if not self.normal.is_unit():
+            self.normal.to_unit()
+
+    @staticmethod
+    def from_verts(p1: Vec3, p2: Vec3, p3: Vec3) -> 'Plain':
+        """Create from three points
+
+        Returns
+        ---
+        Plain
+        """
+        a: Vec3 = p2 - p1
+        b: Vec3 = p3 - p1
+        n: Vec3 = a.cross(b)
+        n.to_unit()
+        d: float = n.x * p1.x + n.y * p1.y + n.z * p1.z
+        return Plain(n, -d)
+
+    def copy(self) -> 'Plain':
+        """Return a copy of self
+
+        Returns
+        ---
+        Plain
+        """
+        return Plain(
+            Vec3(
+                self.normal.x,
+                self.normal.y,
+                self.normal.z,
+            ),
+            self.dir
+        )
+
+    def dot(self, v4: Vec4) -> float:
+        x: float = self.normal.x * v4.x
+        y: float = self.normal.y * v4.y
+        z: float = self.normal.z * v4.z
+        w: float = self.direction * v4.w
+        return x + y + z + w
+
+    def dot_coord(self, v3: Vec3) -> float:
+        x: float = self.normal.x * v3.x
+        y: float = self.normal.y * v3.y
+        z: float = self.normal.z * v3.z
+        w: float = self.direction
+        return x + y + z + w
+
+    def dot_normal(self, v3: Vec3) -> float:
+        x: float = self.normal.x * v3.x
+        y: float = self.normal.y * v3.y
+        z: float = self.normal.z * v3.z
+        return x + y + z
+
+    def unit(self) -> 'Plain':
+        """Return a copy of self that has been normalized
+
+        Returns
+        ---
+        Plain
+        """
+        ls: float = self.normal.length_sqr()
+
+        if is_one(ls):
+            return self.copy()
+
+        inv: float = inv_sqrt(ls)
+        return Plain(
+            self.normal * inv,
+            self.direction * inv
+        )
+
+    def to_unit(self) -> None:
+        """Normalize the length of self
+        """
+        ls = sqr(self.normal.x) + sqr(self.normal.y) + sqr(self.normal.z)
+        if is_one(ls):
+            raise PlainError('length of self was zero')
+        inv = inv_sqrt(ls)
+
+        self.normal.x *= inv
+        self.normal.y *= inv
+        self.normal.z *= inv
+        self.direction *= inv
+
+    def is_equil(self, other: 'Plain') -> bool:
+        """Check if self and other have the same component values
+
+        Parameters
+        ---
+        other : Plain
+
+        Returns
+        ---
+        bool
+        """
+        check_n: bool = self.normal.is_equil(other.normal)
+        check_d: bool = is_equil(self.direction, other.direction)
+        return check_n and check_d
+
+
+# --- QUATERNION
 
 
 class QuatError(Exception):
@@ -1285,7 +1796,7 @@ class Quaternion:
     w: float = 0.0
 
     def __getitem__(self, idx):
-        match clamp(idx, 0, 4):
+        match clamp(idx, 0, 3):
             case 0: return self.x
             case 1: return self.y
             case 2: return self.z

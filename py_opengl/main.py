@@ -1,6 +1,6 @@
 """PY OPENGL
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from textwrap import dedent
 
 import glfw
@@ -25,7 +25,6 @@ from py_opengl import texture
 
 @dataclass(eq=False, repr=False, slots=True)
 class Triangle:
-    _created: bool = False
     vbo_: vbo.Vbo = None
     shader_: shader.Shader = None
     texture_: texture.Texture = None
@@ -37,6 +36,7 @@ class Triangle:
         self.texture_ = texture.Texture()
         self.transform_ = transform.Transform()
 
+        texture_src: str = 'wall.jpg'
 
         vert_src = dedent("""
         # version 430 core
@@ -75,11 +75,6 @@ class Triangle:
         }
         """)
 
-        texture_src: str = 'wall.jpg'
-
-        self.texture_.compile(texture_src)     
-        self.shader_.compile(vert_src, frag_src)
-
         verts = [
             0.5, -0.5, 0.0,
             -0.5, -0.5, 0.0,
@@ -98,28 +93,27 @@ class Triangle:
             0.5, 1.0, 0.0,
         ]
 
+        self.texture_.compile(texture_src)     
+        self.shader_.compile(vert_src, frag_src)
         self.vbo_.add_data(verts)
         self.vbo_.add_data(color)
         self.vbo_.add_data(tex)
-        self._created = True
 
 
     def draw(self) -> None:
         """Draw to screen
         """
-        if self._created:
-            self.texture_.use()
-            self.shader_.use()
-            self.vbo_.draw()
+        self.texture_.use()
+        self.shader_.use()
+        self.vbo_.draw()
 
 
     def clean(self) -> None:
         """Clean up
         """
-        if self._created:
-            self.shader_.clean()
-            self.texture_.clean()
-            self.vbo_.clean()
+        self.shader_.clean()
+        self.texture_.clean()
+        self.vbo_.clean()
 
 
 # --- CALLBACKS
@@ -168,7 +162,6 @@ def main() -> None:
         ms = mouse.Mouse()
         first_move = True
         last_mp = glm.Vec3()
-        mouse_sensitivity: float = 0.2
 
         tri = Triangle()
 
@@ -192,32 +185,41 @@ def main() -> None:
             # keyboard
             if kb.get_state(glwin.get_key_state(glfw.KEY_W)) == keyboard.KeyState.HELD:
                 cam.move_by(camera.CameraDir.IN, 1.4, time.delta)
+                
             if kb.get_state(glwin.get_key_state(glfw.KEY_S)) == keyboard.KeyState.HELD:
                 cam.move_by(camera.CameraDir.OUT, 1.4, time.delta)
+                
             if kb.get_state(glwin.get_key_state(glfw.KEY_A)) == keyboard.KeyState.HELD:
                 cam.move_by(camera.CameraDir.LEFT, 1.4, time.delta)
+                
             if kb.get_state(glwin.get_key_state(glfw.KEY_D)) == keyboard.KeyState.HELD:
                 cam.move_by(camera.CameraDir.RIGHT, 1.4, time.delta)
+                
             if kb.get_state(glwin.get_key_state(glfw.KEY_E)) == keyboard.KeyState.HELD:
                 cam.move_by(camera.CameraDir.UP, 1.4, time.delta)
+                
             if kb.get_state(glwin.get_key_state(glfw.KEY_Q)) == keyboard.KeyState.HELD:
                 cam.move_by(camera.CameraDir.DOWN, 1.4, time.delta)
-
+                
             if kb.get_state(glwin.get_key_state(glfw.KEY_Z)) == keyboard.KeyState.HELD:
                 cam.rotate_by(camera.CameraRot.FOV, 0.8, time.delta)
 
             # mouse
-
             if ms.get_state(glwin.get_mouse_state(glfw.MOUSE_BUTTON_LEFT)) == mouse.MouseState.HELD:
                 if first_move:
                     mx, my = glwin.get_mouse_pos()
-                    last_mp = glm.Vec3(x=mx, y=my)
+                    last_mp.x = mx
+                    last_mp.y = my
                     first_move = False
                 else:
+
                     mx, my = glwin.get_mouse_pos()
-                    tmp = glm.Vec3(x=mx, y=my)
-                    new_mp = tmp - last_mp
-                    last_mp = tmp
+                    
+                    new_mp = glm.Vec3(x=mx, y=my) - last_mp
+
+                    last_mp.x = mx
+                    last_mp.y = my
+
                     cam.rotate_by(camera.CameraRot.YAW, new_mp.x, 0.2)
                     cam.rotate_by(camera.CameraRot.PITCH, new_mp.y, 0.2)
 

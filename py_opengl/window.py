@@ -5,6 +5,8 @@ from typing import (Any, Callable)
 
 import glfw
 
+# notes
+# https://www.glfw.org/docs/latest/input_guide.html#input_keyboard
 
 class GlWindowError(Exception):
     """Gl Window Error
@@ -41,12 +43,11 @@ class GlWindow:
         """Set glfw window callback for window resize
 
         Parameters
-        ----------
+        ---
         cb : Callable[[Any, float, float], None]
             callback function that takes current glfw window and its current width and height
         """
         glfw.set_window_size_callback(self.window, cb)
-
 
     def should_close(self) -> bool:
         """Close window
