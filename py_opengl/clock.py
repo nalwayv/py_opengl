@@ -1,16 +1,7 @@
 '''
 Clock
 ---
-A Simple clock get delta time and ticks based on glfw.get_time()
-
-
-Example
----
-clock = Clock\n
-clock.update()\n
-
-print(clock.delta)\n
-print(clock.ticks)\n
+A Simple clock to get delta time and ticks based on glfw.get_time()
 '''
 import glfw
 from dataclasses import dataclass

@@ -5,14 +5,23 @@ GL MATH
 
 Classes
 ---
+Vec2 :
+    vec2(x, y)
+
 Vec3 :
-    a vec3 class (x, y, z)
+    vec3(x, y, z)
+
+Mat3 :
+    matrix 3x3
 
 Mat4 :
-    a matrix 4x4 class
+    matrix 4x4
+
+Plain :
+    direction and normal
 
 Quaternion :
-    a quaternion class
+    quaternion(x, y, z, w)
 """
 import math
 from dataclasses import dataclass
@@ -895,6 +904,479 @@ class Vec4:
         )
 
 
+# --- MATRIX3
+class Mat3Error(Exception):
+    '''Custom error for matrix 3x3'''
+
+    def __init__(self, msg: str):
+        super().__init__(msg)
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Mat3:
+    ax: float = 0.0
+    ay: float = 0.0
+    az: float = 0.0
+    bx: float = 0.0
+    by: float = 0.0
+    bz: float = 0.0
+    cx: float = 0.0
+    cy: float = 0.0
+    cz: float = 0.0
+
+    def __getitem__(self, idx):
+        match clamp(idx, 0, 8):
+            case 0: return self.ax
+            case 1: return self.ay
+            case 2: return self.az
+            case 3: return self.bx
+            case 4: return self.by
+            case 5: return self.bz
+            case 6: return self.cx
+            case 7: return self.cy
+            case 8: return self.cz
+            case _: raise Mat3Error('out of range')
+
+    def __add__(self, other):
+        if not isinstance(other, Mat3):
+            raise Mat3Error('not of type mat3')
+
+        ax: float = self.ax + other.ax
+        ay: float = self.ay + other.ay
+        az: float = self.az + other.az
+        bx: float = self.bx + other.bx
+        by: float = self.by + other.by
+        bz: float = self.bz + other.bz
+        cx: float = self.cx + other.cx
+        cy: float = self.cy + other.cy
+        cz: float = self.cz + other.cz
+
+        return Mat3(
+            ax, ay, az,
+            bx, by, bz,
+            cx, cy, cz,
+        )
+
+    def __sub__(self, other):
+        if not isinstance(other, Mat3):
+            raise Mat3Error('not of type mat3')
+
+        ax: float = self.ax - other.ax
+        ay: float = self.ay - other.ay
+        az: float = self.az - other.az
+        bx: float = self.bx - other.bx
+        by: float = self.by - other.by
+        bz: float = self.bz - other.bz
+        cx: float = self.cx - other.cx
+        cy: float = self.cy - other.cy
+        cz: float = self.cz - other.cz
+
+        return Mat3(
+            ax, ay, az,
+            bx, by, bz,
+            cx, cy, cz,
+        )
+
+
+    def __mul__(self, other):
+        if not isinstance(other, Mat3):
+            raise Mat3Error('not of type Mat3')
+
+        ax: float = (
+            self.ax * other.ax +
+            self.ay * other.bx +
+            self.az * other.cx
+        )
+        ay: float = (
+            self.ax * other.ay +
+            self.ay * other.by +
+            self.az * other.cy
+        )
+        az: float = (
+            self.ax * other.az +
+            self.ay * other.bz +
+            self.az * other.cz
+        )
+        bx: float = (
+            self.bx * other.ax +
+            self.by * other.bx +
+            self.bz * other.cx
+        )
+        by: float = (
+            self.bx * other.ay +
+            self.by * other.by +
+            self.bz * other.cy
+        )
+        bz: float = (
+            self.bx * other.az +
+            self.by * other.bz +
+            self.bz * other.cz
+        )
+        cx: float = (
+            self.cx * other.ax +
+            self.cy * other.bx +
+            self.cz * other.cx
+        )
+        cy: float = (
+            self.cx * other.ay +
+            self.cy * other.by +
+            self.cz * other.cy
+        )
+        cz: float = (
+            self.cx * other.az +
+            self.cy * other.bz +
+            self.cz * other.cz
+        )
+
+        return Mat3(
+            ax, ay, az,
+            bx, by, bz,
+            cx, cy, cz,
+        )
+
+    @staticmethod
+    def identity() -> 'Mat3':
+        """Create an identity mat3 matrix
+
+        Returns
+        ---
+        Mat3
+        """
+        return Mat3(ax=1.0, by=1.0, cz=1.0)
+
+    @staticmethod
+    def create_scaler(v3: Vec3) -> 'Mat3':
+        """Create a scaler mat3 matrix
+
+        Returns
+        ---
+        Mat3
+        """
+        return Mat3(ax=v3.x, by=v3.y, cz=v3.z)
+    
+    @staticmethod
+    def create_x_rotation(angle_deg: float) -> 'Mat3':
+        """Create a rotation *X* mat3 matrix
+
+        Returns
+        ---
+        Mat3
+        """
+        angle_rad: float = to_radians(angle_deg)
+
+        c: float = cos(angle_rad)
+        s: float = sin(angle_rad)
+
+        return Mat3(ax=1.0, by=c, bz=-s, cy=s, cz=c)
+
+    @staticmethod
+    def create_y_rotation(angle_deg: float) -> 'Mat3':
+        """Create a rotation *y* mat3 matrix
+
+        Returns
+        ---
+        Mat3
+        """
+        angle_rad: float = to_radians(angle_deg)
+
+        c: float = cos(angle_rad)
+        s: float = sin(angle_rad)
+
+        return Mat3(ax=c, az=s, by=1.0, cx=-s, cz=c)
+
+    @staticmethod
+    def create_z_rotation(angle_deg: float) -> 'Mat3':
+        """Create a rotation *z* mat3 matrix
+
+        Returns
+        ---
+        Mat3
+        """
+        angle_rad: float = to_radians(angle_deg)
+
+        c: float = cos(angle_rad)
+        s: float = sin(angle_rad)
+
+        return Mat3(ax=c, ay=-s, bx=s, by=c, cz=1.0)
+
+    def copy(self) -> 'Mat3':
+        """Return a copy
+
+        Returns
+        ---
+        Mat3
+        """
+        return Mat3(
+            self.ax, self.ay, self.az,
+            self.bx, self.by, self.bz,
+            self.cx, self.cy, self.cz
+        )
+
+    def scale(self, by: float) -> 'Mat3':
+        """Return a scaled copy of self
+
+        Returns
+        ---
+        Mat3
+        """
+        ax: float = self.ax * by
+        ay: float = self.ay * by
+        az: float = self.az * by
+
+        bx: float = self.bx * by
+        by: float = self.by * by
+        bz: float = self.bz * by
+
+        cx: float = self.cx * by
+        cy: float = self.cy * by
+        cz: float = self.cz * by
+
+        return Mat3(
+            ax, ay, az,
+            bx, by, bz,
+            cx, cy, cz,
+        )
+
+    def transpose(self) -> 'Mat3':
+        """Return a transposed copy of self
+
+        Returns
+        ---
+        Mat3
+        """
+        ax: float = self.ax
+        ay: float = self.bx
+        az: float = self.cx
+        bx: float = self.ay
+        by: float = self.by
+        bz: float = self.cy
+        cx: float = self.az
+        cy: float = self.bz
+        cz: float = self.cz
+
+        return Mat3(
+            ax, ay, az,
+            bx, by, bz,
+            cx, cy, cz,
+        )
+
+    def cofactor(self) -> 'Mat3':
+        """Return a cofactor copy of self
+
+        Returns
+        ---
+        Mat3
+        """
+        ax: float = self.ax
+        ay: float = -self.ay
+        az: float = self.az
+        bx: float = -self.bx
+        by: float = self.by
+        bz: float = -self.bz
+        cx: float = self.cx
+        cy: float = -self.cy
+        cz: float = self.cz
+
+        return Mat3(
+            ax, ay, az,
+            bx, by, bz,
+            cx, cy, cz
+        )
+
+    def to_unit(self) -> None:
+        """Normalize the length of self
+
+        Raises
+        ---
+        Mat3Error
+            if the determinant of self is zero
+        """
+        det: float = self.determinant()
+
+        if is_zero(det):
+            raise Mat3Error('length of this Mat4 was zero')
+
+        inv = 1.0 / det
+        self.ax *= inv  
+        self.ay *= inv 
+        self.az *= inv  
+        self.aw *= inv  
+        self.bx *= inv  
+        self.by *= inv  
+        self.bz *= inv  
+        self.bw *= inv  
+        self.cx *= inv  
+        self.cy *= inv  
+        self.cz *= inv  
+        self.cw *= inv  
+        self.dx *= inv  
+        self.dy *= inv  
+        self.dz *= inv  
+        self.dw *= inv  
+
+    def unit(self) -> 'Mat3':
+        """Return a copy of self with normalized length
+
+        Returns
+        ---
+        Mat3
+            
+        Raises
+        ---
+        Mat3Error
+            if the determinant of self is zero
+        """
+        det: float = self.determinant()
+        if is_zero(det):
+            raise Mat3Error('length of this Mat4 was zero')
+        return self.scale(1.0 / det)
+
+
+    def inverse(self) -> 'Mat3':
+        """Return the inverse of self
+
+        Returns
+        ---
+        Mat3
+        """
+        a: float = self.ax
+        b: float = self.ay
+        c: float = self.az
+        d: float = self.bx
+        e: float = self.by
+        f: float = self.bz
+        g: float = self.cx
+        h: float = self.cy
+        i: float = self.cz
+
+        det: float = self.determinant()
+        inv: float = 1.0 / det
+
+        ax: float = (e * i - h * f) * inv
+        ay: float = (g * f - d * i) * inv
+        az: float = (d * h - g * e) * inv
+        bx: float = (h * c - b * i) * inv
+        by: float = (a * i - g * c) * inv
+        bz: float = (g * b - a * h) * inv
+        cx: float = (b * f - e * c) * inv
+        cy: float = (d * c - a * f) * inv
+        cz: float = (a * e - d * b) * inv
+
+        return Mat3(
+            ax, ay, az,
+            bx, by, bz,
+            cx, cy, cz
+        )
+
+    def row0(self) -> tuple[float, float, float]:
+        """Return the first row of float values
+
+        Returns
+        ---
+        tuple[float, float, float]
+        """
+        return (self.ax, self.ay, self.az)
+
+    def row1(self) -> tuple[float, float, float]:
+        """Return the second row of float values
+        
+        Returns
+        ---
+        tuple[float, float, float]
+        """
+        return (self.bx, self.by, self.bz)
+
+    def row2(self) -> tuple[float, float, float]:
+        """Return the third row of float values
+
+        Returns
+        ---
+        tuple[float, float, float]
+        """
+        return (self.cx, self.cy, self.cz)
+
+    def col0(self) -> tuple[float, float, float]:
+        """Return the first column of float values
+
+        Returns
+        ---
+        tuple[float, float, float]
+        """
+        return (self.ax, self.bx, self.cx)
+
+    def col1(self) -> tuple[float, float, float]:
+        """Return the second column of float values
+
+        Returns
+        ---
+        tuple[float, float, float]
+        """
+        return (self.ay, self.by, self.cy)
+
+    def col2(self) -> tuple[float, float, float]:
+        """Return the third column of float values
+
+        Returns
+        ---
+        tuple[float, float, float]
+        """
+        return (self.az, self.bz, self.cz)
+
+    def at(self, row: int, col: int) -> float:
+        return self[col * 3 + row]
+
+    def determinant(self) -> float:
+        """Return the determinant of self
+
+        Returns
+        ---
+        float
+        """
+        a0: float = self.ax * self.by * self.cz
+        a1: float = self.ay * self.bz * self.cx
+        a2: float = self.az * self.bx * self.cy
+        b1: float = self.az * self.by * self.cx
+        b2: float = self.ax * self.bz * self.cy
+        b3: float = self.ay * self.bx * self.cz
+
+        return a0 + a1 + a2 - b1 - b2 - b3
+
+    def trace(self) -> float:
+        """Return the sum of the trace values
+
+        Returns
+        ---
+        float
+        """
+        return self.ax + self.by + self.cz
+
+    def array(self) -> list[float]:
+        """Return self as a list of floats
+
+        Returns
+        ---
+        list[float]
+        """
+        return [
+            self.ax, self.ay, self.az,
+            self.bx, self.by, self.bz,
+            self.cx, self.cy, self.cz,
+        ]
+
+    def multi_array(self) -> list[list[float]]:
+        """Return self as a list of list floats
+
+        Returns
+        ---
+        list[list[float]]
+        """
+        return [
+            [self.ax, self.ay, self.az],
+            [self.bx, self.by, self.bz],
+            [self.cx, self.cy, self.cz]
+        ]
+
+
 # --- MATRIX4
 
 
@@ -1320,7 +1802,8 @@ class Mat4:
             self.ax, self.ay, self.az, self.aw,
             self.bx, self.by, self.bz, self.bw,
             self.cx, self.cy, self.cz, self.cw,
-            self.dx, self.dy, self.dz, self.dw)
+            self.dx, self.dy, self.dz, self.dw
+        )
 
     def scale(self, by: float) -> 'Mat4':
         """Return a scaled copy of self
@@ -1382,6 +1865,37 @@ class Mat4:
             bx, by, bz, bw,
             cx, cy, cz, cw,
             dx, dy, dz, dw
+        )
+
+    def cofactor(self) -> 'Mat4':
+        """Return a cofactor copy of self
+
+        Returns
+        ---
+        Mat4
+        """
+        ax: float = self.ax
+        ay: float = -self.ay
+        az: float = self.az
+        aw: float = -self.aw
+        bx: float = -self.bx
+        by: float = self.by
+        bz: float = -self.bz
+        bw: float = self.bw
+        cx: float = self.cx
+        cy: float = -self.cy
+        cz: float = self.cz
+        cw: float = -self.cw
+        dx: float = -self.dx
+        dy: float = self.dy
+        dz: float = -self.dz
+        dw: float = self.dw
+
+        return Mat4(
+            ax, ay, az, aw,
+            bx, by, bz, bw,
+            cx, cy, cz, cw,
+            dx, dy, dz, dw,
         )
 
     def inverse(self) -> 'Mat4':
@@ -1573,6 +2087,9 @@ class Mat4:
         tuple[float, float, float, float]
         """
         return (self.aw, self.bw, self.cw, self.dw)
+
+    def at(self, row: int, col: int) -> float:
+        return self[col * 4 + row]
 
     def determinant(self) -> float:
         """Return the determinant of self

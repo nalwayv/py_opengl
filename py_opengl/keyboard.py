@@ -123,3 +123,42 @@ class Keyboard:
             else:
                 # held
                 return KeyState.HELD
+
+    def is_key_held(self, key_state: tuple[int, int]) -> bool:
+        """Helper function for key held down state
+
+        Parameters
+        ---
+        key_state : tuple[int, int]
+
+        Returns
+        ---
+        bool
+        """
+        return self.get_state(key_state) == KeyState.HELD
+
+    def is_key_pressed(self, key_state: tuple[int, int]) -> bool:
+        """Helper function for key pressed state
+
+        Parameters
+        ---
+        key_state : tuple[int, int]
+
+        Returns
+        ---
+        bool
+        """
+        return self.get_state(key_state) == KeyState.HELD
+
+    def is_key_released(self, key_state: tuple[int, int]) -> bool:
+        """Helper function for key released state
+
+        Parameters
+        ---
+        key_state : tuple[int, int]
+
+        Returns
+        ---
+        bool
+        """
+        return self.get_state(key_state) == KeyState.RELEASED

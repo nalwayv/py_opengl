@@ -127,3 +127,42 @@ class Mouse:
             else:
                 # held
                 return MouseState.HELD
+
+    def is_button_held(self, key_state: tuple[int, int]) -> bool:
+        """Helper function for mouse button held down state
+
+        Parameters
+        ---
+        key_state : tuple[int, int]
+
+        Returns
+        ---
+        bool
+        """
+        return self.get_state(key_state) == MouseState.HELD
+
+    def is_button_pressed(self, key_state: tuple[int, int]) -> bool:
+        """Helper function for mouse button pressed state
+
+        Parameters
+        ---
+        key_state : tuple[int, int]
+
+        Returns
+        ---
+        bool
+        """
+        return self.get_state(key_state) == MouseState.HELD
+
+    def is_button_released(self, key_state: tuple[int, int]) -> bool:
+        """Helper function for mouse button released state
+
+        Parameters
+        ---
+        key_state : tuple[int, int]
+
+        Returns
+        ---
+        bool
+        """
+        return self.get_state(key_state) == MouseState.RELEASED

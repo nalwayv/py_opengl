@@ -36,14 +36,12 @@ class Texture:
         TextureError
             texture file not found
         """
-        path = Path('py_opengl/images/' + file_path)
-        if not path.exists():
+        file = Path(f'py_opengl/images/{file_path}').absolute()
+        if not file.exists():
             raise TextureError('that texture was not found within images folder')
-
-        absolute_path: str = path.absolute().as_posix()
         
         # use pillow to open tetxure image file
-        with Image.open(absolute_path) as im:
+        with Image.open(f'py_opengl/images/{file_path}') as im:
             self.texture_id = GL.glGenTextures(1)
             self.width = im.size[0]
             self.height = im.size[1]

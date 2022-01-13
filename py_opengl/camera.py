@@ -15,7 +15,7 @@ class CameraError(Exception):
         super().__init__(msg)
 
 
-class CameraDir(Enum):
+class CameraDirection(Enum):
     UP = 0
     DOWN = 1
     LEFT = 2
@@ -25,11 +25,16 @@ class CameraDir(Enum):
     DEFAULT = 6
 
 
-class CameraRot(Enum):
+class CameraRotation(Enum):
     YAW = 0
     PITCH = 1
-    FOV = 2
-    DEFAULT = 3
+    DEFAULT = 2
+
+
+class CameraZoom(Enum):
+    IN = 0
+    OUT = 1
+    DEFAULT = 2
 
 
 @dataclass(eq=False, repr=False, slots=True)
@@ -39,83 +44,13 @@ class Camera:
     up: glm.Vec3 = glm.Vec3(y=1.0)
     right: glm.Vec3 = glm.Vec3(x=1.0)
     aspect: float = 1.0
-
     fovy: float = glm.PIOVER2
-    yaw: float = glm.PIOVER2 * -1.0     # -90.0 deg
+    yaw: float = -glm.PIOVER2
     pitch: float = 0.0
     znear: float = 0.01
     zfar: float = 1000.0
 
-    # @staticmethod
-    # def to_pitch(value: float) -> float:
-    #     """Helper func for converting angle values for the cameras pitch field
-
-    #     Parameters
-    #     ---
-    #     value : float
-    #         angle in degreese
-
-    #     Example
-    #     ---
-    #     ```python
-    #     camera = Camera()
-    #     camera.pitch += Camera.to_pitch(80.0)
-    #     ```
-
-    #     Returns
-    #     ---
-    #     float
-    #         float value in randians
-    #     """
-    #     return glm.to_radians(glm.clamp(value, -89.0, 89.0))
-
-    # @staticmethod
-    # def to_yaw(value: float) -> float:
-    #     """Helper func for converting angle values for the camera yaw field
-
-    #     Parameters
-    #     ---
-    #     value : float
-    #         angle in degreese
-
-    #     Example
-    #     ---
-    #     ```python
-    #     camera = Camera()
-    #     camera.yaw += Camera.to_yaw(15.0)
-    #     ```
-
-    #     Returns
-    #     ---
-    #     float
-    #         float value in randians
-    #     """
-    #     return glm.to_radians(value)
-
-    # @staticmethod
-    # def to_fovy(value: float) -> float:
-    #     """Helper func for converting angle values for the cameras fovy field
-
-    #     Parameters
-    #     ---
-    #     value : float
-    #         angle in degreese
-
-    #     Example
-    #     ---
-    #     ```python
-    #     camera = Camera()
-    #     camera.fovy += Camera.to_fovy(45.0)
-    #     ```
-
-    #     Returns
-    #     ---
-    #     float
-    #         float value in radians
-    #     """
-    #     return glm.to_radians(glm.clamp(value, 1.0, 45.0))
-
-    def move_by(self, dir: CameraDir, sensativity: float, dt: float) -> None:
+    def move_by(self, dir: CameraDirection, sensativity: float, dt: float) -> None:
         """Move camera
 
         Parameters
@@ -135,16 +70,15 @@ class Camera:
             not a valid move direction
         """
         match dir:
-            case CameraDir.UP: self.position = self.position - self.up * (sensativity * dt)
-            case CameraDir.DOWN: self.position = self.position + self.up * (sensativity * dt)
-            case CameraDir.RIGHT: self.position = self.position - self.right * (sensativity * dt)
-            case CameraDir.LEFT: self.position = self.position + self.right * (sensativity * dt)
-            case CameraDir.OUT: self.position = self.position - self.front * (sensativity * dt)
-            case CameraDir.IN: self.position = self.position + self.front * (sensativity * dt)
-            
+            case CameraDirection.UP: self.position = self.position - self.up * (sensativity * dt)
+            case CameraDirection.DOWN: self.position = self.position + self.up * (sensativity * dt)
+            case CameraDirection.RIGHT: self.position = self.position - self.right * (sensativity * dt)
+            case CameraDirection.LEFT: self.position = self.position + self.right * (sensativity * dt)
+            case CameraDirection.OUT: self.position = self.position - self.front * (sensativity * dt)
+            case CameraDirection.IN: self.position = self.position + self.front * (sensativity * dt)
             case _: raise CameraError('unknown camera direction')
     
-    def rotate_by(self, dir: CameraRot, value: float, sensativity: float) -> None:
+    def rotate_by(self, dir: CameraRotation, value: float, sensativity: float) -> None:
         """Rotate camera by value
 
         Parameters
@@ -161,15 +95,38 @@ class Camera:
             not a valid rotate direction
         """
         match dir:
-            case CameraRot.YAW: self.yaw = self.yaw - glm.to_radians(value * sensativity)
-            case CameraRot.PITCH: self.pitch = self.pitch + glm.to_radians(glm.clamp(value * sensativity, -89.0, 89.0))
-            case CameraRot.FOV: self.fovy = glm.clamp(
-                                    self.fovy + glm.to_radians(glm.clamp(value * sensativity, 1.0, 45.0)), 
-                                    0.1, 
-                                    glm.PI
-                                )
-
+            case CameraRotation.YAW: self.yaw = self.yaw - glm.to_radians(value * sensativity)
+            case CameraRotation.PITCH: self.pitch = self.pitch + glm.to_radians(glm.clamp(value * sensativity, -89.0, 89.0))
             case _: raise CameraError('unknown camera rotation')
+
+    def zoom_by(self, dir: CameraZoom, value: float, sensativity: float) -> None:
+        """Zoom camera by value
+
+        Parameters
+        ---
+        dir : CameraZoom
+
+        value : float
+
+        sensativity : float
+            
+        Raises
+        ---
+        CameraError
+            not a valid zoom direction
+        """
+        match dir:
+            case CameraZoom.OUT: self.fovy = glm.clamp(
+                self.fovy + glm.to_radians(glm.clamp(value * sensativity, 1.0, 45.0)), 
+                0.1, 
+                glm.PI
+            )
+            case CameraZoom.IN: self.fovy = glm.clamp(
+                self.fovy - glm.to_radians(glm.clamp(value * sensativity, 1.0, 45.0)), 
+                0.1, 
+                glm.PI
+            )
+            case _: raise CameraError('unknown camera zoom')
 
     def update(self) -> None:
         """Update camera's up, right and front fields
