@@ -1,5 +1,5 @@
-'''Shader
-'''
+"""Shader
+"""
 from dataclasses import dataclass
 from OpenGL import GL
 from py_opengl import glm

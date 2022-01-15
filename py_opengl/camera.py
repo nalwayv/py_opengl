@@ -1,11 +1,11 @@
-'''
+"""
 Camera
 ---
 A perspective camera
-'''
+"""
 from dataclasses import dataclass
 from py_opengl import glm
-from enum import Enum
+from enum import Enum, auto
 
 
 class CameraError(Exception):
@@ -16,25 +16,26 @@ class CameraError(Exception):
 
 
 class CameraDirection(Enum):
-    UP = 0
-    DOWN = 1
-    LEFT = 2
-    RIGHT = 3
-    IN = 4
-    OUT = 5
-    DEFAULT = 6
+    UP = auto()
+    DOWN = auto()
+    LEFT = auto()
+    RIGHT = auto()
+    IN = auto()
+    OUT = auto()
+    DEFAULT = auto()
 
 
 class CameraRotation(Enum):
-    YAW = 0
-    PITCH = 1
-    DEFAULT = 2
+    YAW = auto()
+    PITCH = auto()
+    ROLL = auto()
+    DEFAULT = auto()
 
 
 class CameraZoom(Enum):
-    IN = 0
-    OUT = 1
-    DEFAULT = 2
+    IN = auto()
+    OUT = auto()
+    DEFAULT = auto()
 
 
 @dataclass(eq=False, repr=False, slots=True)
@@ -94,9 +95,12 @@ class Camera:
         CameraError
             not a valid rotate direction
         """
+
+
         match dir:
             case CameraRotation.YAW: self.yaw = self.yaw - glm.to_radians(value * sensativity)
             case CameraRotation.PITCH: self.pitch = self.pitch + glm.to_radians(glm.clamp(value * sensativity, -89.0, 89.0))
+            case CameraRotation.ROLL: return
             case _: raise CameraError('unknown camera rotation')
 
     def zoom_by(self, dir: CameraZoom, value: float, sensativity: float) -> None:

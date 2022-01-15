@@ -1,7 +1,7 @@
 """GLFW Window
 """
 from dataclasses import dataclass
-from typing import (Any, Callable)
+from typing import (Any, Optional, Callable)
 
 import glfw
 
@@ -21,7 +21,7 @@ class GlWindowError(Exception):
 
 @dataclass(eq=False, repr=False, slots=True)
 class GlWindow:
-    window: Any = None
+    window: Optional[Any] = None
     width: int = 0
     height: int = 0
     title: str = "glfw_window"
@@ -37,7 +37,6 @@ class GlWindow:
 
         if not self.window:
             raise GlWindowError('failed to init glfw window')
-
 
     def set_window_resize_callback(self, cb: Callable[[Any, float, float], None]) -> None:
         """Set glfw window callback for window resize
@@ -71,7 +70,7 @@ class GlWindow:
 
 
     def get_mouse_pos(self) -> tuple[float, float]:
-        """Returtn current mouse screen position
+        """Return current mouse screen position
 
         Returns
         ---

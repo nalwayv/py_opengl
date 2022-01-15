@@ -5,14 +5,14 @@ With help from glfw get the current state of a
 key being pressed, held or released
 """
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, auto
 
 
 class KeyState(Enum):
-    PRESSED = 0
-    RELEASED = 1
-    HELD = 2
-    DEFAULT = 3
+    PRESSED = auto()
+    RELEASED = auto()
+    HELD = auto()
+    DEFAULT = auto()
 
 
 @dataclass(eq=False, repr=False, slots=True)
@@ -135,7 +135,7 @@ class Keyboard:
         ---
         bool
         """
-        return self.get_state(key_state) == KeyState.HELD
+        return self.get_state(key_state) is KeyState.HELD
 
     def is_key_pressed(self, key_state: tuple[int, int]) -> bool:
         """Helper function for key pressed state
@@ -148,7 +148,7 @@ class Keyboard:
         ---
         bool
         """
-        return self.get_state(key_state) == KeyState.HELD
+        return self.get_state(key_state) is KeyState.PRESSED
 
     def is_key_released(self, key_state: tuple[int, int]) -> bool:
         """Helper function for key released state
@@ -161,4 +161,4 @@ class Keyboard:
         ---
         bool
         """
-        return self.get_state(key_state) == KeyState.RELEASED
+        return self.get_state(key_state) is KeyState.RELEASED

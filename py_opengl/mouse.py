@@ -5,13 +5,13 @@ With help from glfw get the current state of a
 mouse button being pressed, held or released
 """
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, auto
 
 class MouseState(Enum):
-    PRESSED = 0
-    RELEASED = 1
-    HELD = 2
-    DEFAULT = 3
+    PRESSED = auto()
+    RELEASED = auto()
+    HELD = auto()
+    DEFAULT = auto()
 
 
 @dataclass(eq=False, repr=False, slots=True)
@@ -139,7 +139,7 @@ class Mouse:
         ---
         bool
         """
-        return self.get_state(key_state) == MouseState.HELD
+        return self.get_state(key_state) is MouseState.HELD
 
     def is_button_pressed(self, key_state: tuple[int, int]) -> bool:
         """Helper function for mouse button pressed state
@@ -152,7 +152,7 @@ class Mouse:
         ---
         bool
         """
-        return self.get_state(key_state) == MouseState.HELD
+        return self.get_state(key_state) is MouseState.PRESSED
 
     def is_button_released(self, key_state: tuple[int, int]) -> bool:
         """Helper function for mouse button released state
@@ -165,4 +165,4 @@ class Mouse:
         ---
         bool
         """
-        return self.get_state(key_state) == MouseState.RELEASED
+        return self.get_state(key_state) is MouseState.RELEASED

@@ -174,7 +174,8 @@ def inv_sqrt(val: float) -> float:
 def clamp(
         val: float | int,
         low: float | int,
-        high: float | int) -> float | int:
+        high: float | int
+    ) -> float | int:
     """Clamp value between low and high
 
     Returns
@@ -324,7 +325,7 @@ def arctan2(y: float, x: float) -> float:
     return math.atan2(y, x)
 
 
-# --- VECTOR2(X, Y)
+# --- VECTOR_2 (X, Y)
 
 
 class Vec2Error(Exception):
@@ -409,6 +410,15 @@ class Vec2:
             a copy
         """ 
         return Vec2(self.x, self.y)
+
+    def sum_total(self) -> float:
+        """Return sum total of all values
+
+        Returns
+        ---
+        float
+        """
+        return self.x + self.y
 
     def cross(self, other: 'Vec2') -> float:
         """Return the cross product between self and another vec2
@@ -515,7 +525,7 @@ class Vec2:
         return is_equil(self.x, other.x) and is_equil(self.y, other.y)
 
 
-# --- VECTOR3(X, Y, Z)
+# --- VECTOR_3 (X, Y, Z)
 
 
 class Vec3Error(Exception):
@@ -642,6 +652,15 @@ class Vec3:
         """
         return self - self.project(other)
 
+    def sum_total(self) -> float:
+        """Return sum total of all values
+
+        Returns
+        ---
+        float
+        """
+        return self.x + self.y + self.z
+
     def length_sqr(self) -> float:
         """Return the squared length
 
@@ -719,7 +738,7 @@ class Vec3:
         return is_equil(self.x, other.x) and is_equil(self.y, other.y) and is_equil(self.z, other.z)
 
 
-# --- VECTOR4(X, Y, Z, W)
+# --- VECTOR_4 (X, Y, Z, W)
 
 
 class Vec4Error(Exception):
@@ -817,6 +836,15 @@ class Vec4:
             return self.copy()
         return self * inv_sqrt(lsq)
 
+    def sum_total(self) -> float:
+        """Return sum total of all values
+
+        Returns
+        ---
+        float
+        """
+        return self.x + self.y + self.z + self.w
+
     def length_sqr(self) -> float:
         """Return the squared length
 
@@ -904,7 +932,7 @@ class Vec4:
         )
 
 
-# --- MATRIX3
+# --- MATRIX_3
 class Mat3Error(Exception):
     '''Custom error for matrix 3x3'''
 
@@ -1377,7 +1405,7 @@ class Mat3:
         ]
 
 
-# --- MATRIX4
+# --- MATRIX_4
 
 
 class Mat4Error(Exception):

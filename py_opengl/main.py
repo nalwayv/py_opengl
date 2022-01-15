@@ -1,7 +1,8 @@
 """PY OPENGL
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from textwrap import dedent
+from typing import Optional
 
 import glfw
 from loguru import logger
@@ -25,20 +26,20 @@ from py_opengl import texture
 
 @dataclass(eq=False, repr=False, slots=True)
 class Triangle:
-    vbo_: vbo.Vbo = None
-    shader_: shader.Shader = None
-    texture_: texture.Texture = None
-    transform_: transform.Transform = None
+    vbo_: Optional[vbo.Vbo] = None
+    shader_: Optional[shader.Shader] = None
+    texture_: Optional[texture.Texture] = None
+    transform_: Optional[transform.Transform] = None
 
     def __post_init__(self):
-        self.vbo_ = vbo.Vbo()
+        self.vbo_ = vbo.Vbo(length=9)
         self.shader_ = shader.Shader()
         self.texture_ = texture.Texture()
         self.transform_ = transform.Transform()
 
         texture_src: str = 'wall.jpg'
 
-        vert_src = dedent("""
+        vert_src: str = dedent("""
         # version 430 core
 
         layout (location = 0) in vec3 a_pos;
@@ -59,7 +60,7 @@ class Triangle:
         }
         """)
 
-        frag_src = dedent("""
+        frag_src: str = dedent("""
         # version 430 core
 
         in vec3 b_col;
@@ -75,25 +76,25 @@ class Triangle:
         }
         """)
 
-        verts = [
+        verts: list[float] = [
             0.5, -0.5, 0.0,
             -0.5, -0.5, 0.0,
             0.0, 0.5, 0.0
         ]
 
-        color = [
+        color: list[float] = [
             1.0, 0.0, 0.0,
             0.0, 1.0, 0.0,
             0.0, 0.0, 1.0
         ]
 
-        tex = [
+        tex: list[float] = [
             0.0, 0.0, 0.0,
             1.0, 0.0, 0.0,
             0.5, 1.0, 0.0,
         ]
 
-        self.texture_.compile(texture_src)     
+        self.texture_.compile(texture_src)
         self.shader_.compile(vert_src, frag_src)
         self.vbo_.add_data(verts)
         self.vbo_.add_data(color)
@@ -111,6 +112,196 @@ class Triangle:
         """
         self.shader_.clean()
         self.texture_.clean()
+        self.vbo_.clean()
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Cube:
+    vbo_: Optional[vbo.Vbo] = None
+    shader_: Optional[shader.Shader] = None
+    texture_: Optional[texture.Texture] = None
+    transform_: Optional[transform.Transform] = None
+
+    def __post_init__(self):
+        self.vbo_ = vbo.Vbo(length=36)
+        self.shader_ = shader.Shader()
+        self.texture_ = texture.Texture()
+        self.transform_ = transform.Transform()
+
+        texture_src: str = 'grid512.bmp'
+
+        vert_src: str = dedent("""
+        # version 430 core
+
+        layout (location = 0) in vec3 a_pos;
+        layout (location = 1) in vec3 a_col;
+        layout (location = 2) in vec3 a_texture;
+
+        out vec3 b_col;
+        out vec2 b_texture;
+
+        uniform mat4 mvp;
+
+        void main(void)
+        {
+            b_col = a_col;
+            b_texture = vec2(a_texture.x, a_texture.y);
+
+            gl_Position = mvp * vec4(a_pos, 1.0);
+        }
+        """)
+
+        frag_src: str = dedent("""
+        # version 430 core
+
+        in vec3 b_col;
+        in vec2 b_texture;
+
+        out vec4 c_col;
+
+        uniform sampler2D c_texture;
+
+        void main(void)
+        {
+            c_col = texture(c_texture, b_texture) * vec4(b_col, 1.0);
+        }
+        """)
+
+        verts: list[float] = [
+            0.5, 0.5, 0.5,
+            -0.5, 0.5, 0.5,
+            -0.5, -0.5, 0.5,
+            -0.5, -0.5, 0.5,
+            0.5, -0.5, 0.5,
+            0.5, 0.5, 0.5,
+            0.5, 0.5, 0.5,
+            0.5, -0.5, 0.5,
+            0.5, -0.5, -0.5,
+            0.5, -0.5, -0.5,
+            0.5, 0.5, -0.5,
+            0.5, 0.5, 0.5,
+            0.5, 0.5, 0.5,
+            0.5, 0.5, -0.5,
+            -0.5, 0.5, -0.5,
+            -0.5, 0.5, -0.5,
+            -0.5, 0.5, 0.5,
+            0.5, 0.5, 0.5,
+            -0.5, 0.5, 0.5,
+            -0.5, 0.5, -0.5,
+            -0.5, -0.5, -0.5,
+            -0.5, -0.5, -0.5,
+            -0.5, -0.5, 0.5,
+            -0.5, 0.5, 0.5,
+            -0.5, -0.5, -0.5,
+            0.5, -0.5, -0.5,
+            0.5, -0.5, 0.5,
+            0.5, -0.5, 0.5,
+            -0.5, -0.5, 0.5,
+            -0.5, -0.5, -0.5,
+            0.5, -0.5, -0.5,
+            -0.5, -0.5, -0.5,
+            -0.5, 0.5, -0.5,
+            -0.5, 0.5, -0.5,
+            0.5, 0.5, -0.5,
+            0.5, -0.5, -0.5
+        ]
+
+        color: list[float] = [
+            1.0, 1.0, 1.0,
+            1.0, 1.0, 0.0,
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 1.0,
+            1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,
+            1.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,
+            0.0, 1.0, 1.0,
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, 1.0, 1.0,
+            1.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            1.0, 1.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 0.0, 1.0,
+            1.0, 0.0, 1.0,
+            1.0, 0.0, 1.0,
+            1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 1.0,
+            0.0, 0.0, 1.0
+        ]
+
+        tex: list[float] = [
+            1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+        ]
+
+        self.texture_.compile(texture_src)
+        self.shader_.compile(vert_src, frag_src)
+        self.vbo_.add_data(verts)
+        self.vbo_.add_data(color)
+        self.vbo_.add_data(tex)
+
+    def draw(self) -> None:
+        """Draw to screen
+        """
+        self.texture_.use()
+        self.shader_.use()
+        self.vbo_.draw()
+
+    def clean(self) -> None:
+        """Clean up
+        """
+        self.texture_.clean()
+        self.shader_.clean()
         self.vbo_.clean()
 
 
@@ -134,7 +325,6 @@ def cb_window_resize(window, width, height):
 
 # --- MAIN
 
-
 def main() -> None:
     """Main
     """
@@ -148,42 +338,53 @@ def main() -> None:
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
 
-        glwin = window.GlWindow(width=utils.SCREEN_WIDTH, height=utils.SCREEN_HEIGHT)
+        glwin = window.GlWindow(
+            width=utils.SCREEN_WIDTH,
+            height=utils.SCREEN_HEIGHT
+        )
         glfw.make_context_current(glwin.window)
         glwin.center_screen_position()
         glwin.set_window_resize_callback(cb_window_resize)
 
         time = clock.Clock()
-        cam = camera.Camera(position=glm.Vec3(z=3.0), aspect=utils.SCREEN_WIDTH/utils.SCREEN_HEIGHT)
+        cam = camera.Camera(
+            position=glm.Vec3(z=3.0),
+            aspect=utils.SCREEN_WIDTH/utils.SCREEN_HEIGHT
+        )
 
         kb = keyboard.Keyboard()
         ms = mouse.Mouse()
         first_move = True
         last_mp = glm.Vec3()
 
-        tri = Triangle()
+        shape = Cube()
 
         while not glwin.should_close():
             time.update()
 
             GL.glClearColor(0.2, 0.3, 0.3, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+            GL.glEnable(GL.GL_DEPTH_TEST)
+            GL.glEnable(GL.GL_CULL_FACE)
 
             # ---
 
-            tri.draw()
+            shape.draw()
 
-            tri.transform_.rotation = glm.Quaternion.from_axis(time.ticks, glm.Vec3(x=1.0, y=0.5))
-            m: glm.Mat4 = tri.transform_.get_matrix()
+            shape.transform_.rotation = glm.Quaternion.from_axis(
+                time.ticks,
+                glm.Vec3(x=1.0, y=0.5)
+            )
+            m: glm.Mat4 = shape.transform_.get_matrix()
             v: glm.Mat4 = cam.view_matrix()
             p: glm.Mat4 = cam.perspective_matrix()
             mvp: glm.Mat4 = m * v * p
-            tri.shader_.set_m4('mvp', mvp)
+            shape.shader_.set_m4('mvp', mvp)
 
             # keyboard
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
                 cam.move_by(camera.CameraDirection.IN, 1.4, time.delta)
-        
+
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_S)):
                 cam.move_by(camera.CameraDirection.OUT, 1.4, time.delta)
 
@@ -195,12 +396,14 @@ def main() -> None:
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_E)):
                 cam.move_by(camera.CameraDirection.UP, 1.4, time.delta)
-                
+
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_Q)):
                 cam.move_by(camera.CameraDirection.DOWN, 1.4, time.delta)
-                
+
             # mouse
-            if ms.is_button_held(glwin.get_mouse_state(glfw.MOUSE_BUTTON_LEFT)):
+            if ms.is_button_held(
+                    glwin.get_mouse_state(glfw.MOUSE_BUTTON_LEFT)
+            ):
                 if first_move:
                     mx, my = glwin.get_mouse_pos()
                     last_mp.x = mx
@@ -235,9 +438,10 @@ def main() -> None:
 
     finally:
         logger.debug('CLOSED')
-        tri.clean()
+        shape.clean()
         glfw.terminate()
 
 
 if __name__ == '__main__':
     main()
+

@@ -1,5 +1,5 @@
-'''
-'''
+"""Helper Functions
+"""
 import ctypes
 from typing import Final
 

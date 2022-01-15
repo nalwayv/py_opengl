@@ -1,5 +1,5 @@
-'''Vbo
-'''
+"""VBO
+"""
 from dataclasses import dataclass, field
 from OpenGL import GL
 from py_opengl import utils
@@ -8,6 +8,7 @@ from py_opengl import utils
 class Vbo:
     vao_id: int = 0
     components: int = 3     # x y z
+    length: int = 0
     normalized: bool = False
     vbos: list[int] = field(default_factory=list)
 
@@ -18,7 +19,7 @@ class Vbo:
         """Bind vbo
         """
         GL.glBindVertexArray(self.vao_id)
-        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.components)
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.length)
 
     def clean(self) -> None:
         """Clean vbo of currently stored vbo's
