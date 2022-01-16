@@ -105,7 +105,7 @@ class Triangle:
         """
         self.texture_.use()
         self.shader_.use()
-        self.vbo_.draw()
+        self.vbo_.use()
 
     def clean(self) -> None:
         """Clean up
@@ -295,7 +295,7 @@ class Cube:
         """
         self.texture_.use()
         self.shader_.use()
-        self.vbo_.draw()
+        self.vbo_.use()
 
     def clean(self) -> None:
         """Clean up

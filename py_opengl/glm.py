@@ -34,6 +34,10 @@ INFINITY: float = float('inf')
 NEGATIVE_INFINITY: float = float('-inf')
 
 
+def swap(a: float|int, b: float|int) -> tuple[float|int, float|int]:
+    return (b, a)
+
+
 def is_zero(val: float) -> bool:
     """Check if values is zero
 
@@ -172,10 +176,10 @@ def inv_sqrt(val: float) -> float:
 
 
 def clamp(
-        val: float | int,
-        low: float | int,
-        high: float | int
-    ) -> float | int:
+        val: float|int,
+        low: float|int,
+        high: float|int
+    ) -> float|int:
     """Clamp value between low and high
 
     Returns
@@ -794,6 +798,10 @@ class Vec4:
     def one() -> 'Vec4':
         return Vec4(1.0, 1.0, 1.0, 1.0)
 
+    @staticmethod
+    def from_v3(v3: Vec3) -> 'Vec4':
+        return Vec4(x=v3.x, y=v3.y, z=v3.z)
+
     def copy(self) -> 'Vec4':
         """Return a copy of the vec4
 
@@ -904,15 +912,6 @@ class Vec4:
         """
         return is_one(self.length_sqr())
 
-    def is_zero(self) -> bool:
-        """Check if the current *x, y, z* components of self are zero in value
-
-        Returns
-        ---
-        bool
-        """
-        return is_zero(self.x) and is_zero(self.y) and is_zero(self.z)
-
     def is_equil(self, other: 'Vec4') -> bool:
         """Check if self and other have the same *x, y, z, w* component values
 
@@ -929,6 +928,20 @@ class Vec4:
             is_equil(self.y, other.y) and
             is_equil(self.z, other.z) and
             is_equil(self.w, other.w)
+        )
+
+    def is_zero(self) -> bool:
+        """Check if the current *x, y, z* components of self are zero in value
+
+        Returns
+        ---
+        bool
+        """
+        return (
+            is_zero(self.x) and
+            is_zero(self.y) and
+            is_zero(self.z) and
+            is_zero(self.w)
         )
 
 
@@ -2348,7 +2361,7 @@ class Quaternion:
             case 3: return self.w
             case _: raise QuatError('out of range')
 
-    def __add_(self, other):
+    def __add__(self, other):
         if not isinstance(other, Quaternion):
             raise QuatError('not of type Quaternion')
         x: float = self.x + other.x
@@ -2357,7 +2370,7 @@ class Quaternion:
         w: float = self.w + other.w
         return Quaternion(x, y, z, w)
 
-    def __sub_(self, other):
+    def __sub__(self, other):
         if not isinstance(other, Quaternion):
             raise QuatError('not of type Quaternion')
         x: float = self.x - other.x
@@ -2444,8 +2457,7 @@ class Quaternion:
 
         return Quaternion(x, y, z, w)
 
-    @staticmethod
-    def lerp(start: 'Quaternion', end: 'Quaternion', weight: float) -> 'Quaternion':
+    def lerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
         """Create a quaternion based on the *linear interpolation* between start and end based on weight
 
         Returns
@@ -2455,27 +2467,26 @@ class Quaternion:
         t: float = weight
         t1: float = 1.0 - t
 
-        dot = start.dot(end)
+        dot = self.dot(to)
 
         x, y, z, w = 0.0, 0.0, 0.0, 0.0
         if is_zero(dot):
-            x = t1 * start.x + t * end.x
-            y = t1 * start.y + t * end.y
-            z = t1 * start.z + t * end.z
-            w = t1 * start.w + t * end.w
+            x = t1 * self.x + t * to.x
+            y = t1 * self.y + t * to.y
+            z = t1 * self.z + t * to.z
+            w = t1 * self.w + t * to.w
         else:
-            x = t1 * start.x - t * end.x
-            y = t1 * start.y - t * end.y
-            z = t1 * start.z - t * end.z
-            w = t1 * start.w - t * end.w
+            x = t1 * self.x - t * to.x
+            y = t1 * self.y - t * to.y
+            z = t1 * self.z - t * to.z
+            w = t1 * self.w - t * to.w
 
         return Quaternion(x, y, z, w).unit()
 
-    @staticmethod
-    def slerp(start: 'Quaternion', end: 'Quaternion', weight: float) -> 'Quaternion':
+    def slerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
         '''Return a slerp quaternion'''
 
-        dot: float = start.dot(end)
+        dot: float = self.dot(to)
         flip: bool = False
 
         if dot < 0.0:
@@ -2492,12 +2503,7 @@ class Quaternion:
             s1 = sin((1.0 - weight) * o) * inv
             s2 = -sin(weight * o) * inv if flip else sin(weight * o) * inv
 
-        x: float = s1 * start.x + s2 * end.x
-        y: float = s1 * start.y + s2 * end.y
-        z: float = s1 * start.z + s2 * end.z
-        w: float = s1 * start.w + s2 * end.w
-
-        return Quaternion(x, y, z, w)
+        return self.scale(s1) + to.scale(s2)
 
     def copy(self) -> 'Quaternion':
         """Return a copy of self

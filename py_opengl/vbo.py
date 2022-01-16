@@ -1,6 +1,9 @@
 """VBO
 """
+from ctypes import util
 from dataclasses import dataclass, field
+from msilib.schema import Component
+from textwrap import indent
 from OpenGL import GL
 from py_opengl import utils
 
@@ -15,7 +18,7 @@ class Vbo:
     def __post_init__(self):
         self.vao_id = GL.glGenVertexArrays(1)
 
-    def draw(self) -> None:
+    def use(self) -> None:
         """Bind vbo
         """
         GL.glBindVertexArray(self.vao_id)
@@ -44,7 +47,7 @@ class Vbo:
         normal: bool = GL.GL_TRUE if self.normalized else GL.GL_FALSE
         size_of: int = len(arr) * utils.FLOAT_SIZE
 
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, size_of, utils.c_array(arr), GL.GL_STATIC_DRAW)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, size_of, utils.c_arrayF(arr), GL.GL_STATIC_DRAW)
 
         at = len(self.vbos) - 1
         GL.glVertexAttribPointer(at, self.components, GL.GL_FLOAT, normal, 0, utils.c_cast(0))

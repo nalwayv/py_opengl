@@ -19,7 +19,7 @@ UINT_SIZE: Final[int] = ctypes.sizeof(ctypes.c_uint)
 # --- C HELPERS FUNCTION
 
 
-def c_array(arr: list[float]):
+def c_arrayF(arr: list[float]):
     """Create a ctypes.c_float_Array for OpenGL from a python list of floats
 
     Parameters
@@ -33,6 +33,21 @@ def c_array(arr: list[float]):
         A ctypes.c_float array
     """
     return (ctypes.c_float * len(arr))(*arr)
+
+def c_arrayU(arr: list[int]):
+    """Create a ctypes.c_uint_Array for OpenGL from a python list of ints
+
+    Parameters
+    ---
+    arr : list[int]
+        A python list of floats
+
+    Returns
+    ---
+    ctypes.c__Array
+        A ctypes.c_uint array
+    """
+    return(ctypes.c_uint * len(arr))(*arr)
 
 
 def c_cast(offset: int):
