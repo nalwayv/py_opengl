@@ -114,7 +114,7 @@ class Triangle:
         self.texture_.clean()
         self.vbo_.clean()
 
-
+# cube with pure verts
 @dataclass(eq=False, repr=False, slots=True)
 class Cube:
     vbo_: Optional[vbo.Vbo] = None
@@ -245,7 +245,7 @@ class Cube:
             0.0, 0.0, 1.0
         ]
 
-        tex: list[float] = [
+        tex_coords: list[float] = [
             1.0, 0.0, 0.0,
             0.0, 0.0, 0.0,
             0.0, 1.0, 0.0,
@@ -288,7 +288,114 @@ class Cube:
         self.shader_.compile(vert_src, frag_src)
         self.vbo_.add_data(verts)
         self.vbo_.add_data(color)
-        self.vbo_.add_data(tex)
+        self.vbo_.add_data(tex_coords)
+
+    def draw(self) -> None:
+        """Draw to screen
+        """
+        self.texture_.use()
+        self.shader_.use()
+        self.vbo_.use()
+
+    def clean(self) -> None:
+        """Clean up
+        """
+        self.texture_.clean()
+        self.shader_.clean()
+        self.vbo_.clean()
+
+# cube using indices
+@dataclass(eq=False, repr=False, slots=True)
+class Cube2:
+    vbo_: Optional[vbo.VboIbo] = None
+    shader_: Optional[shader.Shader] = None
+    texture_: Optional[texture.Texture] = None
+    transform_: Optional[transform.Transform] = None
+
+    def __post_init__(self):
+        self.vbo_ = vbo.VboIbo(length=36)
+        self.shader_ = shader.Shader()
+        self.texture_ = texture.Texture()
+        self.transform_ = transform.Transform()
+
+        texture_src: str = 'grid512.bmp'
+
+        vert_src: str = dedent("""
+        # version 430 core
+
+        layout (location = 0) in vec3 a_pos;
+        layout (location = 1) in vec3 a_col;
+        layout (location = 2) in vec3 a_texture;
+
+        out vec3 b_col;
+        out vec2 b_texture;
+
+        uniform mat4 mvp;
+
+        void main(void)
+        {
+            b_col = a_col;
+            b_texture = vec2(a_texture.x, a_texture.y);
+
+            gl_Position = mvp * vec4(a_pos, 1.0);
+        }
+        """)
+
+        frag_src: str = dedent("""
+        # version 430 core
+
+        in vec3 b_col;
+        in vec2 b_texture;
+
+        out vec4 c_col;
+
+        uniform sampler2D c_texture;
+
+        void main(void)
+        {
+            c_col = texture(c_texture, b_texture) * vec4(b_col, 1.0);
+        }
+        """)
+
+        verts: list[float] = [
+             0.5, 0.5, 0.5,  -0.5, 0.5, 0.5,  -0.5,-0.5, 0.5,  0.5,-0.5, 0.5,
+             0.5, 0.5, 0.5,   0.5,-0.5, 0.5,   0.5,-0.5,-0.5,  0.5, 0.5,-0.5,
+             0.5, 0.5, 0.5,   0.5, 0.5,-0.5,  -0.5, 0.5,-0.5, -0.5, 0.5, 0.5,
+            -0.5, 0.5, 0.5,  -0.5, 0.5,-0.5,  -0.5,-0.5,-0.5, -0.5,-0.5, 0.5,
+            -0.5,-0.5,-0.5,   0.5,-0.5,-0.5,   0.5,-0.5, 0.5, -0.5,-0.5, 0.5,
+             0.5,-0.5,-0.5,  -0.5,-0.5,-0.5,  -0.5, 0.5,-0.5,  0.5, 0.5,-0.5
+        ]
+
+        color: list[float] = [
+            1.0, 1.0, 1.0,   1.0, 1.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 1.0,
+            1.0, 1.0, 1.0,   1.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,   0.0, 1.0, 1.0,   0.0, 1.0, 0.0,   1.0, 1.0, 0.0,
+            1.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 0.0, 0.0,   1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,   0.0, 0.0, 1.0,   1.0, 0.0, 1.0,   1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0,   0.0, 0.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 1.0
+        ]
+
+        tex_coords: list[float] = [
+            1.0, 0.0,   0.0, 0.0,   0.0, 1.0,   1.0, 1.0,
+            0.0, 0.0,   0.0, 1.0,   1.0, 1.0,   1.0, 0.0,
+            1.0, 1.0,   1.0, 0.0,   0.0, 0.0,   0.0, 1.0,
+            1.0, 0.0,   0.0, 0.0,   0.0, 1.0,   1.0, 1.0,
+            0.0, 1.0,   1.0, 1.0,   1.0, 0.0,   0.0, 0.0,
+            0.0, 1.0,   1.0, 1.0,   1.0, 0.0,   0.0, 0.0
+        ]
+   
+        indices: list[int] = [
+             0, 1, 2,   2, 3, 0,
+             4, 5, 6,   6, 7, 4,
+             8, 9,10,  10,11, 8,
+            12,13,14,  14,15,12,
+            16,17,18,  18,19,16,
+            20,21,22,  22,23,20
+        ]
+
+        self.texture_.compile(texture_src)
+        self.shader_.compile(vert_src, frag_src)
+        self.vbo_.setup(verts, color, tex_coords, indices)
 
     def draw(self) -> None:
         """Draw to screen
@@ -357,7 +464,7 @@ def main() -> None:
         first_move = True
         last_mp = glm.Vec3()
 
-        shape = Cube()
+        shape = Cube2()
 
         while not glwin.should_close():
             time.update()
