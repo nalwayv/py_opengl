@@ -1,32 +1,29 @@
 """
-GL MATH
+Gl Math
 ---
-
 
 Classes
 ---
-Vec2 :
-    vec2(x, y)
+Vec2
 
-Vec3 :
-    vec3(x, y, z)
+Vec3
 
-Mat3 :
-    matrix 3x3
+Vec4
 
-Mat4 :
-    matrix 4x4
+Ray2D
 
-Plain :
-    direction and normal
+Ray3D
 
-Quaternion :
-    quaternion(x, y, z, w)
+Mat3
+
+Mat4
+
+Plain
+
+Quaternion
 """
-from cmath import acos
 import math
 from dataclasses import dataclass
-from os import stat
 from typing import Final
 
 PI: Final[float] = 3.14159265358979323846
@@ -2685,11 +2682,12 @@ class Quaternion:
             return self.nlerp(to, weight)
         else:
             if abs(cos_half_theta) < EPSILON:
-                x = self.x * 0.5 + to_cpy.x * 0.5
-                y = self.y * 0.5 + to_cpy.y * 0.5
-                z = self.z * 0.5 + to_cpy.z * 0.5
-                w = self.w * 0.5 + to_cpy.w * 0.5
-                return Quaternion(x, y, z, w)
+                return Quaternion(
+                    self.x * 0.5 + to_cpy.x * 0.5,
+                    self.y * 0.5 + to_cpy.y * 0.5,
+                    self.z * 0.5 + to_cpy.z * 0.5,
+                    self.w * 0.5 + to_cpy.w * 0.5
+                )
             else:
                 half_theta: float = arccos(cos_half_theta)
                 sin_half_theta: float = sqrt(1.0 - sqr(cos_half_theta))
@@ -2697,12 +2695,12 @@ class Quaternion:
                 ratio_a: float = sin((1.0 - weight) * half_theta) / sin_half_theta
                 ratio_b: float = sin(weight * half_theta) / sin_half_theta
 
-                x = self.x * ratio_a + to_cpy.x * ratio_b
-                y = self.y * ratio_a + to_cpy.y * ratio_b
-                z = self.z * ratio_a + to_cpy.z * ratio_b
-                w = self.w * ratio_a + to_cpy.w * ratio_b
-                return Quaternion(x, y, z, w)
-
+                return Quaternion(
+                    self.x * ratio_a + to_cpy.x * ratio_b,
+                    self.y * ratio_a + to_cpy.y * ratio_b,
+                    self.z * ratio_a + to_cpy.z * ratio_b,
+                    self.w * ratio_a + to_cpy.w * ratio_b
+                )
 
     def copy(self) -> 'Quaternion':
         """Return a copy of self
