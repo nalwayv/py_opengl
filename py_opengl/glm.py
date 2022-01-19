@@ -23,19 +23,18 @@ Plain :
 Quaternion :
     quaternion(x, y, z, w)
 """
+from cmath import acos
 import math
 from dataclasses import dataclass
+from os import stat
+from typing import Final
 
-PI: float = 3.14159265358979323846
-PIOVER2: float = 1.57079632679489661923
-TAU: float = 6.28318530717958647693
-EPSILON: float = 0.00000000000000022204
-INFINITY: float = float('inf')
-NEGATIVE_INFINITY: float = float('-inf')
-
-
-def swap(a: float|int, b: float|int) -> tuple[float|int, float|int]:
-    return (b, a)
+PI: Final[float] = 3.14159265358979323846
+PIOVER2: Final[float] = 1.57079632679489661923
+TAU: Final[float] = 6.28318530717958647693
+EPSILON: Final[float] = 0.00000000000000022204
+INFINITY: Final[float] = float('inf')
+NEGATIVE_INFINITY: Final[float] = float('-inf')
 
 
 def is_zero(val: float) -> bool:
@@ -207,7 +206,7 @@ def lerp(start: float, end: float, weight: float) -> float:
     float
         lerp amount
     """
-    return start + clamp(weight, 0, 1) * (end - start)
+    return start + clamp(weight, 0.0, 1.0) * (end - start)
 
 
 def normalize(val: float, low: float, high: float) -> float:
@@ -415,6 +414,37 @@ class Vec2:
         """ 
         return Vec2(self.x, self.y)
 
+    def rotate_by(self, angle_deg: float) -> 'Vec2':
+        """Rotate by angle
+
+        Returns
+        ---
+        Vec2
+            vec2 rotated by
+        """
+        angle_rad: float = to_radians(angle_deg)
+        c: float = cos(angle_rad)
+        s: float = sin(angle_rad)
+
+        x: float = self.x * c - self.y * s
+        y: float = self.x * s + self.y * c
+
+        return Vec2(x, y)
+
+    def angle_between(self, other: 'Vec2') -> float:
+        """Return the angle in radians between self and other
+
+        Parameters
+        ---
+        other : Vec2
+
+        Returns
+        ---
+        float
+            angle between self and other
+        """
+        return arctan2(other.y, other.x) - arctan2(self.y, self.x)
+    
     def sum_total(self) -> float:
         """Return sum total of all values
 
@@ -655,6 +685,59 @@ class Vec3:
         Vec3
         """
         return self - self.project(other)
+
+    def rotate_by(self, q: 'Quaternion') -> 'Vec3':
+        """Rotate by quaternion
+
+        Returns
+        ---
+        Vec3
+        """
+        x2: float = sqr(q.x)
+        y2: float = sqr(q.y)
+        z2: float = sqr(q.z)
+        w2: float = sqr(q.w)
+        xy: float = q.x * q.y
+        xz: float = q.x * q.z
+        yz: float = q.y * q.z
+        wx: float = q.w * q.x
+        wy: float = q.w * q.y
+        wz: float = q.w * q.z
+
+        x: float = (
+            self.x * (x2 + w2 - y2 - z2) +
+            self.y * (2.0 * xy - 2.0 * wz) +
+            self.z * (2.0 * xz + 2.0 * wy)
+        )
+        y: float = (
+            self.x * (2.0 * wz + 2.0 * xy) +
+            self.y * (w2 - x2 + y2 - z2) +
+            self.z * (-2.0 * wx + 2.0 * yz)
+        )
+        z: float = (
+            self.x * (-2.0 * wy + 2.0 * xz) +
+            self.y * (2.0 * wx + 2.0 * yz) +
+            self.z * (w2 - x2 - y2 + z2)
+        )
+
+        return Vec3(x, y, z)
+
+    def angle_between(self, other: 'Vec3') -> float:
+        """Return the angle in radians between self and other
+
+        Parameters
+        ---
+        other : Vec3
+
+        Returns
+        ---
+        float
+            angle between self and other
+        """
+        return arctan2(
+            self.cross(other).length_sqrt(),
+            self.dot(other)
+        )
 
     def sum_total(self) -> float:
         """Return sum total of all values
@@ -945,7 +1028,65 @@ class Vec4:
         )
 
 
+# --- Ray2D
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Ray2D:
+    origin: Vec2 = Vec2()
+    direction: Vec2 = Vec2()
+    
+    def __post_init__(self):
+        if not self.direction.is_unit():
+            self.direction.to_unit()
+
+    def get_point(self, at: float) -> Vec2:
+        """Return point at along ray
+
+        Parameters
+        ---
+        at : float
+            how far along ray top travel
+
+        Returns
+        ---
+        Vec2
+            point at
+        """
+        return self.origin + (self.direction * at)
+
+
+# --- Ray3D
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Ray3D:
+    origin: Vec3 = Vec3()
+    direction: Vec3 = Vec3()
+
+    def __post_init__(self):
+        if not self.direction.is_unit():
+            self.direction.to_unit()
+
+    def get_point(self, at: float) -> Vec3:
+        """Return point at along ray
+
+        Parameters
+        ---
+        at : float
+            how far along ray top travel
+
+        Returns
+        ---
+        Vec3
+            point at
+        """
+        return self.origin + (self.direction * at)
+
+
 # --- MATRIX_3
+
+
 class Mat3Error(Exception):
     '''Custom error for matrix 3x3'''
 
@@ -1017,7 +1158,6 @@ class Mat3:
             bx, by, bz,
             cx, cy, cz,
         )
-
 
     def __mul__(self, other):
         if not isinstance(other, Mat3):
@@ -2260,14 +2400,7 @@ class Plain:
         ---
         Plain
         """
-        return Plain(
-            Vec3(
-                self.normal.x,
-                self.normal.y,
-                self.normal.z,
-            ),
-            self.dir
-        )
+        return Plain(self.normal.copy(), self.dir)
 
     def dot(self, v4: Vec4) -> float:
         x: float = self.normal.x * v4.x
@@ -2364,19 +2497,23 @@ class Quaternion:
     def __add__(self, other):
         if not isinstance(other, Quaternion):
             raise QuatError('not of type Quaternion')
+
         x: float = self.x + other.x
         y: float = self.y + other.y
         z: float = self.z + other.z
         w: float = self.w + other.w
+
         return Quaternion(x, y, z, w)
 
     def __sub__(self, other):
         if not isinstance(other, Quaternion):
             raise QuatError('not of type Quaternion')
+
         x: float = self.x - other.x
         y: float = self.y - other.y
         z: float = self.z - other.z
         w: float = self.w - other.w
+
         return Quaternion(x, y, z, w)
 
     def __mul__(self, other):
@@ -2410,6 +2547,10 @@ class Quaternion:
     def from_euler(angles: Vec3) -> 'Quaternion':
         """Create from euler angles
 
+        Parameters
+        ---
+        angles : Vec3
+
         Returns
         ---
         Quaternion
@@ -2436,6 +2577,14 @@ class Quaternion:
     def from_axis(angle_deg: float, axis: Vec3) -> 'Quaternion':
         """Create a quaternion from an angle and axis of rotation
 
+        Parameters
+        ---
+        angle_deg : float
+            angle in degrees
+
+        axis : Vec3
+            axis of rotation
+
         Returns
         ---
         Quaternion
@@ -2460,50 +2609,100 @@ class Quaternion:
     def lerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
         """Create a quaternion based on the *linear interpolation* between start and end based on weight
 
+        Parameters
+        ---
+        to : Quaternion
+
+        weight : float
+
         Returns
         ---
         Quaternion
         """
-        t: float = weight
-        t1: float = 1.0 - t
+        x: float = lerp(self.x, to.x, weight)
+        y: float = lerp(self.y, to.y, weight)
+        z: float = lerp(self.z, to.z, weight)
+        w: float = lerp(self.w, to.w, weight)
 
-        dot = self.dot(to)
+        return Quaternion(x, y, z, w)
 
-        x, y, z, w = 0.0, 0.0, 0.0, 0.0
-        if is_zero(dot):
-            x = t1 * self.x + t * to.x
-            y = t1 * self.y + t * to.y
-            z = t1 * self.z + t * to.z
-            w = t1 * self.w + t * to.w
-        else:
-            x = t1 * self.x - t * to.x
-            y = t1 * self.y - t * to.y
-            z = t1 * self.z - t * to.z
-            w = t1 * self.w - t * to.w
+    def nlerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
+        """Return the interpolation between two quaternions
 
-        return Quaternion(x, y, z, w).unit()
+        Parameters
+        ---
+        to : Quaternion
+
+        weight : float
+
+        Returns
+        ---
+        Quaternion
+        """
+        x: float = lerp(self.x, to.x, weight)
+        y: float = lerp(self.y, to.y, weight)
+        z: float = lerp(self.z, to.z, weight)
+        w: float = lerp(self.w, to.w, weight)
+
+        length: float = sqrt(sqr(x) + sqr(y) + sqr(z) + sqr(w))
+        if is_zero(length):
+            length = 1.0
+
+        inv: float = 1.0 / length
+        x *= inv
+        y *= inv
+        z *= inv
+        w *= inv
+
+        return Quaternion(x, y, z, w)
 
     def slerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
-        '''Return a slerp quaternion'''
+        """Return the spherical linear interpolation between two quaternions
 
-        dot: float = self.dot(to)
-        flip: bool = False
+        Parameters
+        ---
+        to : Quaternion
 
-        if dot < 0.0:
-            flip = True
-            dot *= -1.0
+        weight : float
 
-        s1, s2 = 0.0, 0.0
-        if dot > (1.0 - EPSILON):
-            s1 = 1.0 - weight
-            s2 = -weight if flip else weight
+        Returns
+        ---
+        Quaternion
+        """
+        cos_half_theta : float = self.dot(to)
+        to_cpy = to.copy()
+
+        if cos_half_theta < 0.0:
+            to_cpy.x *= -1.0
+            to_cpy.y *= -1.0
+            to_cpy.z *= -1.0
+            to_cpy.w *= -1.0
+            cos_half_theta *= -1.0
+
+        if abs(cos_half_theta) >= 1.0:
+            return self.copy()
+        elif cos_half_theta > 0.95:
+            return self.nlerp(to, weight)
         else:
-            o: float = arccos(dot)
-            inv: float = 1.0 / sin(o)
-            s1 = sin((1.0 - weight) * o) * inv
-            s2 = -sin(weight * o) * inv if flip else sin(weight * o) * inv
+            if abs(cos_half_theta) < EPSILON:
+                x = self.x * 0.5 + to_cpy.x * 0.5
+                y = self.y * 0.5 + to_cpy.y * 0.5
+                z = self.z * 0.5 + to_cpy.z * 0.5
+                w = self.w * 0.5 + to_cpy.w * 0.5
+                return Quaternion(x, y, z, w)
+            else:
+                half_theta: float = arccos(cos_half_theta)
+                sin_half_theta: float = sqrt(1.0 - sqr(cos_half_theta))
 
-        return self.scale(s1) + to.scale(s2)
+                ratio_a: float = sin((1.0 - weight) * half_theta) / sin_half_theta
+                ratio_b: float = sin(weight * half_theta) / sin_half_theta
+
+                x = self.x * ratio_a + to_cpy.x * ratio_b
+                y = self.y * ratio_a + to_cpy.y * ratio_b
+                z = self.z * ratio_a + to_cpy.z * ratio_b
+                w = self.w * ratio_a + to_cpy.w * ratio_b
+                return Quaternion(x, y, z, w)
+
 
     def copy(self) -> 'Quaternion':
         """Return a copy of self
@@ -2530,10 +2729,10 @@ class Quaternion:
         ---
         Quaternion
         """
-        x = self.x * by
-        y = self.y * by
-        z = self.z * by
-        w = self.w * by
+        x: float = self.x * by
+        y: float = self.y * by
+        z: float = self.z * by
+        w: float = self.w * by
         return Quaternion(x, y, z, w)
 
     def inverse(self) -> 'Quaternion':
@@ -2544,7 +2743,11 @@ class Quaternion:
         Quaternion
         """
         inv: float = 1.0 / self.length_sqr()
-        return Quaternion(-self.x * inv, -self.y * inv, -self.z * inv, self.q * inv)
+        x: float = -self.x * inv
+        y: float = -self.y * inv
+        z: float = -self.z * inv
+        w: float = self.q * inv
+        return Quaternion(x, y, z, w)
 
     def to_unit(self) -> None:
         """Normalize the length of self
@@ -2559,7 +2762,7 @@ class Quaternion:
         if is_zero(lsq):
             raise QuatError('length was zero')
 
-        inv = inv_sqrt(lsq)
+        inv: float = inv_sqrt(lsq)
         self.x *= inv
         self.y *= inv
         self.z *= inv

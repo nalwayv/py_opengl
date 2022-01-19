@@ -22,13 +22,13 @@ class Texture:
     height: float = 0.0
     texture_id: int = 0
 
-    def compile(self, file_path: str) -> None:
+    def compile(self, file_name: str) -> None:
         """Create and compile a texture for opengl to use within a shader
 
         Parameters
         ---
-        file_path : str
-            file path of image that should be located within
+        file_name : str
+            file name of image that should be located within
             the *./images* directory
 
         Raises
@@ -36,7 +36,7 @@ class Texture:
         TextureError
             texture file not found
         """
-        file = Path(f'py_opengl/images/{file_path}').absolute()
+        file = Path(f'py_opengl/images/{file_name}').absolute()
 
         if not file.exists():
             raise TextureError('that texture was not found within images folder')
@@ -44,10 +44,9 @@ class Texture:
         # use pillow to open tetxure image file
         with Image.open(file.as_posix()) as im:
             self.texture_id = GL.glGenTextures(1)
-            self.width = im.size[0]
-            self.height = im.size[1]
-            border = 0
-            level = 0
+            self.width, self.height = im.size
+            border: int = 0
+            level: int = 0
 
             GL.glBindTexture(GL.GL_TEXTURE_2D, self.texture_id)
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
@@ -56,7 +55,17 @@ class Texture:
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_REPEAT)
             GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
 
-            GL.glTexImage2D(GL.GL_TEXTURE_2D, level, GL.GL_RGB, self.width, self.height, border, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, im.tobytes())
+            GL.glTexImage2D(
+                GL.GL_TEXTURE_2D,
+                level,
+                GL.GL_RGB,
+                self.width,
+                self.height,
+                border,
+                GL.GL_RGB,
+                GL.GL_UNSIGNED_BYTE,
+                im.tobytes()
+            )
 
     def clean(self) -> None:
         """Clean up texture from opengl

@@ -1,10 +1,18 @@
 """Shader
 """
 from dataclasses import dataclass
+from pathlib import Path
+
 from OpenGL import GL
-from py_opengl import glm
 from OpenGL.GL.shaders import compileShader, compileProgram
 
+from py_opengl import glm
+
+class ShaderError(Exception):
+    '''Custom error for Shader'''
+
+    def __init__(self, msg: str):
+        super().__init__(msg)
 
 @dataclass(eq=False, repr=False, slots=True)
 class Shader:
@@ -13,19 +21,37 @@ class Shader:
     def __post_init__(self):
         self.shader_id = GL.glCreateProgram()
 
-    def compile(self, v_src: str, f_src: str) -> None:
+    def compile(self, vert_file: str, frag_file: str) -> None:
         """Compile shader
 
         Parameters
         ---
-        v_src : str
-            vertex shader code in str format
-        f_src : str
-            fragment shader code in str format
+        vert_file : str
+            vert file name
+        frag_file : str
+            frag file name
+
+        Raises
+        ---
+        ShaderError
+            if shader is not located within *shaders* folder
         """
-        self.shader_id = compileProgram(
-                compileShader(v_src, GL.GL_VERTEX_SHADER),
-                compileShader(f_src, GL.GL_FRAGMENT_SHADER))
+        v_file = Path(f'py_opengl/shaders/{vert_file}').absolute()
+        f_file = Path(f'py_opengl/shaders/{frag_file}').absolute()
+
+        if not v_file.exists():
+            raise ShaderError('vert file was not found within shaders folder')
+        if not f_file.exists():
+            raise ShaderError('frag file was not found within shaders folder')
+
+        with(
+            open(v_file.as_posix(), mode='r') as v,
+            open(f_file.as_posix(), mode='r') as f
+        ):
+            self.shader_id = compileProgram(
+                compileShader(v, GL.GL_VERTEX_SHADER),
+                compileShader(f, GL.GL_FRAGMENT_SHADER)
+            )
 
     def clean(self) -> None:
         """Clean shader by deleteing the stored shader program id

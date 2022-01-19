@@ -8,6 +8,7 @@ import glfw
 # notes
 # https://www.glfw.org/docs/latest/input_guide.html#input_keyboard
 
+
 class GlWindowError(Exception):
     """Gl Window Error
 

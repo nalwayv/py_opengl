@@ -1,7 +1,6 @@
 """PY OPENGL
 """
 from dataclasses import dataclass
-from textwrap import dedent
 from typing import Optional
 
 import glfw
@@ -26,55 +25,20 @@ from py_opengl import texture
 
 @dataclass(eq=False, repr=False, slots=True)
 class Triangle:
-    vbo_: Optional[vbo.Vbo] = None
+    vbo_: Optional[vbo.VboIbo] = None
     shader_: Optional[shader.Shader] = None
     texture_: Optional[texture.Texture] = None
     transform_: Optional[transform.Transform] = None
 
     def __post_init__(self):
-        self.vbo_ = vbo.Vbo(length=9)
+        self.vbo_ = vbo.VboIbo(length=9)
         self.shader_ = shader.Shader()
         self.texture_ = texture.Texture()
         self.transform_ = transform.Transform()
 
         texture_src: str = 'wall.jpg'
-
-        vert_src: str = dedent("""
-        # version 430 core
-
-        layout (location = 0) in vec3 a_pos;
-        layout (location = 1) in vec3 a_col;
-        layout (location = 2) in vec3 a_texture;
-
-        out vec3 b_col;
-        out vec2 b_texture;
-
-        uniform mat4 mvp;
-
-        void main(void)
-        {
-            b_col = a_col;
-            b_texture = vec2(a_texture.x, a_texture.y);
-
-            gl_Position = mvp * vec4(a_pos, 1.0);
-        }
-        """)
-
-        frag_src: str = dedent("""
-        # version 430 core
-
-        in vec3 b_col;
-        in vec2 b_texture;
-
-        out vec4 c_col;
-
-        uniform sampler2D c_texture;
-
-        void main(void)
-        {
-            c_col = texture(c_texture, b_texture) * vec4(b_col, 1.0);
-        }
-        """)
+        vert_src: str = 'shader.vert'
+        frag_src: str = 'shader.frag'
 
         verts: list[float] = [
             0.5, -0.5, 0.0,
@@ -88,17 +52,21 @@ class Triangle:
             0.0, 0.0, 1.0
         ]
 
-        tex: list[float] = [
-            0.0, 0.0, 0.0,
-            1.0, 0.0, 0.0,
-            0.5, 1.0, 0.0,
+        tex_coords: list[float] = [
+            0.0, 0.0,
+            1.0, 0.0,
+            0.5, 1.0,
+        ]
+
+        indices: list[int] = [
+            0, 1, 2,
+            3, 4, 5,
+            6, 7, 8
         ]
 
         self.texture_.compile(texture_src)
         self.shader_.compile(vert_src, frag_src)
-        self.vbo_.add_data(verts)
-        self.vbo_.add_data(color)
-        self.vbo_.add_data(tex)
+        self.vbo_.setup(verts, color, tex_coords, indices)
 
     def draw(self) -> None:
         """Draw to screen
@@ -114,199 +82,9 @@ class Triangle:
         self.texture_.clean()
         self.vbo_.clean()
 
-# cube with pure verts
+
 @dataclass(eq=False, repr=False, slots=True)
 class Cube:
-    vbo_: Optional[vbo.Vbo] = None
-    shader_: Optional[shader.Shader] = None
-    texture_: Optional[texture.Texture] = None
-    transform_: Optional[transform.Transform] = None
-
-    def __post_init__(self):
-        self.vbo_ = vbo.Vbo(length=36)
-        self.shader_ = shader.Shader()
-        self.texture_ = texture.Texture()
-        self.transform_ = transform.Transform()
-
-        texture_src: str = 'grid512.bmp'
-
-        vert_src: str = dedent("""
-        # version 430 core
-
-        layout (location = 0) in vec3 a_pos;
-        layout (location = 1) in vec3 a_col;
-        layout (location = 2) in vec3 a_texture;
-
-        out vec3 b_col;
-        out vec2 b_texture;
-
-        uniform mat4 mvp;
-
-        void main(void)
-        {
-            b_col = a_col;
-            b_texture = vec2(a_texture.x, a_texture.y);
-
-            gl_Position = mvp * vec4(a_pos, 1.0);
-        }
-        """)
-
-        frag_src: str = dedent("""
-        # version 430 core
-
-        in vec3 b_col;
-        in vec2 b_texture;
-
-        out vec4 c_col;
-
-        uniform sampler2D c_texture;
-
-        void main(void)
-        {
-            c_col = texture(c_texture, b_texture) * vec4(b_col, 1.0);
-        }
-        """)
-
-        verts: list[float] = [
-            0.5, 0.5, 0.5,
-            -0.5, 0.5, 0.5,
-            -0.5, -0.5, 0.5,
-            -0.5, -0.5, 0.5,
-            0.5, -0.5, 0.5,
-            0.5, 0.5, 0.5,
-            0.5, 0.5, 0.5,
-            0.5, -0.5, 0.5,
-            0.5, -0.5, -0.5,
-            0.5, -0.5, -0.5,
-            0.5, 0.5, -0.5,
-            0.5, 0.5, 0.5,
-            0.5, 0.5, 0.5,
-            0.5, 0.5, -0.5,
-            -0.5, 0.5, -0.5,
-            -0.5, 0.5, -0.5,
-            -0.5, 0.5, 0.5,
-            0.5, 0.5, 0.5,
-            -0.5, 0.5, 0.5,
-            -0.5, 0.5, -0.5,
-            -0.5, -0.5, -0.5,
-            -0.5, -0.5, -0.5,
-            -0.5, -0.5, 0.5,
-            -0.5, 0.5, 0.5,
-            -0.5, -0.5, -0.5,
-            0.5, -0.5, -0.5,
-            0.5, -0.5, 0.5,
-            0.5, -0.5, 0.5,
-            -0.5, -0.5, 0.5,
-            -0.5, -0.5, -0.5,
-            0.5, -0.5, -0.5,
-            -0.5, -0.5, -0.5,
-            -0.5, 0.5, -0.5,
-            -0.5, 0.5, -0.5,
-            0.5, 0.5, -0.5,
-            0.5, -0.5, -0.5
-        ]
-
-        color: list[float] = [
-            1.0, 1.0, 1.0,
-            1.0, 1.0, 0.0,
-            1.0, 0.0, 0.0,
-            1.0, 0.0, 0.0,
-            1.0, 0.0, 1.0,
-            1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,
-            1.0, 0.0, 1.0,
-            0.0, 0.0, 1.0,
-            0.0, 0.0, 1.0,
-            0.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,
-            0.0, 1.0, 1.0,
-            0.0, 1.0, 0.0,
-            0.0, 1.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 1.0, 1.0,
-            1.0, 1.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0,
-            1.0, 0.0, 0.0,
-            1.0, 1.0, 0.0,
-            0.0, 0.0, 0.0,
-            0.0, 0.0, 1.0,
-            1.0, 0.0, 1.0,
-            1.0, 0.0, 1.0,
-            1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0,
-            0.0, 0.0, 1.0,
-            0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 1.0, 1.0,
-            0.0, 0.0, 1.0
-        ]
-
-        tex_coords: list[float] = [
-            1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 1.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 1.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 0.0, 0.0,
-            1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 1.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 0.0, 0.0,
-            1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-        ]
-
-        self.texture_.compile(texture_src)
-        self.shader_.compile(vert_src, frag_src)
-        self.vbo_.add_data(verts)
-        self.vbo_.add_data(color)
-        self.vbo_.add_data(tex_coords)
-
-    def draw(self) -> None:
-        """Draw to screen
-        """
-        self.texture_.use()
-        self.shader_.use()
-        self.vbo_.use()
-
-    def clean(self) -> None:
-        """Clean up
-        """
-        self.texture_.clean()
-        self.shader_.clean()
-        self.vbo_.clean()
-
-# cube using indices
-@dataclass(eq=False, repr=False, slots=True)
-class Cube2:
     vbo_: Optional[vbo.VboIbo] = None
     shader_: Optional[shader.Shader] = None
     texture_: Optional[texture.Texture] = None
@@ -319,43 +97,8 @@ class Cube2:
         self.transform_ = transform.Transform()
 
         texture_src: str = 'grid512.bmp'
-
-        vert_src: str = dedent("""
-        # version 430 core
-
-        layout (location = 0) in vec3 a_pos;
-        layout (location = 1) in vec3 a_col;
-        layout (location = 2) in vec3 a_texture;
-
-        out vec3 b_col;
-        out vec2 b_texture;
-
-        uniform mat4 mvp;
-
-        void main(void)
-        {
-            b_col = a_col;
-            b_texture = vec2(a_texture.x, a_texture.y);
-
-            gl_Position = mvp * vec4(a_pos, 1.0);
-        }
-        """)
-
-        frag_src: str = dedent("""
-        # version 430 core
-
-        in vec3 b_col;
-        in vec2 b_texture;
-
-        out vec4 c_col;
-
-        uniform sampler2D c_texture;
-
-        void main(void)
-        {
-            c_col = texture(c_texture, b_texture) * vec4(b_col, 1.0);
-        }
-        """)
+        vert_src: str = 'shader.vert'
+        frag_src: str = 'shader.frag'
 
         verts: list[float] = [
              0.5, 0.5, 0.5,  -0.5, 0.5, 0.5,  -0.5,-0.5, 0.5,  0.5,-0.5, 0.5,
@@ -432,6 +175,7 @@ def cb_window_resize(window, width, height):
 
 # --- MAIN
 
+
 def main() -> None:
     """Main
     """
@@ -464,7 +208,7 @@ def main() -> None:
         first_move = True
         last_mp = glm.Vec3()
 
-        shape = Cube2()
+        shape = Cube()
 
         while not glwin.should_close():
             time.update()

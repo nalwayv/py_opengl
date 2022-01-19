@@ -85,14 +85,14 @@ class VboIbo:
             self,
             verts: list[float],
             color: list[float],
-            texture: list[float],
+            tex_coords: list[float],
             indices: list[int]
         ) -> None:
         """Setup vbo
         """
         vsize: int = len(verts) * utils.FLOAT_SIZE
         csize: int = len(color) * utils.FLOAT_SIZE
-        tsize: int = len(texture) * utils.FLOAT_SIZE
+        tsize: int = len(tex_coords) * utils.FLOAT_SIZE
         isize: int = len(indices) * utils.UINT_SIZE
         components: int = 3
         components_texture: int = 2
@@ -121,7 +121,7 @@ class VboIbo:
         GL.glEnableVertexAttribArray(1)
 
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo_ids[2])
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, tsize, utils.c_arrayF(texture), GL.GL_STATIC_DRAW)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, tsize, utils.c_arrayF(tex_coords), GL.GL_STATIC_DRAW)
         GL.glVertexAttribPointer(2, components_texture, GL.GL_FLOAT, normal, 0, utils.c_cast(0))
         GL.glEnableVertexAttribArray(2)
 

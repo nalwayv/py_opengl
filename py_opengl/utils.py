@@ -5,8 +5,8 @@ from typing import Final
 
 # --- GLOBALS
 
-SCREEN_WIDTH: Final[int] = 500
-SCREEN_HEIGHT: Final[int] = 500
+SCREEN_WIDTH: Final[int] = 640
+SCREEN_HEIGHT: Final[int] = 480
 
 
 # --- DATA SIZES

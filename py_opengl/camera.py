@@ -139,8 +139,9 @@ class Camera:
         self.front.y = glm.sin(self.pitch)
         self.front.z = glm.cos(self.pitch) * glm.sin(self.yaw)
 
-        self.front = self.front.unit()
-        self.right = self.front.cross(glm.Vec3(y=1.0)).unit()
+        self.front.to_unit()
+        self.right = self.front.cross(glm.Vec3(y=1))
+        self.right.to_unit()
         self.up = self.right.cross(self.front)
 
     def perspective_matrix(self) -> glm.Mat4:
