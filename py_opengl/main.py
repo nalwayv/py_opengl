@@ -1,7 +1,6 @@
 """PY OPENGL
 """
 from dataclasses import dataclass
-from typing import Optional
 
 import glfw
 from loguru import logger
@@ -25,10 +24,10 @@ from py_opengl import texture
 
 @dataclass(eq=False, repr=False, slots=True)
 class Triangle:
-    vbo_: Optional[vbo.VboIbo] = None
-    shader_: Optional[shader.Shader] = None
-    texture_: Optional[texture.Texture] = None
-    transform_: Optional[transform.Transform] = None
+    vbo_: vbo.VboIbo|None = None
+    shader_: shader.Shader|None = None
+    texture_: texture.Texture|None = None
+    transform_: transform.Transform|None = None
 
     def __post_init__(self):
         self.vbo_ = vbo.VboIbo(length=9)
@@ -85,10 +84,10 @@ class Triangle:
 
 @dataclass(eq=False, repr=False, slots=True)
 class Cube:
-    vbo_: Optional[vbo.VboIbo] = None
-    shader_: Optional[shader.Shader] = None
-    texture_: Optional[texture.Texture] = None
-    transform_: Optional[transform.Transform] = None
+    vbo_: vbo.VboIbo|None = None
+    shader_: shader.Shader|None = None
+    texture_: texture.Texture|None = None
+    transform_: transform.Transform|None = None
 
     def __post_init__(self):
         self.vbo_ = vbo.VboIbo(length=36)
@@ -295,4 +294,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-

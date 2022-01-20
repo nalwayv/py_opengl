@@ -1031,11 +1031,11 @@ class Vec4:
 @dataclass(eq=False, repr=False, slots=True)
 class Ray2D:
     origin: Vec2 = Vec2()
-    direction: Vec2 = Vec2()
+    normal: Vec2 = Vec2(x=1.0)
     
     def __post_init__(self):
-        if not self.direction.is_unit():
-            self.direction.to_unit()
+        if not self.normal.is_unit():
+            self.normal.to_unit()
 
     def get_point(self, at: float) -> Vec2:
         """Return point at along ray
@@ -1050,7 +1050,7 @@ class Ray2D:
         Vec2
             point at
         """
-        return self.origin + (self.direction * at)
+        return self.origin + (self.normal * at)
 
 
 # --- Ray3D
@@ -1059,11 +1059,11 @@ class Ray2D:
 @dataclass(eq=False, repr=False, slots=True)
 class Ray3D:
     origin: Vec3 = Vec3()
-    direction: Vec3 = Vec3()
+    normal: Vec3 = Vec3(x=1.0)
 
     def __post_init__(self):
-        if not self.direction.is_unit():
-            self.direction.to_unit()
+        if not self.normal.is_unit():
+            self.normal.to_unit()
 
     def get_point(self, at: float) -> Vec3:
         """Return point at along ray
@@ -1078,7 +1078,7 @@ class Ray3D:
         Vec3
             point at
         """
-        return self.origin + (self.direction * at)
+        return self.origin + (self.normal * at)
 
 
 # --- MATRIX_3

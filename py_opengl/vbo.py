@@ -1,9 +1,6 @@
 """VBO
 """
-from ctypes import util
 from dataclasses import dataclass, field
-from msilib.schema import Component
-from textwrap import indent
 from OpenGL import GL
 from py_opengl import utils
 
