@@ -14,7 +14,6 @@ from py_opengl import vbo
 from py_opengl import keyboard
 from py_opengl import mouse
 from py_opengl import camera
-from py_opengl import transform
 from py_opengl import window
 from py_opengl import texture
 
@@ -27,13 +26,13 @@ class Triangle:
     vbo_: vbo.VboIbo|None = None
     shader_: shader.Shader|None = None
     texture_: texture.Texture|None = None
-    transform_: transform.Transform|None = None
+    transform_: glm.Transform|None = None
 
     def __post_init__(self):
         self.vbo_ = vbo.VboIbo(length=9)
         self.shader_ = shader.Shader()
         self.texture_ = texture.Texture()
-        self.transform_ = transform.Transform()
+        self.transform_ = glm.Transform()
 
         texture_src: str = 'wall.jpg'
         vert_src: str = 'shader.vert'
@@ -87,13 +86,13 @@ class Cube:
     vbo_: vbo.VboIbo|None = None
     shader_: shader.Shader|None = None
     texture_: texture.Texture|None = None
-    transform_: transform.Transform|None = None
+    transform_: glm.Transform|None = None
 
     def __post_init__(self):
         self.vbo_ = vbo.VboIbo(length=36)
         self.shader_ = shader.Shader()
         self.texture_ = texture.Texture()
-        self.transform_ = transform.Transform()
+        self.transform_ = glm.Transform()
 
         texture_src: str = 'grid512.bmp'
         vert_src: str = 'shader.vert'

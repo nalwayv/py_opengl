@@ -21,6 +21,8 @@ Mat4
 Plain
 
 Quaternion
+
+Transform
 """
 import math
 from dataclasses import dataclass
@@ -1446,59 +1448,59 @@ class Mat3:
             cx, cy, cz
         )
 
-    def row0(self) -> tuple[float, float, float]:
+    def row0(self) -> Vec3:
         """Return the first row of float values
 
         Returns
         ---
-        tuple[float, float, float]
+        Vec3
         """
-        return (self.ax, self.ay, self.az)
+        return Vec3(self.ax, self.ay, self.az)
 
-    def row1(self) -> tuple[float, float, float]:
+    def row1(self) -> Vec3:
         """Return the second row of float values
         
         Returns
         ---
-        tuple[float, float, float]
+        Vec3
         """
-        return (self.bx, self.by, self.bz)
+        return Vec3(self.bx, self.by, self.bz)
 
-    def row2(self) -> tuple[float, float, float]:
+    def row2(self) -> Vec3:
         """Return the third row of float values
 
         Returns
         ---
-        tuple[float, float, float]
+        Vec3
         """
-        return (self.cx, self.cy, self.cz)
+        return Vec3(self.cx, self.cy, self.cz)
 
-    def col0(self) -> tuple[float, float, float]:
+    def col0(self) -> Vec3:
         """Return the first column of float values
 
         Returns
         ---
-        tuple[float, float, float]
+        Vec3
         """
-        return (self.ax, self.bx, self.cx)
+        return Vec3(self.ax, self.bx, self.cx)
 
-    def col1(self) -> tuple[float, float, float]:
+    def col1(self) -> Vec3:
         """Return the second column of float values
 
         Returns
         ---
-        tuple[float, float, float]
+        Vec3
         """
-        return (self.ay, self.by, self.cy)
+        return Vec3(self.ay, self.by, self.cy)
 
-    def col2(self) -> tuple[float, float, float]:
+    def col2(self) -> Vec3:
         """Return the third column of float values
 
         Returns
         ---
-        tuple[float, float, float]
+        Vec3
         """
-        return (self.az, self.bz, self.cz)
+        return Vec3(self.az, self.bz, self.cz)
 
     def at(self, row: int, col: int) -> float:
         return self[col * 3 + row]
@@ -1779,6 +1781,51 @@ class Mat4:
         Mat4
         """
         return Mat4(ax=1.0, by=1.0, cz=1.0, dx=v3.x, dy=v3.y, dz=v3.z, dw=1.0)
+
+    @staticmethod
+    def create_x_shear(shear_y: float, shear_z: float) -> 'Mat4':
+        """Create a shear mat4 matrix on x axis
+
+        Returns
+        ---
+        Mat4
+        """
+        return Mat4(
+            ax=1.0, ay=shear_y, az=shear_z,
+            by=1.0,
+            cz=1.0,
+            dw=1.0
+        )
+
+    @staticmethod
+    def create_y_shear(shear_x: float, shear_z: float) -> 'Mat4':
+        """Create a shear mat4 matrix on y axis
+
+        Returns
+        ---
+        Mat4
+        """
+        return Mat4(
+            ax=1.0,
+            bx=shear_x, by=1.0, bz=shear_z,
+            cz=1.0,
+            dw=1.0
+        )
+
+    @staticmethod
+    def create_z_shear(shear_x: float, shear_y: float) -> 'Mat4':
+        """Create a shear mat4 matrix on z axis
+
+        Returns
+        ---
+        Mat4
+        """
+        return Mat4(
+            ax=1.0,
+            by=1.0,
+            cx=shear_x, cy=shear_y, cz=1.0,
+            dw=1.0
+        )
 
     @staticmethod
     def create_x_rotation(angle_deg: float) -> 'Mat4':
@@ -2194,77 +2241,77 @@ class Mat4:
             raise Mat4Error('length of this Mat4 was zero')
         return self.scale(1.0 / det)
 
-    def row0(self) -> tuple[float, float, float, float]:
+    def row0(self) -> Vec4:
         """Return the first row of float values
 
         Returns
         ---
-        tuple[float, float, float, float]
+        Vec4
         """
-        return (self.ax, self.ay, self.az, self.aw)
+        return Vec4(self.ax, self.ay, self.az, self.aw)
 
-    def row1(self) -> tuple[float, float, float, float]:
+    def row1(self) -> Vec4:
         """Return the second row of float values
         
         Returns
         ---
-        tuple[float, float, float, float]
+        Vec4
         """
-        return (self.bx, self.by, self.bz, self.bw)
+        return Vec4(self.bx, self.by, self.bz, self.bw)
 
-    def row2(self) -> tuple[float, float, float, float]:
+    def row2(self) -> Vec4:
         """Return the third row of float values
 
         Returns
         ---
-        tuple[float, float, float, float]
+        Vec4
         """
-        return (self.cx, self.cy, self.cz, self.cw)
+        return Vec4(self.cx, self.cy, self.cz, self.cw)
 
-    def row3(self) -> tuple[float, float, float, float]:
+    def row3(self) -> Vec4:
         """Return the fourth row of float values
 
         Returns
         ---
-        tuple[float, float, float, float]
+        Vec4
         """
-        return (self.dx, self.dy, self.dz, self.dw)
+        return Vec4(self.dx, self.dy, self.dz, self.dw)
 
-    def col0(self) -> tuple[float, float, float, float]:
+    def col0(self) -> Vec4:
         """Return the first column of float values
 
         Returns
         ---
-        tuple[float, float, float, float]
+        Vec4
         """
-        return (self.ax, self.bx, self.cx, self.dx)
+        return Vec4(self.ax, self.bx, self.cx, self.dx)
 
-    def col1(self) -> tuple[float, float, float, float]:
+    def col1(self) -> Vec4:
         """Return the second column of float values
 
         Returns
         ---
-        tuple[float, float, float, float]
+        Vec4
         """
-        return (self.ay, self.by, self.cy, self.dy)
+        return Vec4(self.ay, self.by, self.cy, self.dy)
 
-    def col2(self) -> tuple[float, float, float, float]:
+    def col2(self) -> Vec4:
         """Return the third column of float values
 
         Returns
         ---
-        tuple[float, float, float, float]
+        Vec4
         """
-        return (self.az, self.bz, self.cz, self.dz)
+        return Vec4(self.az, self.bz, self.cz, self.dz)
 
-    def col3(self) -> tuple[float, float, float, float]:
+    def col3(self) -> Vec4:
         """Return the fourth column of float values
 
         Returns
         ---
-        tuple[float, float, float, float]
+        Vec4
         """
-        return (self.aw, self.bw, self.cw, self.dw)
+        return Vec4(self.aw, self.bw, self.cw, self.dw)
 
     def at(self, row: int, col: int) -> float:
         return self[col * 4 + row]
@@ -2953,3 +3000,26 @@ class Quaternion:
         bool
         """
         return is_one(self.length_sqr())
+
+
+# --- TRANSFORM
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Transform:
+    position: Vec3 = Vec3()
+    scale: float = 1.0
+    rotation: Quaternion = Quaternion(w=1.0)
+
+    def get_matrix(self) -> Mat4:
+        """Return transform matrix
+
+        Returns
+        ---
+        glm.Mat4
+        """
+        return (
+            Mat4.create_translation(self.position) *
+            self.rotation.to_mat4() *
+            Mat4.create_scaler(Vec3(self.scale, self.scale, self.scale))
+        )
