@@ -11,6 +11,6 @@ Python packages used
 | [loguru](https://pypi.org/project/loguru/) | 0.5.3 |
 | [pillow](https://pypi.org/project/Pillow/) | 9.0.0 |
 
-### Resouses used
+### Resources used
 
 [Learn OpenGL](https://learnopengl.com)
