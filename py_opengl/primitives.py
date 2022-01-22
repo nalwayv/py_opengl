@@ -21,6 +21,25 @@ class Aabb:
             (max_pt - min_pt) * 0.5
         )
 
+    def copy(self) -> 'Aabb':
+        """Return a copy of self
+
+        Returns
+        ---
+        Abbb
+        """
+        return Aabb(self.position.copy(), self.size.copy())
+
+    def closest_pt(self, pt: glm.Vec3) -> glm.Vec3:
+        pt_min: glm.Vec3 = self.get_min()
+        pt_max: glm.Vec3 = self.get_max()
+
+        x: float = glm.clamp(pt.x, pt_min.x, pt_max.x)
+        y: float = glm.clamp(pt.y, pt_min.y, pt_max.y)
+        z: float = glm.clamp(pt.z, pt_min.z, pt_max.z)
+
+        return glm.Vec3(x, y, z)
+
     def get_min(self) -> glm.Vec3:
         pt1: glm.Vec3 = self.position + self.size
         pt2: glm.Vec3 = self.position - self.size
@@ -41,9 +60,10 @@ class Aabb:
 
         return glm.Vec3(x, y, z)
 
-    def intersect(self, other: 'Aabb') -> bool:
+    def intersect_aabb(self, other: 'Aabb') -> bool:
         amin: glm.Vec3 = self.get_min()
         amax: glm.Vec3 = self.get_max()
+
         bmin: glm.Vec3 = other.get_min()
         bmax: glm.Vec3 = other.get_max()
 
@@ -52,6 +72,82 @@ class Aabb:
         check_z: bool = amin.z <= bmax.z and amax.z >= bmin.z
 
         return check_x and check_y and check_z
+
+    def intersect_pt(self, pt: glm.Vec3) -> bool:
+        amin = self.get_min()
+        amax = self.get_max()
+
+        check = (
+            (pt.x < amin.x) or
+            (pt.y < amin.y) or
+            (pt.x > amax.x) or
+            (pt.y > amax.y)
+        )
+
+        return not check
+
+    def intersect_sphere(self, sph: 'Sphere') -> bool:
+        close_pt: glm.Vec3 = self.closest_pt(sph.position)
+        dis: float = (sph.position - close_pt).length_sqr()
+        r2 = glm.sqr(sph.radius)
+        return dis < r2
+
+    def intersect_plain(self, plain: 'Plain') -> bool:
+        len_sq: float = (
+            self.size.x * glm.absf(plain.normal.x) +
+            self.size.y * glm.absf(plain.normal.y) +
+            self.size.z * glm.absf(plain.normal.z)
+        )
+
+        dot: float = plain.normal.dot(self.position)
+        dis: float = dot - plain.direction
+
+        return glm.absf(dis) <= len_sq
+
+
+# --- SPHERE
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Sphere:
+    position: glm.Vec3 = glm.Vec3()
+    radius: float = 1.0
+
+    def copy(self) -> 'Sphere':
+        """Return a copy of self
+
+        Returns
+        ---
+        Sphere
+        """
+        return Sphere(self.position.copy(), self.radius)
+
+    def closest_pt(self, pt: glm.Vec3) -> glm.Vec3:
+        p = pt - self.position
+        p.to_unit()
+        return self.position + (p * self.radius)
+
+    def intersect_sphere(self, other: 'Sphere') -> bool:
+        dis: float = (self.position - other.position).length_sqr()
+        r2: float = glm.sqr(self.radius + other.radius)
+        return dis < r2
+
+    def intersect_pt(self, pt: glm.Vec3) -> bool:
+        dis: float = (self.position - pt).length_sqr()
+        r2: float = glm.sqr(self.radius)
+        return dis < r2
+
+    def intersect_aabb(self, aabb: 'Aabb') -> bool:
+        close_pt: glm.Vec3 = aabb.closest_pt(self.position)
+        dis: float = (self.position - close_pt).length_sqr()
+        r2 = glm.sqr(self.radius)
+        return dis < r2
+
+    def intersect_plain(self, plain: 'Plain'):
+        close_pt: glm.Vec3 = plain.closest_pt(self.position)
+        dis: float = (self.position - close_pt).length_sqr()
+        r2: float = glm.sqr(self.radius)
+        return dis < r2
 
 
 # --- PLAIN
@@ -72,25 +168,6 @@ class Plain:
     def __post_init__(self):
         if not self.normal.is_unit():
             self.normal.to_unit()
-
-    @staticmethod
-    def from_verts(
-            p1: glm.Vec3,
-            p2: glm.Vec3,
-            p3: glm.Vec3
-        ) -> 'Plain':
-        """Create from three points
-
-        Returns
-        ---
-        Plain
-        """
-        a: glm.Vec3 = p2 - p1
-        b: glm.Vec3 = p3 - p1
-        n: glm.Vec3 = a.cross(b)
-        n.to_unit()
-        d: float = n.x * p1.x + n.y * p1.y + n.z * p1.z
-        return Plain(n, -d)
 
     def copy(self) -> 'Plain':
         """Return a copy of self
@@ -120,6 +197,11 @@ class Plain:
         y: float = self.normal.y * v3.y
         z: float = self.normal.z * v3.z
         return x + y + z
+
+    def closest_pt(self, pt: glm.Vec3) -> glm.Vec3:
+        dot: float = self.normal.dot(pt)
+        dis: float = dot - self.direction
+        return pt - (self.normal * dis)
 
     def unit(self) -> 'Plain':
         """Return a copy of self that has been normalized
@@ -153,18 +235,24 @@ class Plain:
         self.normal.z *= inv
         self.direction *= inv
 
-    def is_equil(self, other: 'Plain') -> bool:
-        """Check if self and other have the same component values
+    def intersect_plain(self, other: 'Plain') -> bool:
+        dis: float = (self.normal.cross(other.nomal)).length_sqr()
+        return not glm.is_zero(dis)
 
-        Parameters
-        ---
-        other : Plain
+    def intersect_sphere(self, sph: 'Sphere') -> bool:
+        close_pt = self.closest_pt(sph.position)
+        len_sq = (sph.position - close_pt).length_sqr()
+        r2 = glm.sqr(sph.radius)
+        return len_sq < r2
 
-        Returns
-        ---
-        bool
-        """
-        check_n: bool = self.normal.is_equil(other.normal)
-        check_d: bool = glm.is_equil(self.direction, other.direction)
-        return check_n and check_d
+    def intersect_aabb(self, aabb: 'Aabb') -> bool:
+        len_sq: float = (
+            aabb.size.x * glm.absf(self.normal.x) +
+            aabb.size.y * glm.absf(self.normal.y) +
+            aabb.size.z * glm.absf(self.normal.z)
+        )
 
+        dot: float = self.normal.dot(aabb.position)
+        dis: float = dot - self.direction
+
+        return glm.absf(dis) <= len_sq

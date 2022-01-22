@@ -37,6 +37,10 @@ NEGATIVE_INFINITY: Final[float] = float('-inf')
 # --- FUNCTIONS
 
 
+def absf(x: float) -> float:
+    return abs(x)
+
+
 def is_zero(val: float) -> bool:
     """Check if values is zero
 
@@ -50,7 +54,7 @@ def is_zero(val: float) -> bool:
     bool
         is zero or not
     """
-    return abs(val) <= EPSILON
+    return absf(val) <= EPSILON
 
 
 def is_one(val: float) -> bool:
@@ -84,7 +88,7 @@ def is_equil(x: float, y: float) -> bool:
     bool
         are equil or not
     """
-    return abs(x - y) <= EPSILON
+    return absf(x - y) <= EPSILON
 
 
 def to_radians(val: float) -> float:
@@ -2649,12 +2653,12 @@ class Quaternion:
             to_cpy.w *= -1.0
             cos_half_theta *= -1.0
 
-        if abs(cos_half_theta) >= 1.0:
+        if absf(cos_half_theta) >= 1.0:
             return self.copy()
         elif cos_half_theta > 0.95:
             return self.nlerp(to, weight)
         else:
-            if abs(cos_half_theta) < EPSILON:
+            if absf(cos_half_theta) < EPSILON:
                 return Quaternion(
                     self.x * 0.5 + to_cpy.x * 0.5,
                     self.y * 0.5 + to_cpy.y * 0.5,
