@@ -18,8 +18,6 @@ Mat3
 
 Mat4
 
-Plain
-
 Quaternion
 
 Transform
@@ -34,6 +32,9 @@ TAU: Final[float] = 6.28318530717958647693
 EPSILON: Final[float] = 0.00000000000000022204
 INFINITY: Final[float] = float('inf')
 NEGATIVE_INFINITY: Final[float] = float('-inf')
+
+
+# --- FUNCTIONS
 
 
 def is_zero(val: float) -> bool:
@@ -173,6 +174,40 @@ def inv_sqrt(val: float) -> float:
     return 1.0 / sqrt(val)
 
 
+def maxf(x: float, y: float) -> float:
+    """Return max float between x and y
+
+    Parameters
+    ---
+    x : float
+        
+    y : float
+        
+
+    Returns
+    ---
+    float
+    """
+    return x if x > y else y
+
+
+def minf(x: float, y: float) -> float:
+    """Return min float between x and y
+
+    Parameters
+    ---
+    x : float
+        
+    y : float
+        
+
+    Returns
+    ---
+    float
+    """
+    return x if x < y else y
+
+
 def clamp(
         val: float|int,
         low: float|int,
@@ -185,7 +220,7 @@ def clamp(
     float | int
         clamped value
     """
-    return max(low, min(val, high))
+    return maxf(low, minf(val, high))
 
 
 def lerp(start: float, end: float, weight: float) -> float:
@@ -325,6 +360,7 @@ def arctan2(y: float, x: float) -> float:
         the value in radians
     """
     return math.atan2(y, x)
+
 
 
 # --- VECTOR_2 (X, Y)
@@ -1027,7 +1063,7 @@ class Vec4:
         )
 
 
-# --- Ray2D
+# --- RAY2D
 
 
 @dataclass(eq=False, repr=False, slots=True)
@@ -1055,7 +1091,7 @@ class Ray2D:
         return self.origin + (self.normal * at)
 
 
-# --- Ray3D
+# --- RAY3D
 
 
 @dataclass(eq=False, repr=False, slots=True)
@@ -2401,116 +2437,6 @@ class Mat4:
             [self.cx, self.cy, self.cz, self.cw],
             [self.dx, self.dy, self.dz, self.dw]
         ]
-
-
-# --- PLAIN
-
-
-class PlainError(Exception):
-    '''Custom error for plain'''
-
-    def __init__(self, msg: str):
-        super().__init__(msg)
-
-
-@dataclass(eq=False, repr=False, slots=True)
-class Plain:
-    normal: Vec3 = Vec3()
-    direction: float = 0.0
-
-    def __post_init__(self):
-        if not self.normal.is_unit():
-            self.normal.to_unit()
-
-    @staticmethod
-    def from_verts(p1: Vec3, p2: Vec3, p3: Vec3) -> 'Plain':
-        """Create from three points
-
-        Returns
-        ---
-        Plain
-        """
-        a: Vec3 = p2 - p1
-        b: Vec3 = p3 - p1
-        n: Vec3 = a.cross(b)
-        n.to_unit()
-        d: float = n.x * p1.x + n.y * p1.y + n.z * p1.z
-        return Plain(n, -d)
-
-    def copy(self) -> 'Plain':
-        """Return a copy of self
-
-        Returns
-        ---
-        Plain
-        """
-        return Plain(self.normal.copy(), self.dir)
-
-    def dot(self, v4: Vec4) -> float:
-        x: float = self.normal.x * v4.x
-        y: float = self.normal.y * v4.y
-        z: float = self.normal.z * v4.z
-        w: float = self.direction * v4.w
-        return x + y + z + w
-
-    def dot_coord(self, v3: Vec3) -> float:
-        x: float = self.normal.x * v3.x
-        y: float = self.normal.y * v3.y
-        z: float = self.normal.z * v3.z
-        w: float = self.direction
-        return x + y + z + w
-
-    def dot_normal(self, v3: Vec3) -> float:
-        x: float = self.normal.x * v3.x
-        y: float = self.normal.y * v3.y
-        z: float = self.normal.z * v3.z
-        return x + y + z
-
-    def unit(self) -> 'Plain':
-        """Return a copy of self that has been normalized
-
-        Returns
-        ---
-        Plain
-        """
-        ls: float = self.normal.length_sqr()
-
-        if is_one(ls):
-            return self.copy()
-
-        inv: float = inv_sqrt(ls)
-        return Plain(
-            self.normal * inv,
-            self.direction * inv
-        )
-
-    def to_unit(self) -> None:
-        """Normalize the length of self
-        """
-        ls = sqr(self.normal.x) + sqr(self.normal.y) + sqr(self.normal.z)
-        if is_one(ls):
-            raise PlainError('length of self was zero')
-        inv = inv_sqrt(ls)
-
-        self.normal.x *= inv
-        self.normal.y *= inv
-        self.normal.z *= inv
-        self.direction *= inv
-
-    def is_equil(self, other: 'Plain') -> bool:
-        """Check if self and other have the same component values
-
-        Parameters
-        ---
-        other : Plain
-
-        Returns
-        ---
-        bool
-        """
-        check_n: bool = self.normal.is_equil(other.normal)
-        check_d: bool = is_equil(self.direction, other.direction)
-        return check_n and check_d
 
 
 # --- QUATERNION
