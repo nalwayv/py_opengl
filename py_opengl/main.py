@@ -71,7 +71,7 @@ class Triangle:
         """
         self.texture_.use()
         self.shader_.use()
-        self.vbo_.use()
+        self.vbo_.use(vbo.VboDrawMode.TRIANGLES)
 
     def clean(self) -> None:
         """Clean up
@@ -87,6 +87,7 @@ class Cube:
     shader_: shader.Shader|None = None
     texture_: texture.Texture|None = None
     transform_: glm.Transform|None = None
+    size: glm.Vec3 = glm.Vec3(1.0, 1.0, 1.0)
 
     def __post_init__(self):
         self.vbo_ = vbo.VboIbo(length=36)
@@ -98,13 +99,17 @@ class Cube:
         vert_src: str = 'shader.vert'
         frag_src: str = 'shader.frag'
 
+        hw: float = self.size.x * 0.5
+        hh: float = self.size.y * 0.5
+        hd: float = self.size.z * 0.5
+
         verts: list[float] = [
-             0.5, 0.5, 0.5,  -0.5, 0.5, 0.5,  -0.5,-0.5, 0.5,  0.5,-0.5, 0.5,
-             0.5, 0.5, 0.5,   0.5,-0.5, 0.5,   0.5,-0.5,-0.5,  0.5, 0.5,-0.5,
-             0.5, 0.5, 0.5,   0.5, 0.5,-0.5,  -0.5, 0.5,-0.5, -0.5, 0.5, 0.5,
-            -0.5, 0.5, 0.5,  -0.5, 0.5,-0.5,  -0.5,-0.5,-0.5, -0.5,-0.5, 0.5,
-            -0.5,-0.5,-0.5,   0.5,-0.5,-0.5,   0.5,-0.5, 0.5, -0.5,-0.5, 0.5,
-             0.5,-0.5,-0.5,  -0.5,-0.5,-0.5,  -0.5, 0.5,-0.5,  0.5, 0.5,-0.5
+             hw, hh, hd,  -hw, hh, hd,  -hw,-hh, hd,  hw,-hh, hd,
+             hw, hh, hd,   hw,-hh, hd,   hw,-hh,-hd,  hw, hh,-hd,
+             hw, hh, hd,   hw, hh,-hd,  -hw, hh,-hd, -hw, hh, hd,
+            -hw, hh, hd,  -hw, hh,-hd,  -hw,-hh,-hd, -hw,-hh, hd,
+            -hw,-hh,-hd,   hw,-hh,-hd,   hw,-hh, hd, -hw,-hh, hd,
+             hw,-hh,-hd,  -hw,-hh,-hd,  -hw, hh,-hd,  hw, hh,-hd
         ]
 
         color: list[float] = [
@@ -143,7 +148,7 @@ class Cube:
         """
         self.texture_.use()
         self.shader_.use()
-        self.vbo_.use()
+        self.vbo_.use(vbo.VboDrawMode.TRIANGLES)
 
     def clean(self) -> None:
         """Clean up
@@ -206,12 +211,12 @@ def main() -> None:
         first_move = True
         last_mp = glm.Vec3()
 
-        shape = Cube()
+        shape = Cube(size=glm.Vec3(1.0, 1.0, 0.5))
 
         while not glwin.should_close():
             time.update()
 
-            GL.glClearColor(0.2, 0.3, 0.3, 1.0)
+            GL.glClearColor(0.15, 0.15, 0.15, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
             GL.glEnable(GL.GL_DEPTH_TEST)
             GL.glEnable(GL.GL_CULL_FACE)

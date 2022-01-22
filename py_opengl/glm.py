@@ -10,10 +10,6 @@ Vec3
 
 Vec4
 
-Ray2D
-
-Ray3D
-
 Mat3
 
 Mat4
@@ -1065,62 +1061,6 @@ class Vec4:
             is_zero(self.z) and
             is_zero(self.w)
         )
-
-
-# --- RAY2D
-
-
-@dataclass(eq=False, repr=False, slots=True)
-class Ray2D:
-    origin: Vec2 = Vec2()
-    normal: Vec2 = Vec2(x=1.0)
-    
-    def __post_init__(self):
-        if not self.normal.is_unit():
-            self.normal.to_unit()
-
-    def get_point(self, at: float) -> Vec2:
-        """Return point at along ray
-
-        Parameters
-        ---
-        at : float
-            how far along ray top travel
-
-        Returns
-        ---
-        Vec2
-            point at
-        """
-        return self.origin + (self.normal * at)
-
-
-# --- RAY3D
-
-
-@dataclass(eq=False, repr=False, slots=True)
-class Ray3D:
-    origin: Vec3 = Vec3()
-    normal: Vec3 = Vec3(x=1.0)
-
-    def __post_init__(self):
-        if not self.normal.is_unit():
-            self.normal.to_unit()
-
-    def get_point(self, at: float) -> Vec3:
-        """Return point at along ray
-
-        Parameters
-        ---
-        at : float
-            how far along ray top travel
-
-        Returns
-        ---
-        Vec3
-            point at
-        """
-        return self.origin + (self.normal * at)
 
 
 # --- MATRIX_3

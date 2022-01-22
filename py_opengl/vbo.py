@@ -1,8 +1,16 @@
 """VBO
 """
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from OpenGL import GL
 from py_opengl import utils
+
+
+class VboDrawMode(Enum):
+    TRIANGLES = auto()
+    LINE_LOOP = auto()
+    LINE_STRIP = auto()
+    DEFAULT = auto()
 
 
 @dataclass(eq=False, repr=False, slots=True)
@@ -60,11 +68,22 @@ class VboIbo:
     length: int = 0
     normalized: bool = False
 
-    def use(self) -> None:
+    def use(self, mode: VboDrawMode) -> None:
         """use vbo
         """
         GL.glBindVertexArray(self.vao_id)
-        GL.glDrawElements(GL.GL_TRIANGLES, self.length, GL.GL_UNSIGNED_INT, utils.c_cast(0))
+        match mode:
+           case VboDrawMode.TRIANGLES:
+               GL.glDrawElements(GL.GL_TRIANGLES, self.length, GL.GL_UNSIGNED_INT, utils.c_cast(0))
+
+           case VboDrawMode.LINE_LOOP:
+               GL.glDrawElements(GL.GL_LINE_LOOP, self.length, GL.GL_UNSIGNED_INT, utils.c_cast(0))
+
+           case VboDrawMode.LINE_STRIP:
+               GL.glDrawElements(GL.GL_LINE_STRIP, self.length, GL.GL_UNSIGNED_INT, utils.c_cast(0))
+
+           case VboDrawMode.DEFAULT: return
+           case _: return
 
     def clean(self) -> None:
         """Clean vbo of currently stored vbo's

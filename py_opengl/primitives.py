@@ -3,6 +3,62 @@ from dataclasses import dataclass
 from py_opengl import glm
 
 
+# --- RAY2D
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Ray2D:
+    origin: glm.Vec2 = glm.Vec2()
+    normal: glm.Vec2 = glm.Vec2(x=1.0)
+    
+    def __post_init__(self):
+        if not self.normal.is_unit():
+            self.normal.to_unit()
+
+    def get_point(self, at: float) -> glm.Vec2:
+        """Return point at along ray
+
+        Parameters
+        ---
+        at : float
+            how far along ray top travel
+
+        Returns
+        ---
+        Vec2
+            point at
+        """
+        return self.origin + (self.normal * at)
+
+
+# --- RAY3D
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Ray3D:
+    origin: glm.Vec3 = glm.Vec3()
+    normal: glm.Vec3 = glm.Vec3(x=1.0)
+
+    def __post_init__(self):
+        if not self.normal.is_unit():
+            self.normal.to_unit()
+
+    def get_point(self, at: float) -> glm.Vec3:
+        """Return point at along ray
+
+        Parameters
+        ---
+        at : float
+            how far along ray top travel
+
+        Returns
+        ---
+        Vec3
+            point at
+        """
+        return self.origin + (self.normal * at)
+
+
 # --- AABB
 
 
@@ -12,10 +68,7 @@ class Aabb:
     size: glm.Vec3 = glm.Vec3()
 
     @staticmethod
-    def from_min_max(
-            min_pt: glm.Vec3,
-            max_pt: glm.Vec3
-        ) -> 'Aabb':
+    def from_min_max(min_pt: glm.Vec3, max_pt: glm.Vec3) -> 'Aabb':
         return Aabb(
             (min_pt + max_pt) * 0.5,
             (max_pt - min_pt) * 0.5
@@ -74,17 +127,13 @@ class Aabb:
         return check_x and check_y and check_z
 
     def intersect_pt(self, pt: glm.Vec3) -> bool:
-        amin = self.get_min()
-        amax = self.get_max()
-
-        check = (
-            (pt.x < amin.x) or
-            (pt.y < amin.y) or
-            (pt.x > amax.x) or
-            (pt.y > amax.y)
-        )
-
-        return not check
+        amin: glm.Vec3 = self.get_min()
+        amax: glm.Vec3 = self.get_max()
+        if pt.x < amin.x or pt.y < amin.y or pt.z < amin.z:
+            return False
+        if pt.x > amax.x or pt.y > amax.y or pt.z > amax.z:
+            return False
+        return True
 
     def intersect_sphere(self, sph: 'Sphere') -> bool:
         close_pt: glm.Vec3 = self.closest_pt(sph.position)
@@ -238,6 +287,10 @@ class Plain:
     def intersect_plain(self, other: 'Plain') -> bool:
         dis: float = (self.normal.cross(other.nomal)).length_sqr()
         return not glm.is_zero(dis)
+
+    def intersect_pt(self, pt: glm.Vec3) -> bool:
+        dot: float = pt.dot(self.normal)
+        return glm.is_zero(dot - self.direction)
 
     def intersect_sphere(self, sph: 'Sphere') -> bool:
         close_pt = self.closest_pt(sph.position)

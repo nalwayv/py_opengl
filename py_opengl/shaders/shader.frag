@@ -2,6 +2,7 @@
 // A simple shader that includes vert position, color and texture
 in vec3 b_col;
 in vec2 b_texture;
+
 out vec4 c_col;
 uniform sampler2D c_texture;
 

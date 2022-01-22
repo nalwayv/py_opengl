@@ -48,6 +48,7 @@ class Shader:
             open(v_file.as_posix(), mode='r') as v,
             open(f_file.as_posix(), mode='r') as f
         ):
+
             self.shader_id = compileProgram(
                 compileShader(v, GL.GL_VERTEX_SHADER),
                 compileShader(f, GL.GL_FRAGMENT_SHADER)
