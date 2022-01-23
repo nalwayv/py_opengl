@@ -269,20 +269,18 @@ class Ray:
         if not self.normal.is_unit():
             self.normal.to_unit()
 
-    def get_point(self, at: float) -> glm.Vec3:
-        """Return point at along ray
+    def get_point(self, t: float) -> glm.Vec3:
+        """Return point along ray
 
         Parameters
         ---
-        at : float
-            how far along ray top travel
+        t : float
 
         Returns
         ---
         Vec3
-            point at
         """
-        return self.origin + (self.normal * at)
+        return self.origin + (self.normal * t)
     
     def cast_aabb(self, aabb: Aabb) -> tuple[bool, glm.Vec3]:
         amin: glm.Vec3 = aabb.get_min()
