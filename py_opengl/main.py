@@ -16,7 +16,7 @@ from py_opengl import mouse
 from py_opengl import camera
 from py_opengl import window
 from py_opengl import texture
-
+from py_opengl import color
 
 # --- SHAPE
 
@@ -213,10 +213,12 @@ def main() -> None:
 
         shape = Cube(size=glm.Vec3(1.0, 1.0, 0.5))
 
+        bg_col = color.Color.from_rgba(75, 75, 75, 255)
+        
         while not glwin.should_close():
             time.update()
 
-            GL.glClearColor(0.15, 0.15, 0.15, 1.0)
+            GL.glClearColor(*bg_col.get_data_norm())
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
             GL.glEnable(GL.GL_DEPTH_TEST)
             GL.glEnable(GL.GL_CULL_FACE)

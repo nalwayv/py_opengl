@@ -22,18 +22,34 @@ import math
 from dataclasses import dataclass
 from typing import Final
 
+
+# --- CONSTANTS
+
+
 PI: Final[float] = 3.14159265358979323846
-PIOVER2: Final[float] = 1.57079632679489661923
+PHI: Final[float] = 1.57079632679489661923
 TAU: Final[float] = 6.28318530717958647693
 EPSILON: Final[float] = 0.00000000000000022204
-INFINITY: Final[float] = float('inf')
-NEGATIVE_INFINITY: Final[float] = float('-inf')
+MAX_FLOAT: Final[float] = 1.7976931348623157e+308
+MIN_FLOAT: Final[float] = 2.2250738585072014e-308
+INFINITY: Final[float] = math.inf
+NEGATIVE_INFINITY: Final[float] = -math.inf
 
 
 # --- FUNCTIONS
 
 
 def absf(x: float) -> float:
+    """Return the absolute of value x
+
+    Parameters
+    ---
+    x : float
+
+    Returns
+    ---
+    float
+    """
     return abs(x)
 
 
@@ -85,6 +101,16 @@ def is_equil(x: float, y: float) -> bool:
         are equil or not
     """
     return absf(x - y) <= EPSILON
+
+
+def is_infinite(val) -> bool:
+    """Check if value if infinite
+
+    Returns
+    ---
+    bool
+    """
+    return math.isinf(val)
 
 
 def to_radians(val: float) -> float:
@@ -220,7 +246,11 @@ def clamp(
     float | int
         clamped value
     """
-    return maxf(low, minf(val, high))
+    if val <= low:
+        return low
+    if val >= high:
+        return high
+    return val
 
 
 def lerp(start: float, end: float, weight: float) -> float:
@@ -2720,10 +2750,10 @@ class Quaternion:
         test: float = (self.x * self.z) + (self.w * self.y)
 
         if test > threshold * len_sq:
-            return Vec3(0.0, PIOVER2, 2.0 * arctan2(self.x, self.y))
+            return Vec3(0.0, PHI, 2.0 * arctan2(self.x, self.y))
 
         if test < -threshold * len_sq:
-            return Vec3(0.0, -PIOVER2, -2.0 * arctan2(self.x, self.w))
+            return Vec3(0.0, -PHI, -2.0 * arctan2(self.x, self.w))
 
         xy: float = 2.0 * ((self.w * self.x) - (self.y * self.z))
         xx: float = w2 - x2 - y2 + z2
