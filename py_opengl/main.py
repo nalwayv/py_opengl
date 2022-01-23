@@ -214,7 +214,7 @@ def main() -> None:
         shape = Cube(size=glm.Vec3(1.0, 1.0, 0.5))
 
         bg_col = color.Color.from_rgba(75, 75, 75, 255)
-        
+
         while not glwin.should_close():
             time.update()
 

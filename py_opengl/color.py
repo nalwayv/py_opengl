@@ -27,7 +27,7 @@ class Color:
         return 0xFF & (self._data >> 16)
 
     def get_alpha(self) -> int:
-        return 0xFF & (self._data >> 32)
+        return 0xFF & (self._data >> 24)
 
     def set_red(self, value: int) -> None: 
         self._data = (self._data & 0xFFFFFF00) | (glm.clamp(value, 0, 255))
@@ -39,7 +39,7 @@ class Color:
         self._data = (self._data & 0xFF00FFFF) | (glm.clamp(value, 0, 255) << 16)
 
     def set_alpha(self, value: int) -> None:
-        self._data = (self._data & 0x00FFFFFF) | (glm.clamp(value, 0, 255) << 32)
+        self._data = (self._data & 0x00FFFFFF) | (glm.clamp(value, 0, 255) << 24)
 
     def get_data(self) -> tuple[int, int, int, int]:
         return (
@@ -50,9 +50,10 @@ class Color:
         )
 
     def get_data_norm(self) -> tuple[float, float, float, float]:
+        inv = 1.0 / 255.0
         return (
-            float(self.get_red() / 255),
-            float(self.get_green() / 255),
-            float(self.get_blue() / 255),
-            float(self.get_alpha() / 255)
+            float(self.get_red()) * inv,
+            float(self.get_green()) * inv,
+            float(self.get_blue()) * inv,
+            float(self.get_alpha()) * inv
         )
