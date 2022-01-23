@@ -9,7 +9,7 @@ class Color:
     _data: int = 0xFF
 
     @staticmethod
-    def from_rgba(red, green, blue, alpha) -> 'Color':
+    def from_rgba(red: int, green: int, blue: int, alpha: int) -> 'Color':
         c = Color()
         c.set_red(red)
         c.set_green(green)
