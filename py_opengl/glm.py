@@ -442,7 +442,7 @@ class Vec2:
     
     @staticmethod
     def lerp(begin: 'Vec2', end: 'Vec2', weight: float) -> 'Vec2':
-        """Lerp from self to other
+        """Return lerp between begin end end vec3
 
         Parameters
         ---
@@ -749,7 +749,7 @@ class Vec3:
 
     @staticmethod
     def lerp(begin: 'Vec3', end: 'Vec3', weight: float) -> 'Vec3':
-        """Lerp from self to other
+        """Return lerp between begin and end vec3
 
         Parameters
         ---
@@ -1049,6 +1049,30 @@ class Vec4:
     @staticmethod
     def from_v3(v3: Vec3) -> 'Vec4':
         return Vec4(x=v3.x, y=v3.y, z=v3.z)
+
+
+    @staticmethod
+    def lerp(begin: 'Vec4', end: 'Vec4', weight: float) -> 'Vec4':
+        """Return lerp between begin ben and end vec4
+
+        Parameters
+        ---
+        begin : Vec4
+            
+        end : Vec4
+            
+        weight : float
+            
+
+        Returns
+        ---
+        Vec4
+        """
+        x = lerp(begin.x, end.x, weight)
+        y = lerp(begin.y, end.y, weight)
+        z = lerp(begin.z, end.z, weight)
+        w = lerp(begin.w, end.w, weight)
+        return Vec4(x, y, z, w)
 
     def copy(self) -> 'Vec4':
         """Return a copy of the vec4
