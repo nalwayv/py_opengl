@@ -229,11 +229,14 @@ def main() -> None:
 
             shape.transform_.rotation = glm.Quaternion.from_axis(
                 time.ticks,
-                glm.Vec3(x=1.0, y=0.5)
+                glm.Vec3(x=1.0, y=0.5, z=0.8)
             )
+
+            # shape.transform_.rotation = glm.Mat4.from_axis(time.ticks, glm.Vec3(x=1.0, y=0.5, z=0.8))
+            
             m: glm.Mat4 = shape.transform_.get_matrix()
             v: glm.Mat4 = cam.view_matrix()
-            p: glm.Mat4 = cam.perspective_matrix()
+            p: glm.Mat4 = cam.projection_matrix()
             mvp: glm.Mat4 = m * v * p
             shape.shader_.set_m4('mvp', mvp)
 

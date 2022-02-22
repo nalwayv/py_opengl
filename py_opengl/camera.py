@@ -154,15 +154,17 @@ class Camera:
         self.right.to_unit()
         self.up = self.right.cross(self.front)
 
-    def perspective_matrix(self) -> glm.Mat4:
-        """Return perspective matrix
+    def projection_matrix(self) -> glm.Mat4:
+        """Return projection matrix
 
         Returns
         ---
         glm.Mat4
             camera perspective matrix
         """
-        return glm.Mat4.perspective(self.fovy, self.aspect, self.znear, self.zfar)
+        # return glm.Mat4.ortho_projection(-1, 1, 1, -1, 1, 100)
+        return glm.Mat4.frustum_projection(self.fovy, self.aspect, self.znear, self.zfar)
+
 
     def view_matrix(self) -> glm.Mat4:
         """Return view matrix

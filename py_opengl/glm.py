@@ -34,6 +34,7 @@ MAX_FLOAT: Final[float] = 1.7976931348623157e+308
 MIN_FLOAT: Final[float] = 2.2250738585072014e-308
 INFINITY: Final[float] = math.inf
 NEGATIVE_INFINITY: Final[float] = -math.inf
+DOT_THRESHOLD: Final[float] = 0.9995
 
 
 # --- FUNCTIONS
@@ -270,7 +271,7 @@ def lerp(start: float, end: float, weight: float) -> float:
     float
         lerp amount
     """
-    return start + clamp(weight, 0.0, 1.0) * (end - start)
+    return start + (end - start) * clamp(weight, 0.0, 1.0)
 
 
 def normalize(val: float, low: float, high: float) -> float:
@@ -438,7 +439,28 @@ class Vec2:
     @staticmethod
     def one() -> 'Vec2':
         return Vec2(1.0, 1.0)
+    
+    @staticmethod
+    def lerp(begin: 'Vec2', end: 'Vec2', weight: float) -> 'Vec2':
+        """Lerp from self to other
 
+        Parameters
+        ---
+        begin : Vec2
+
+        end : Vec2
+            
+        weight : float
+            value between 0 and 1
+
+        Returns
+        ---
+        Vec2
+        """
+        lx: float = lerp(begin.x, end.x, weight)
+        ly: float = lerp(begin.y, end.y, weight)
+        return Vec2(lx, ly)
+    
     def to_unit(self) -> None:
         """Normalize length
 
@@ -462,7 +484,7 @@ class Vec2:
         Returns
         ---
         Vec2
-            a copy byt with a normalized length
+            a copy of self with a normalized length
         """
         lsq: float = self.length_sqr()
         if is_zero(lsq):
@@ -478,6 +500,15 @@ class Vec2:
             a copy
         """ 
         return Vec2(self.x, self.y)
+
+    def perpendicular(self) -> 'Vec2':
+        """Return the prpendicular of self
+
+        Returns
+        ---
+        Vec2
+        """
+        return Vec2(-self.y, self.x)
 
     def rotate_by(self, angle_deg: float) -> 'Vec2':
         """Rotate by angle
@@ -496,6 +527,27 @@ class Vec2:
 
         return Vec2(x, y)
 
+    def angle_to(self, other: 'Vec2') -> float:
+        """Return the nagle in radians to other
+
+        Parameters
+        ---
+        other : Vec2
+
+        Returns
+        ---
+        float
+            angle to in radians
+        """
+        ang: float = arctan2(other.y, self.x) - arctan2(self.y, other.x)
+        
+        if ang > PI:
+            ang -= TAU
+        elif ang <= -PI:
+            ang += TAU
+
+        return ang
+
     def angle_between(self, other: 'Vec2') -> float:
         """Return the angle in radians between self and other
 
@@ -508,7 +560,8 @@ class Vec2:
         float
             angle between self and other
         """
-        return arctan2(other.y, other.x) - arctan2(self.y, self.x)
+        return arccos(
+            self.dot(other) / (self.length_sqrt() * other.length_sqrt()))
     
     def sum_total(self) -> float:
         """Return sum total of all values
@@ -565,7 +618,7 @@ class Vec2:
         """
         return sqrt(self.length_sqr())
 
-    def distance(self, other: 'Vec2') -> float:
+    def distance_sqrt(self, other: 'Vec2') -> float:
         """Return the distance between self and other vec2
 
         Parameters
@@ -578,6 +631,21 @@ class Vec2:
         """
         dir: Vec2 = other - self
         return dir.length_sqrt()
+
+    def distance_sqr(self, other: 'Vec2') -> float:
+        """Return the distance between self and other vec2
+
+        Parameters
+        ---
+        other : Vec2
+
+        Returns
+        ---
+        float
+        """
+        dir: Vec2 = other - self
+        return dir.length_sqr()
+
 
     def dot(self, other: 'Vec2') -> float:
         """Return the dot product between self and other vec3
@@ -679,6 +747,29 @@ class Vec3:
     def from_v2(v2: Vec2) -> 'Vec3':
         return Vec3(x=v2.x, y=v2.y)
 
+    @staticmethod
+    def lerp(begin: 'Vec3', end: 'Vec3', weight: float) -> 'Vec3':
+        """Lerp from self to other
+
+        Parameters
+        ---
+        begin : Vec3
+        
+        end : Vec3
+            
+        weight : float
+            value between 0 and 1
+
+        Returns
+        ---
+        Vec3
+            
+        """
+        lx: float = lerp(begin.x, end.x, weight)
+        ly: float = lerp(begin.y, end.y, weight)
+        lz: float = lerp(begin.z, end.z, weight)
+        return Vec3(lx, ly, lz)
+
     def to_unit(self) -> None:
         """Normalize length
 
@@ -751,58 +842,53 @@ class Vec3:
         """
         return self - self.project(other)
 
-    def rotate_by(self, q: 'Quaternion') -> 'Vec3':
-        """Rotate by quaternion
-
-        Returns
-        ---
-        Vec3
-        """
-        x2: float = sqr(q.x)
-        y2: float = sqr(q.y)
-        z2: float = sqr(q.z)
-        w2: float = sqr(q.w)
-        xy: float = q.x * q.y
-        xz: float = q.x * q.z
-        yz: float = q.y * q.z
-        wx: float = q.w * q.x
-        wy: float = q.w * q.y
-        wz: float = q.w * q.z
-
-        x: float = (
-            self.x * (x2 + w2 - y2 - z2) +
-            self.y * (2.0 * xy - 2.0 * wz) +
-            self.z * (2.0 * xz + 2.0 * wy)
-        )
-        y: float = (
-            self.x * (2.0 * wz + 2.0 * xy) +
-            self.y * (w2 - x2 + y2 - z2) +
-            self.z * (-2.0 * wx + 2.0 * yz)
-        )
-        z: float = (
-            self.x * (-2.0 * wy + 2.0 * xz) +
-            self.y * (2.0 * wx + 2.0 * yz) +
-            self.z * (w2 - x2 - y2 + z2)
-        )
-
-        return Vec3(x, y, z)
-
-    def angle_between(self, other: 'Vec3') -> float:
-        """Return the angle in radians between self and other
+    def rotate_by(self, angle_deg: float, axis: 'Vec3') -> 'Vec3':
+        """Rotate by angle along unit axis
 
         Parameters
-        ---
-        other : Vec3
+        ----------
+        angle_deg : float
+            angle in degreese
+        axis : Vec3
+            axis to rotate around
 
         Returns
-        ---
-        float
-            angle between self and other
+        -------
+        Vec3
+            rotated vec3
         """
-        return arctan2(
-            self.cross(other).length_sqrt(),
-            self.dot(other)
+        rad: float = to_radians(angle_deg)
+
+        u = axis.copy()
+        if not u.is_unit():
+            u.to_unit()
+
+        c: float = arccos(rad)
+        s: float = arcsin(rad)
+
+        m1 = Vec3(
+            c + u.x * u.x * (1 - c),
+            u.x * u.y * (1 - c) - u.z * s,
+            u.x * u.z * (1 - c) + u.y * s
         )
+
+        m2 = Vec3(
+            u.y * u.x * (1 - c) + u.z * s,
+            c + u.y * u.y * (1 - c),
+            u.y * u.z * (1 - c) - u.x * s
+        )
+
+        m3 = Vec3(
+            u.z * u.x * (1 - c) - u.y * s,
+            u.z * u.y * (1 - c) + u.x * s,
+            c + u.z * u.z * (1 - c)
+        )
+
+        x: float = self.dot(m1)
+        y: float = self.dot(m2)
+        z: float = self.dot(m3)
+
+        return Vec3(x, y, z)
 
     def sum_total(self) -> float:
         """Return sum total of all values
@@ -831,7 +917,7 @@ class Vec3:
         """
         return sqrt(self.length_sqr())
 
-    def distance(self, other: 'Vec3') -> float:
+    def distance_sqrt(self, other: 'Vec3') -> float:
         """Return the distance between self and other vec3
 
         Parameters
@@ -844,6 +930,20 @@ class Vec3:
         """
         dir: Vec3 = other - self
         return dir.length_sqrt()
+
+    def distance_sqr(self, other: 'Vec3') -> float:
+        """Return the distance between self and other vec3
+
+        Parameters
+        ---
+        other : Vec3
+
+        Returns
+        ---
+        float
+        """
+        dir: Vec3 = other - self
+        return dir.length_sqr()
 
     def dot(self, other: 'Vec3') -> float:
         """Return the dot product between self and other vec3
@@ -1019,7 +1119,7 @@ class Vec4:
         """
         return sqrt(self.length_sqr())
 
-    def distance(self, other: 'Vec4') -> float:
+    def distance_sqrt(self, other: 'Vec4') -> float:
         """Return the distance between self and other vec4
 
         Parameters
@@ -1032,6 +1132,20 @@ class Vec4:
         """
         dir: Vec4 = other - self
         return dir.length_sqrt()
+
+    def distance_sqr(self, other: 'Vec4') -> float:
+        """Return the distance between self and other vec4
+
+        Parameters
+        ---
+        other : Vec4
+
+        Returns
+        ---
+        float
+        """
+        dir: Vec4 = other - self
+        return dir.length_sqr()
 
     def dot(self, other: 'Vec4') -> float:
         """Return the dot product between self and other vec4
@@ -1866,6 +1980,48 @@ class Mat4:
         s: float = sin(angle_rad)
 
         return Mat4(ax=c, az=s, by=1.0, cx=-s, cz=c, dw=1.0)
+    
+    @staticmethod
+    def from_axis(angle_deg: float, axis: 'Vec3') -> 'Mat4':
+        """Create a rotated matrix
+
+        Parameters
+        ----------
+        angle_deg : float
+            angle in degreese
+        axis : Vec3
+            unit axis
+
+        Returns
+        -------
+        Mat4
+            rotated mat4
+        """
+        angle_rad = to_radians(angle_deg)
+        u = axis.copy()
+        if not u.is_unit():
+            u.to_unit()
+
+        l: float = axis.length_sqrt()
+        x: float = axis.x / l
+        y: float = axis.y / l
+        z: float = axis.z / l
+
+        c: float = cos(angle_rad)
+        s: float = sin(angle_rad)
+
+        return Mat4(
+            ax = x * x * (1.0 - c) + c,
+            ay = y * x * (1.0 - c) + z * s,
+            az = x * z * (1.0 - c) - y * s,
+            bx = x * y * (1.0 - c) - z * s,
+            by = y * y * (1.0 - c) + c,
+            bz = y * z * (1.0 - c) + x * s,
+            cx = x * z * (1.0 - c) + y * s,
+            cy = y * z * (1.0 - c) - x * s,
+            cz = z * z * (1.0 - c) + c,
+            dw = 1.0
+        )
 
     @staticmethod
     def create_z_rotation(angle_deg: float) -> 'Mat4':
@@ -1881,47 +2037,6 @@ class Mat4:
         s: float = sin(angle_rad)
 
         return Mat4(ax=c, ay=-s, bx=s, by=c, cz=1.0, dw=1.0)
-
-    @staticmethod
-    def from_axis(angle_deg: float, axis: Vec3) -> 'Mat4':
-        """Create a mat4 matrix from an angle and axis of rotation
-
-        Returns
-        ---
-        Mat4
-        """
-        axis_cpy: Vec3 = axis.copy()
-
-        if not axis_cpy.is_unit():
-            axis_cpy.to_unit()
-
-        angle_rad: float = to_radians(angle_deg)
-        c: float = cos(angle_rad)
-        s: float = sin(angle_rad)
-
-        x2: float = sqr(axis_cpy.x)
-        y2: float = sqr(axis_cpy.y)
-        z2: float = sqr(axis_cpy.z)
-        ww: float = 1.0 - c
-
-        ax: float = c + x2 * ww
-        ay: float = axis_cpy.x * axis_cpy.y * ww - axis_cpy.z * s
-        az: float = axis_cpy.x * axis_cpy.z * ww + axis_cpy.y * s
-
-        bx: float = axis_cpy.y * axis_cpy.x * ww + axis_cpy.z * s
-        by: float = c + y2 * ww
-        bz: float = axis_cpy.y * axis_cpy.z * ww - axis_cpy.x * s
-
-        cx: float = axis_cpy.z * axis_cpy.x * ww - axis_cpy.y * s
-        cy: float = axis_cpy.z * axis_cpy.y * ww + axis_cpy.x * s
-        cz: float = c + z2 * ww
-
-        return Mat4(
-            ax=ax, ay=ay, az=az,
-            bx=bx, by=by, bz=bz,
-            cx=cx, cy=cy, cz=cz,
-            dw=1.0
-        )
 
     @staticmethod
     def look_at(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
@@ -1951,56 +2066,8 @@ class Mat4:
         )
 
     @staticmethod
-    def frustum(left: float, right: float, bottom: float, top: float, far: float, near: float) -> 'Mat4':
-        """Create a mat4 matrix *frustum* field of view
-
-        Returns
-        ---
-        Mat4
-        """
-        rl: float = 1.0 / (right - left)
-        tb: float = 1.0 / (top - bottom)
-        fn: float = 1.0 / (far - near)
-
-        x: float = 2.0 * near * rl
-        y: float = 2.0 * near * tb
-        a: float = (right + left) * rl
-        b: float = (top + bottom) * tb
-        c: float = -(far + near) * fn
-        d: float = -(2.0 * far * near) * fn
-
-        return Mat4(
-            ax=x,
-            by=y,
-            cx=a, cy=b, cz=c, cw=-1.0,
-            dz=d, dw=0.0
-        )
-
-    @staticmethod
-    def ortho(left: float, right: float, bottom: float, top: float, near: float, far: float) -> 'Mat4':
-        """Create a mat4 matrix *ortho* field of view
-
-        Returns
-        ---
-        Mat4
-        """
-        lr: float = 1.0 / (left - right)
-        bt: float = 1.0 / (bottom - top)
-        nf: float = 1.0 / (near - far)
-
-        x: float = -2.0 * lr
-        y: float = -2.0 * bt
-        z: float = 2.0 * nf
-
-        a: float = (right + left) * lr
-        b: float = (top + bottom) * bt
-        c: float = (far + near) * nf
-
-        return Mat4(ax=x, by=y, cz=z, dx=a, dy=b, dz=c, dw=1.0)
-
-    @staticmethod
-    def perspective(fov: float, aspect: float, znear: float, zfar: float) -> 'Mat4':
-        """Create a mat4 matrix *perspective projection* field of view
+    def frustum_projection(fov: float, aspect: float, near: float, far: float) -> 'Mat4':
+        """Create a mat4 matrix *frustum projection* field of view
 
         Returns
         ---
@@ -2013,18 +2080,44 @@ class Mat4:
         Mat4Error
             if znear or zfar are less or equil to zero or znear is more or equil to zfar
         """
-
         if fov <= 0.0 or fov > PI:
             raise Mat4Error('m4 projection fov out of range')
 
-        if znear <= 0.0 or zfar <= 0.0 or znear >= zfar:
+        if near <= 0.0 or far <= 0.0 or near >= far:
             raise Mat4Error('m4 projection aspect out of range')
 
-        fovy: float = 1.0 / tan(fov * 0.5)
-        fovx: float = fovy / aspect
-        zrange: float = zfar / (zfar - znear)
+        y: float = 1.0 / tan(fov * 0.5)
+        x: float = y / aspect
+        r: float = far / (far - near)
+        n: float = near * r
 
-        return Mat4(ax=fovx, by=fovy, cz=zrange, cw=-1.0, dz=znear*zrange)
+        return Mat4(ax=x, by=y, cz=r, cw=-1.0, dz=n)
+
+    @staticmethod
+    def ortho_projection(left: float, right: float, top: float, bottom: float, near: float, far: float) -> 'Mat4':
+        """Create a mat4 matrix *ortho_projection* field of view
+
+        Returns
+        ---
+        Mat4
+        """
+        rl_inv: float = 1.0 / (right - left)
+        tb_inv: float = 1.0 / (top - bottom)
+        fn_inv: float = 1.0 / (far - near)
+
+        rl: float = right + left
+        tb: float = top + bottom
+        fn: float = far + near
+
+        return Mat4(
+            ax=2.0 * rl_inv,
+            by=2.0 * tb_inv,
+            cz=-2.0 * fn_inv,
+            dx=-rl * rl_inv,
+            dy=-tb * tb_inv,
+            dz=-fn * fn_inv,
+            dw=1.0
+        )
 
     def copy(self) -> 'Mat4':
         """Return a copy
@@ -2550,32 +2643,15 @@ class Quaternion:
 
         return Quaternion(x, y, z, w)
 
-    def lerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
-        """Create a quaternion based on the *linear interpolation* between start and end based on weight
-
-        Parameters
-        ---
-        to : Quaternion
-
-        weight : float
-
-        Returns
-        ---
-        Quaternion
-        """
-        x: float = lerp(self.x, to.x, weight)
-        y: float = lerp(self.y, to.y, weight)
-        z: float = lerp(self.z, to.z, weight)
-        w: float = lerp(self.w, to.w, weight)
-
-        return Quaternion(x, y, z, w)
-
-    def nlerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
+    @staticmethod
+    def lerp(begin: 'Quaternion', end: 'Quaternion', weight: float) -> 'Quaternion':
         """Return the interpolation between two quaternions
 
         Parameters
         ---
-        to : Quaternion
+        begin : Quaternion
+        
+        end : Quaternion
 
         weight : float
 
@@ -2583,10 +2659,33 @@ class Quaternion:
         ---
         Quaternion
         """
-        x: float = lerp(self.x, to.x, weight)
-        y: float = lerp(self.y, to.y, weight)
-        z: float = lerp(self.z, to.z, weight)
-        w: float = lerp(self.w, to.w, weight)
+        x: float = lerp(begin.x, end.x, weight)
+        y: float = lerp(begin.y, end.y, weight)
+        z: float = lerp(begin.z, end.z, weight)
+        w: float = lerp(begin.w, end.w, weight)
+
+        return Quaternion(x, y, z, w)
+
+    @staticmethod
+    def nlerp(begin: 'Quaternion', end: 'Quaternion', weight: float) -> 'Quaternion':
+        """Return the normal interpolation between two quaternions
+
+        Parameters
+        ---
+        begin : Quaternion
+
+        end : Quaternion
+
+        weight : float
+
+        Returns
+        ---
+        Quaternion
+        """
+        x: float = lerp(begin.x, end.x, weight)
+        y: float = lerp(begin.y, end.y, weight)
+        z: float = lerp(begin.z, end.z, weight)
+        w: float = lerp(begin.w, end.w, weight)
 
         length: float = sqrt(sqr(x) + sqr(y) + sqr(z) + sqr(w))
         if is_zero(length):
@@ -2600,12 +2699,15 @@ class Quaternion:
 
         return Quaternion(x, y, z, w)
 
-    def slerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
+    @staticmethod
+    def slerp(begin: 'Quaternion', end: 'Quaternion', weight: float) -> 'Quaternion':
         """Return the spherical linear interpolation between two quaternions
 
         Parameters
         ---
-        to : Quaternion
+        begin : Quaternion
+
+        end : Quaternion
 
         weight : float
 
@@ -2613,41 +2715,22 @@ class Quaternion:
         ---
         Quaternion
         """
-        cos_half_theta : float = self.dot(to)
-        to_cpy = to.copy()
+        d: float = begin.dot(end)
+        b: 'Quaternion' = begin.copy()
+        e: 'Quaternion' = end.copy()
 
-        if cos_half_theta < 0.0:
-            to_cpy.x *= -1.0
-            to_cpy.y *= -1.0
-            to_cpy.z *= -1.0
-            to_cpy.w *= -1.0
-            cos_half_theta *= -1.0
+        if d < 0.0:
+            b = b.scale(-1.0)
+            d *= -1.0
 
-        if absf(cos_half_theta) >= 1.0:
-            return self.copy()
-        elif cos_half_theta > 0.95:
-            return self.nlerp(to, weight)
-        else:
-            if absf(cos_half_theta) < EPSILON:
-                return Quaternion(
-                    self.x * 0.5 + to_cpy.x * 0.5,
-                    self.y * 0.5 + to_cpy.y * 0.5,
-                    self.z * 0.5 + to_cpy.z * 0.5,
-                    self.w * 0.5 + to_cpy.w * 0.5
-                )
-            else:
-                half_theta: float = arccos(cos_half_theta)
-                sin_half_theta: float = sqrt(1.0 - sqr(cos_half_theta))
+        if d > DOT_THRESHOLD:
+            return Quaternion.nlerp(b, e, weight)
 
-                ratio_a: float = sin((1.0 - weight) * half_theta) / sin_half_theta
-                ratio_b: float = sin(weight * half_theta) / sin_half_theta
+        d: float = clamp(d, -1.0, 1.0)
+        t: float = arccos(d) * weight
+        c: 'Quaternion' = (e - b.scale(d)).unit()
 
-                return Quaternion(
-                    self.x * ratio_a + to_cpy.x * ratio_b,
-                    self.y * ratio_a + to_cpy.y * ratio_b,
-                    self.z * ratio_a + to_cpy.z * ratio_b,
-                    self.w * ratio_a + to_cpy.w * ratio_b
-                )
+        return b.scale(cos(t)) + c.scale(sin(t))
 
     def copy(self) -> 'Quaternion':
         """Return a copy of self
@@ -2910,6 +2993,7 @@ class Transform:
     position: Vec3 = Vec3()
     scale: float = 1.0
     rotation: Quaternion = Quaternion(w=1.0)
+    # rotation: Mat4 = Mat4()
 
     def get_matrix(self) -> Mat4:
         """Return transform matrix
