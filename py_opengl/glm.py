@@ -34,7 +34,7 @@ MAX_FLOAT: Final[float] = 1.7976931348623157e+308
 MIN_FLOAT: Final[float] = 2.2250738585072014e-308
 INFINITY: Final[float] = math.inf
 NEGATIVE_INFINITY: Final[float] = -math.inf
-DOT_THRESHOLD: Final[float] = 0.9995
+E: Final[float] = 2.71828182845904523536
 
 
 # --- FUNCTIONS
@@ -51,7 +51,21 @@ def absf(x: float) -> float:
     ---
     float
     """
-    return abs(x)
+    return float(abs(x))
+
+
+def absi(x: int) -> int:
+    """Return the absolute of value x
+
+    Parameters
+    ---
+    x : int
+
+    Returns
+    ---
+    int
+    """
+    return int(abs(x))
 
 
 def is_zero(val: float) -> bool:
@@ -218,6 +232,23 @@ def maxf(x: float, y: float) -> float:
     return x if x > y else y
 
 
+def maxi(x: int, y: int) -> int:
+    """Return max int between x and y
+
+    Parameters
+    ---
+    x : int
+        
+    y : int
+        
+
+    Returns
+    ---
+    int
+    """
+    return x if x > y else y
+
+
 def minf(x: float, y: float) -> float:
     """Return min float between x and y
 
@@ -235,16 +266,44 @@ def minf(x: float, y: float) -> float:
     return x if x < y else y
 
 
-def clamp(
-        val: float|int,
-        low: float|int,
-        high: float|int
-    ) -> float|int:
+def mini(x: int, y: int) -> int:
+    """Return min int between x and y
+
+    Parameters
+    ---
+    x : int
+        
+    y : int
+        
+
+    Returns
+    ---
+    int
+    """
+    return x if x < y else y
+
+
+def clampf(val: float, low: float, high: float) -> float:
     """Clamp value between low and high
 
     Returns
     ---
-    float | int
+    float
+        clamped value
+    """
+    if val <= low:
+        return low
+    if val >= high:
+        return high
+    return val
+
+
+def clampi(val: int, low: int, high: int) -> int:
+    """Clamp value between low and high
+
+    Returns
+    ---
+    int
         clamped value
     """
     if val <= low:
@@ -271,7 +330,7 @@ def lerp(start: float, end: float, weight: float) -> float:
     float
         lerp amount
     """
-    return start + (end - start) * clamp(weight, 0.0, 1.0)
+    return start + (end - start) * clampf(weight, 0.0, 1.0)
 
 
 def normalize(val: float, low: float, high: float) -> float:
@@ -393,6 +452,82 @@ def arctan2(y: float, x: float) -> float:
     return math.atan2(y, x)
 
 
+def stepify(val: float, steps: float) -> float:
+    """Snaps value to given steps
+
+    Parameters
+    ---
+    value : float
+
+    steps : float
+
+    Returns
+    ---
+    float
+    """
+    return (val // steps) * steps
+
+
+def wrap(val: int, low: int, high: int) -> int:
+    """wrap int value between low and high - 1
+
+    Example
+    ---
+    wrap(6, 1, 5) => 2
+
+    wrap(5, 1, 6) => 1
+    
+    wrap(7, 2, 5) => 4
+
+
+    Parameters
+    ---
+    value : int
+    
+    low : int
+    
+    high : int
+
+    Returns
+    ---
+    int
+    """
+    return ((val - low) % (high - low) + low)
+
+
+def repeat(val: int, length: int) -> int:
+    """repeat value from 0 to high
+    
+    Parameters    
+    ---
+    value : int
+
+    length : int
+    
+    Return
+    ---
+    int
+    """
+    return val - (val // length) * val
+
+
+def ping_pong(val: int, length:int) -> int:
+    """repeat value from 0 to high and back
+    
+    Parameters    
+    ---
+    value : int
+
+    length : int
+    
+    Return
+    ---
+    int
+    """
+    val = repeat(val, length * 2)
+    val = length - absi(val - length)
+    return val
+    
 
 # --- VECTOR_2 (X, Y)
 
@@ -410,10 +545,10 @@ class Vec2:
     y: float = 0.0
 
     def __getitem__(self, idx):
-        match clamp(idx, 0, 1):
+        match clampi(idx, 0, 1):
             case 0: return self.x
             case 1: return self.y
-            case _: raise Vec2Error('out of range')
+        raise Vec2Error('out of range')
 
     def __add__(self, other):
         if not isinstance(other, Vec2):
@@ -709,11 +844,11 @@ class Vec3:
     z: float = 0.0
 
     def __getitem__(self, idx):
-        match clamp(idx, 0, 2):
+        match clampi(idx, 0, 2):
             case 0: return self.x
             case 1: return self.y
             case 2: return self.z
-            case _: raise Vec3Error('out of range')
+        raise Vec3Error('out of range')
 
     def __add__(self, other):
         if not isinstance(other, Vec3):
@@ -1008,12 +1143,12 @@ class Vec4:
     w: float = 0.0
 
     def __getitem__(self, idx):
-        match clamp(idx, 0, 3):
+        match clampi(idx, 0, 3):
             case 0: return self.x
             case 1: return self.y
             case 2: return self.z
             case 3: return self.w
-            case _: raise Vec4Error('out of range')
+        raise Vec4Error('out of range')
 
     def __add__(self, other):
         if not isinstance(other, Vec4):
@@ -1186,8 +1321,7 @@ class Vec4:
             (self.x * other.x) +
             (self.y * other.y) +
             (self.z * other.z) +
-            (self.w * other.w)
-        )
+            (self.w * other.w))
 
     def is_unit(self) -> bool:
         """Check if the current length of self is normalized
@@ -1213,8 +1347,7 @@ class Vec4:
             is_equil(self.x, other.x) and
             is_equil(self.y, other.y) and
             is_equil(self.z, other.z) and
-            is_equil(self.w, other.w)
-        )
+            is_equil(self.w, other.w))
 
     def is_zero(self) -> bool:
         """Check if the current *x, y, z* components of self are zero in value
@@ -1227,8 +1360,7 @@ class Vec4:
             is_zero(self.x) and
             is_zero(self.y) and
             is_zero(self.z) and
-            is_zero(self.w)
-        )
+            is_zero(self.w))
 
 
 # --- MATRIX_3
@@ -1254,7 +1386,7 @@ class Mat3:
     cz: float = 0.0
 
     def __getitem__(self, idx):
-        match clamp(idx, 0, 8):
+        match clampi(idx, 0, 8):
             case 0: return self.ax
             case 1: return self.ay
             case 2: return self.az
@@ -1264,7 +1396,7 @@ class Mat3:
             case 6: return self.cx
             case 7: return self.cy
             case 8: return self.cz
-            case _: raise Mat3Error('out of range')
+        raise Mat3Error('out of range')
 
     def __add__(self, other):
         if not isinstance(other, Mat3):
@@ -1283,8 +1415,7 @@ class Mat3:
         return Mat3(
             ax, ay, az,
             bx, by, bz,
-            cx, cy, cz,
-        )
+            cx, cy, cz)
 
     def __sub__(self, other):
         if not isinstance(other, Mat3):
@@ -1303,8 +1434,7 @@ class Mat3:
         return Mat3(
             ax, ay, az,
             bx, by, bz,
-            cx, cy, cz,
-        )
+            cx, cy, cz)
 
     def __mul__(self, other):
         if not isinstance(other, Mat3):
@@ -1313,54 +1443,44 @@ class Mat3:
         ax: float = (
             self.ax * other.ax +
             self.ay * other.bx +
-            self.az * other.cx
-        )
+            self.az * other.cx)
         ay: float = (
             self.ax * other.ay +
             self.ay * other.by +
-            self.az * other.cy
-        )
+            self.az * other.cy)
         az: float = (
             self.ax * other.az +
             self.ay * other.bz +
-            self.az * other.cz
-        )
+            self.az * other.cz)
         bx: float = (
             self.bx * other.ax +
             self.by * other.bx +
-            self.bz * other.cx
-        )
+            self.bz * other.cx)
         by: float = (
             self.bx * other.ay +
             self.by * other.by +
-            self.bz * other.cy
-        )
+            self.bz * other.cy)
         bz: float = (
             self.bx * other.az +
             self.by * other.bz +
-            self.bz * other.cz
-        )
+            self.bz * other.cz)
         cx: float = (
             self.cx * other.ax +
             self.cy * other.bx +
-            self.cz * other.cx
-        )
+            self.cz * other.cx)
         cy: float = (
             self.cx * other.ay +
             self.cy * other.by +
-            self.cz * other.cy
-        )
+            self.cz * other.cy)
         cz: float = (
             self.cx * other.az +
             self.cy * other.bz +
-            self.cz * other.cz
-        )
+            self.cz * other.cz)
 
         return Mat3(
             ax, ay, az,
             bx, by, bz,
-            cx, cy, cz,
-        )
+            cx, cy, cz)
 
     @staticmethod
     def identity() -> 'Mat3':
@@ -1437,8 +1557,7 @@ class Mat3:
         return Mat3(
             self.ax, self.ay, self.az,
             self.bx, self.by, self.bz,
-            self.cx, self.cy, self.cz
-        )
+            self.cx, self.cy, self.cz)
 
     def scale(self, by: float) -> 'Mat3':
         """Return a scaled copy of self
@@ -1462,8 +1581,7 @@ class Mat3:
         return Mat3(
             ax, ay, az,
             bx, by, bz,
-            cx, cy, cz,
-        )
+            cx, cy, cz)
 
     def transpose(self) -> 'Mat3':
         """Return a transposed copy of self
@@ -1485,8 +1603,7 @@ class Mat3:
         return Mat3(
             ax, ay, az,
             bx, by, bz,
-            cx, cy, cz,
-        )
+            cx, cy, cz)
 
     def cofactor(self) -> 'Mat3':
         """Return a cofactor copy of self
@@ -1508,8 +1625,7 @@ class Mat3:
         return Mat3(
             ax, ay, az,
             bx, by, bz,
-            cx, cy, cz
-        )
+            cx, cy, cz)
 
     def to_unit(self) -> None:
         """Normalize the length of self
@@ -1593,8 +1709,7 @@ class Mat3:
         return Mat3(
             ax, ay, az,
             bx, by, bz,
-            cx, cy, cz
-        )
+            cx, cy, cz)
 
     def row0(self) -> Vec3:
         """Return the first row of float values
@@ -1688,8 +1803,7 @@ class Mat3:
         return [
             self.ax, self.ay, self.az,
             self.bx, self.by, self.bz,
-            self.cx, self.cy, self.cz,
-        ]
+            self.cx, self.cy, self.cz]
 
     def multi_array(self) -> list[list[float]]:
         """Return self as a list of list floats
@@ -1701,8 +1815,7 @@ class Mat3:
         return [
             [self.ax, self.ay, self.az],
             [self.bx, self.by, self.bz],
-            [self.cx, self.cy, self.cz]
-        ]
+            [self.cx, self.cy, self.cz]]
 
 
 # --- MATRIX_4
@@ -1735,7 +1848,7 @@ class Mat4:
     dw: float = 0.0
 
     def __getitem__(self, idx):
-        match clamp(idx, 0, 15):
+        match clampi(idx, 0, 15):
             case 0: return self.ax
             case 1: return self.ay
             case 2: return self.az
@@ -1752,7 +1865,7 @@ class Mat4:
             case 13: return self.dy
             case 14: return self.dz
             case 15: return self.dw
-            case _: raise Mat4Error('out of range')
+        raise Mat4Error('out of range')
 
     def __add__(self, other):
         if not isinstance(other, Mat4):
@@ -1779,8 +1892,7 @@ class Mat4:
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
-            dx, dy, dz, dw
-        )
+            dx, dy, dz, dw)
 
     def __sub__(self, other):
         if not isinstance(other, Mat4):
@@ -1807,8 +1919,7 @@ class Mat4:
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
-            dx, dy, dz, dw
-        )
+            dx, dy, dz, dw)
 
     def __mul__(self, other):
         if not isinstance(other, Mat4):
@@ -1897,8 +2008,7 @@ class Mat4:
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
-            dx, dy, dz, dw
-        )
+            dx, dy, dz, dw)
 
     @staticmethod
     def identity() -> 'Mat4':
@@ -1942,8 +2052,7 @@ class Mat4:
             ax=1.0, ay=shear_y, az=shear_z,
             by=1.0,
             cz=1.0,
-            dw=1.0
-        )
+            dw=1.0)
 
     @staticmethod
     def create_y_shear(shear_x: float, shear_z: float) -> 'Mat4':
@@ -1957,8 +2066,7 @@ class Mat4:
             ax=1.0,
             bx=shear_x, by=1.0, bz=shear_z,
             cz=1.0,
-            dw=1.0
-        )
+            dw=1.0)
 
     @staticmethod
     def create_z_shear(shear_x: float, shear_y: float) -> 'Mat4':
@@ -1972,8 +2080,7 @@ class Mat4:
             ax=1.0,
             by=1.0,
             cx=shear_x, cy=shear_y, cz=1.0,
-            dw=1.0
-        )
+            dw=1.0)
 
     @staticmethod
     def create_x_rotation(angle_deg: float) -> 'Mat4':
@@ -2004,9 +2111,24 @@ class Mat4:
         s: float = sin(angle_rad)
 
         return Mat4(ax=c, az=s, by=1.0, cx=-s, cz=c, dw=1.0)
-    
+      
     @staticmethod
-    def from_axis(angle_deg: float, axis: 'Vec3') -> 'Mat4':
+    def create_z_rotation(angle_deg: float) -> 'Mat4':
+        """Create a rotation *z* mat4 matrix
+
+        Returns
+        ---
+        Mat4
+        """
+        angle_rad: float = to_radians(angle_deg)
+
+        c: float = cos(angle_rad)
+        s: float = sin(angle_rad)
+
+        return Mat4(ax=c, ay=-s, bx=s, by=c, cz=1.0, dw=1.0)   
+  
+    @staticmethod
+    def from_axis(angle_deg: float, axis: Vec3) -> 'Mat4':
         """Create a rotated matrix
 
         Parameters
@@ -2021,46 +2143,7 @@ class Mat4:
         Mat4
             rotated mat4
         """
-        angle_rad = to_radians(angle_deg)
-        u = axis.copy()
-        if not u.is_unit():
-            u.to_unit()
-
-        l: float = axis.length_sqrt()
-        x: float = axis.x / l
-        y: float = axis.y / l
-        z: float = axis.z / l
-
-        c: float = cos(angle_rad)
-        s: float = sin(angle_rad)
-
-        return Mat4(
-            ax = x * x * (1.0 - c) + c,
-            ay = y * x * (1.0 - c) + z * s,
-            az = x * z * (1.0 - c) - y * s,
-            bx = x * y * (1.0 - c) - z * s,
-            by = y * y * (1.0 - c) + c,
-            bz = y * z * (1.0 - c) + x * s,
-            cx = x * z * (1.0 - c) + y * s,
-            cy = y * z * (1.0 - c) - x * s,
-            cz = z * z * (1.0 - c) + c,
-            dw = 1.0
-        )
-
-    @staticmethod
-    def create_z_rotation(angle_deg: float) -> 'Mat4':
-        """Create a rotation *z* mat4 matrix
-
-        Returns
-        ---
-        Mat4
-        """
-        angle_rad: float = to_radians(angle_deg)
-
-        c: float = cos(angle_rad)
-        s: float = sin(angle_rad)
-
-        return Mat4(ax=c, ay=-s, bx=s, by=c, cz=1.0, dw=1.0)
+        return Quaternion.from_axis(angle_deg, axis).to_mat4()
 
     @staticmethod
     def look_at(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
@@ -2086,8 +2169,7 @@ class Mat4:
             x.x, y.x, z.x, 0.0,
             x.y, y.y, z.y, 0.0,
             x.z, y.z, z.z, 0.0,
-            dx, dy, dz, 1.0
-        )
+            dx, dy, dz, 1.0)
 
     @staticmethod
     def frustum_projection(fov: float, aspect: float, near: float, far: float) -> 'Mat4':
@@ -2140,8 +2222,7 @@ class Mat4:
             dx=-rl * rl_inv,
             dy=-tb * tb_inv,
             dz=-fn * fn_inv,
-            dw=1.0
-        )
+            dw=1.0)
 
     def copy(self) -> 'Mat4':
         """Return a copy
@@ -2154,8 +2235,7 @@ class Mat4:
             self.ax, self.ay, self.az, self.aw,
             self.bx, self.by, self.bz, self.bw,
             self.cx, self.cy, self.cz, self.cw,
-            self.dx, self.dy, self.dz, self.dw
-        )
+            self.dx, self.dy, self.dz, self.dw)
 
     def scale(self, by: float) -> 'Mat4':
         """Return a scaled copy of self
@@ -2185,8 +2265,7 @@ class Mat4:
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
-            dx, dy, dz, dw
-        )
+            dx, dy, dz, dw)
 
     def transpose(self) -> 'Mat4':
         """Return a transposed copy of self
@@ -2216,8 +2295,7 @@ class Mat4:
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
-            dx, dy, dz, dw
-        )
+            dx, dy, dz, dw)
 
     def cofactor(self) -> 'Mat4':
         """Return a cofactor copy of self
@@ -2247,8 +2325,7 @@ class Mat4:
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
-            dx, dy, dz, dw,
-        )
+            dx, dy, dz, dw)
 
     def inverse(self) -> 'Mat4':
         """Return the inverse of self
@@ -2291,8 +2368,7 @@ class Mat4:
             b00 * b11 - b01 *
             b10 + b02 * b09 +
             b03 * b08 - b04 *
-            b07 + b05 * b06
-        )
+            b07 + b05 * b06)
 
         inv: float = 1.0 / det
 
@@ -2317,8 +2393,7 @@ class Mat4:
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
-            dx, dy, dz, dw
-        )
+            dx, dy, dz, dw)
 
     def to_unit(self) -> None:
         """Normalize the length of self
@@ -2498,8 +2573,7 @@ class Mat4:
             b20 - b21 - b22 + b23 +
             b30 - b31 - b32 + b33 +
             b40 - b41 - b42 + b43 +
-            b50 - b51 - b52 + b53
-        )
+            b50 - b51 - b52 + b53)
 
     def array(self) -> list[float]:
         """Return self as a list of floats
@@ -2512,8 +2586,7 @@ class Mat4:
             self.ax, self.ay, self.az, self.aw,
             self.bx, self.by, self.bz, self.bw,
             self.cx, self.cy, self.cz, self.cw,
-            self.dx, self.dy, self.dz, self.dw
-        ]
+            self.dx, self.dy, self.dz, self.dw]
 
     def multi_array(self) -> list[list[float]]:
         """Return self as a list of list floats
@@ -2526,8 +2599,7 @@ class Mat4:
             [self.ax, self.ay, self.az, self.aw],
             [self.bx, self.by, self.bz, self.bw],
             [self.cx, self.cy, self.cz, self.cw],
-            [self.dx, self.dy, self.dz, self.dw]
-        ]
+            [self.dx, self.dy, self.dz, self.dw]]
 
 
 # --- QUATERNION
@@ -2548,12 +2620,12 @@ class Quaternion:
     w: float = 0.0
 
     def __getitem__(self, idx):
-        match clamp(idx, 0, 3):
+        match clampi(idx, 0, 3):
             case 0: return self.x
             case 1: return self.y
             case 2: return self.z
             case 3: return self.w
-            case _: raise QuatError('out of range')
+        raise QuatError('out of range')
 
     def __add__(self, other):
         if not isinstance(other, Quaternion):
@@ -2691,39 +2763,6 @@ class Quaternion:
         return Quaternion(x, y, z, w)
 
     @staticmethod
-    def nlerp(begin: 'Quaternion', end: 'Quaternion', weight: float) -> 'Quaternion':
-        """Return the normal interpolation between two quaternions
-
-        Parameters
-        ---
-        begin : Quaternion
-
-        end : Quaternion
-
-        weight : float
-
-        Returns
-        ---
-        Quaternion
-        """
-        x: float = lerp(begin.x, end.x, weight)
-        y: float = lerp(begin.y, end.y, weight)
-        z: float = lerp(begin.z, end.z, weight)
-        w: float = lerp(begin.w, end.w, weight)
-
-        length: float = sqrt(sqr(x) + sqr(y) + sqr(z) + sqr(w))
-        if is_zero(length):
-            length = 1.0
-
-        inv: float = 1.0 / length
-        x *= inv
-        y *= inv
-        z *= inv
-        w *= inv
-
-        return Quaternion(x, y, z, w)
-
-    @staticmethod
     def slerp(begin: 'Quaternion', end: 'Quaternion', weight: float) -> 'Quaternion':
         """Return the spherical linear interpolation between two quaternions
 
@@ -2739,23 +2778,29 @@ class Quaternion:
         ---
         Quaternion
         """
-        d: float = begin.dot(end)
-        b: 'Quaternion' = begin.copy()
-        e: 'Quaternion' = end.copy()
+        scale: float = Vec2()
+        v4: Vec4 = Vec4(end.x, end.y, end.z, end.w)
+        cosine: float = begin.dot(end)
 
-        if d < 0.0:
-            b = b.scale(-1.0)
-            d *= -1.0
-
-        if d > DOT_THRESHOLD:
-            return Quaternion.nlerp(b, e, weight)
-
-        d: float = clamp(d, -1.0, 1.0)
-        t: float = arccos(d) * weight
-        c: 'Quaternion' = (e - b.scale(d)).unit()
-
-        return b.scale(cos(t)) + c.scale(sin(t))
-
+        if cosine < 0.0:
+            cosine *= -1.0
+            v4 = v4 * -1.0
+        
+        if (1.0 - cosine) > EPSILON:
+            omega = arccos(cosine)
+            sinom = sin(omega)
+            scale.x = sin((1.0 - weight) * omega) / sinom
+            scale.y = sin(weight * omega) / sinom
+        else:
+            scale.x = 1.0 - weight
+            scale.y = weight
+        
+        return Quaternion(
+            x = scale.x * begin.x + scale.y * v4.x,
+            y = scale.x * begin.y + scale.y * v4.y,
+            z = scale.x * begin.z + scale.y * v4.z,
+            w = scale.x * begin.w + scale.y * v4.w)
+ 
     def copy(self) -> 'Quaternion':
         """Return a copy of self
 
@@ -2920,21 +2965,17 @@ class Quaternion:
 
         s2: float = 2.0 / (x2 + y2 + z2 + w2)
 
-        ax: float = 1.0 - (s2 * (y2 + z2))
-        ay: float = s2 * (xy + zw)
-        az: float = s2 * (xz - yw)
-        bx: float = s2 * (xy - zw)
-        by: float = 1.0 - (s2 * (x2 + z2))
-        bz: float = s2 * (yz + xw)
-        cx: float = s2 * (xz + yw)
-        cy: float = s2 * (yz - xw)
-        cz: float = 1.0 - (s2 * (x2 + y2))
-
         return Mat4(
-            ax, ay, az, 0.0,
-            bx, by, bz, 0.0,
-            cx, cy, cz, 0.0,
-            0.0, 0.0, 0.0, 1.0)
+            ax = 1.0 - (s2 * (y2 + z2)),
+            ay = s2 * (xy + zw),
+            az = s2 * (xz - yw),
+            bx = s2 * (xy - zw),
+            by = 1.0 - (s2 * (x2 + z2)),
+            bz = s2 * (yz + xw),
+            cx = s2 * (xz + yw),
+            cy = s2 * (yz - xw),
+            cz = 1.0 - (s2 * (x2 + y2)),
+            dw = 1.0)
 
     def length_sqr(self) -> float:
         """Return the squared length
@@ -2969,8 +3010,7 @@ class Quaternion:
             (self.x * other.x) +
             (self.y * other.y) +
             (self.z * other.z) +
-            (self.w * other.w)
-        )
+            (self.w * other.w))
 
     def angle(self) -> float:
         """Return the current angle of self in radians
@@ -2996,8 +3036,7 @@ class Quaternion:
             is_equil(self.x, other.x) and
             is_equil(self.y, other.y) and
             is_equil(self.z, other.z) and
-            is_equil(self.w, other.w)
-        )
+            is_equil(self.w, other.w))
 
     def is_unit(self) -> bool:
         """Check if the length of self is one
@@ -3029,5 +3068,15 @@ class Transform:
         return (
             Mat4.create_translation(self.position) *
             self.rotation.to_mat4() *
-            Mat4.create_scaler(Vec3(self.scale, self.scale, self.scale))
-        )
+            Mat4.create_scaler(Vec3(self.scale, self.scale, self.scale)))
+    
+    def get_matrix_inverse(self) -> Mat4:
+        """Return transform matrix inverse
+
+        Returns
+        ---
+        glm.Mat4
+        """
+        matrix: Mat4 = self.get_matrix()
+        return matrix.inverse()
+    

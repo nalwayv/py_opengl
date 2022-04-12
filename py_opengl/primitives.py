@@ -1,7 +1,13 @@
 """"""
 from dataclasses import dataclass
 from py_opengl import glm
+from enum import Enum, auto
 
+class Shape(Enum):
+    AABB = auto()
+    SPHERE = auto()
+    PLAIN = auto()
+    RAY = auto()
 
 # --- AABB
 
@@ -10,13 +16,13 @@ from py_opengl import glm
 class Aabb:
     position: glm.Vec3 = glm.Vec3()
     size: glm.Vec3 = glm.Vec3()
+    shape_id: Shape = Shape.AABB
 
     @staticmethod
     def from_min_max(min_pt: glm.Vec3, max_pt: glm.Vec3) -> 'Aabb':
         return Aabb(
-            (min_pt + max_pt) * 0.5,
-            (max_pt - min_pt) * 0.5
-        )
+            position=(min_pt + max_pt) * 0.5,
+            size=(max_pt - min_pt) * 0.5)
 
     def copy(self) -> 'Aabb':
         """Return a copy of self
@@ -25,7 +31,9 @@ class Aabb:
         ---
         Abbb
         """
-        return Aabb(self.position.copy(), self.size.copy())
+        return Aabb(
+            position=self.position.copy(),
+            size=self.size.copy())
 
     def closest_pt(self, pt: glm.Vec3) -> glm.Vec3:
         pt_min: glm.Vec3 = self.get_min()
@@ -108,6 +116,7 @@ class Aabb:
 class Sphere:
     position: glm.Vec3 = glm.Vec3()
     radius: float = 1.0
+    shape_id: Shape = Shape.SPHERE
 
     def copy(self) -> 'Sphere':
         """Return a copy of self
@@ -160,6 +169,7 @@ class PlainError(Exception):
 class Plain:
     normal: glm.Vec3 = glm.Vec3(x=1.0)
     direction: float = 0.0
+    shape_id: Shape = Shape.PLAIN
 
     def __post_init__(self):
         if not self.normal.is_unit():
@@ -172,7 +182,9 @@ class Plain:
         ---
         Plain
         """
-        return Plain(self.normal.copy(), self.dir)
+        return Plain(
+            normal=self.normal.copy(),
+            direction=self.direction)
 
     def dot(self, v4: glm.Vec4) -> float:
         x: float = self.normal.x * v4.x
@@ -212,9 +224,8 @@ class Plain:
 
         inv: float = glm.inv_sqrt(len_sqr)
         return Plain(
-            self.normal * inv,
-            self.direction * inv
-        )
+            normal=self.normal * inv,
+            direction=self.direction * inv)
 
     def to_unit(self) -> None:
         """Normalize the length of self
@@ -223,7 +234,7 @@ class Plain:
         if glm.is_zero(len_sqr):
             raise PlainError('length of plain was zero')
 
-        inv = glm.inv_sqrt(len_sqr)
+        inv: float = glm.inv_sqrt(len_sqr)
 
         self.normal.x *= inv
         self.normal.y *= inv
@@ -248,8 +259,7 @@ class Plain:
         len_sq: float = (
             aabb.size.x * glm.absf(self.normal.x) +
             aabb.size.y * glm.absf(self.normal.y) +
-            aabb.size.z * glm.absf(self.normal.z)
-        )
+            aabb.size.z * glm.absf(self.normal.z))
 
         dot: float = self.normal.dot(aabb.position)
         dis: float = dot - self.direction
@@ -263,13 +273,24 @@ class Plain:
 @dataclass(eq=False, repr=False, slots=True)
 class Ray:
     origin: glm.Vec3 = glm.Vec3()
-    normal: glm.Vec3 = glm.Vec3(x=1.0)
+    direction: glm.Vec3 = glm.Vec3(z=1.0)
+    shape_id: Shape = Shape.RAY
 
-    def __post_init__(self):
-        if not self.normal.is_unit():
-            self.normal.to_unit()
+    @staticmethod
+    def from_points(origin: glm.Vec3, target:glm.Vec3) -> 'Ray':
+        o = origin.copy()
+        d = target - origin
+        if not d.is_unit():
+            d.to_unit()
 
-    def get_point(self, t: float) -> glm.Vec3:
+        return Ray(origin=o, direction=d)
+
+    def copy(self) -> 'Ray':
+        o = self.origin.copy()
+        d = self.direction.copy()
+        return Ray(origin=o, direction=d)
+
+    def get_hit(self, t: float) -> glm.Vec3:
         """Return point along ray
 
         Parameters
@@ -280,7 +301,10 @@ class Ray:
         ---
         Vec3
         """
-        return self.origin + (self.normal * t)
+        dir = self.direction.copy()
+        if not dir.is_unit():
+            dir.to_unit()
+        return self.origin + (dir * t)
     
     def cast_aabb(self, aabb: Aabb) -> tuple[bool, glm.Vec3]:
         amin: glm.Vec3 = aabb.get_min()
@@ -288,12 +312,16 @@ class Ray:
         tmin: float = glm.MIN_FLOAT
         tmax: float = glm.MAX_FLOAT
 
+        dir = self.direction.copy()
+        if not dir.is_unit():
+            dir.to_unit()
+
         for idx in range(3):
-            if glm.is_zero(self.normal[idx]):
+            if glm.is_zero(dir[idx]):
                 if self.origin[idx] < amin[idx] or self.origin[idx] > amax[idx]:
                     return False, glm.Vec3()
             else:
-                inv: float = 1.0 / self.normal[idx]
+                inv: float = 1.0 / dir[idx]
 
                 t1: float = (amin[idx] - self.origin[idx]) * inv
                 t2: float = (amax[idx] - self.origin[idx]) * inv
@@ -313,8 +341,12 @@ class Ray:
         return True, self.get_point(tmin)
 
     def cast_sphere(self, sph: Sphere) -> tuple[bool, glm.Vec3]:
+        dir = self.direction.copy()
+        if not dir.is_unit():
+            dir.to_unit()
+
         a: glm.Vec3 = sph.position - self.origin
-        b: float = a.dot(self.normal)
+        b: float = a.dot(dir)
         c: float = a.length_sqr() - glm.sqr(sph.radius)
 
         if c > 0.0 and b > 0.0:

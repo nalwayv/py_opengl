@@ -101,13 +101,11 @@ class Camera:
         CameraError
             not a valid rotate direction
         """
-
-
         match dir:
             case CameraRotation.YAW:
                 self.yaw = self.yaw - glm.to_radians(value * sensativity)
             case CameraRotation.PITCH:
-                self.pitch = self.pitch + glm.to_radians(glm.clamp(value * sensativity, -89.0, 89.0))
+                self.pitch = self.pitch + glm.to_radians(glm.clampf(value * sensativity, -89.0, 89.0))
             case CameraRotation.ROLL: return
             case _: raise CameraError('unknown camera rotation')
 
@@ -129,14 +127,14 @@ class Camera:
         """
         match dir:
             case CameraZoom.OUT: 
-                self.fovy = glm.clamp(
-                    self.fovy + glm.to_radians(glm.clamp(value * sensativity, 1.0, 45.0)), 
+                self.fovy = glm.clampf(
+                    self.fovy + glm.to_radians(glm.clampf(value * sensativity, 1.0, 45.0)), 
                     0.1, 
                     glm.PI
                 )
             case CameraZoom.IN: 
-                self.fovy = glm.clamp(
-                    self.fovy - glm.to_radians(glm.clamp(value * sensativity, 1.0, 45.0)), 
+                self.fovy = glm.clampf(
+                    self.fovy - glm.to_radians(glm.clampf(value * sensativity, 1.0, 45.0)), 
                     0.1, 
                     glm.PI
                 )
