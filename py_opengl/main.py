@@ -7,7 +7,7 @@ from loguru import logger
 from OpenGL import GL
 
 from py_opengl import utils
-from py_opengl import glm
+from py_opengl import maths
 from py_opengl import clock
 from py_opengl import shader
 from py_opengl import vbo
@@ -26,13 +26,13 @@ class Triangle:
     vbo_: vbo.VboIbo|None = None
     shader_: shader.Shader|None = None
     texture_: texture.Texture|None = None
-    transform_: glm.Transform|None = None
+    transform_: maths.Transform|None = None
 
     def __post_init__(self):
         self.vbo_ = vbo.VboIbo(length=9)
         self.shader_ = shader.Shader()
         self.texture_ = texture.Texture()
-        self.transform_ = glm.Transform()
+        self.transform_ = maths.Transform()
 
         texture_src: str = 'wall.jpg'
         vert_src: str = 'shader.vert'
@@ -86,14 +86,14 @@ class Cube:
     vbo_: vbo.VboIbo|None = None
     shader_: shader.Shader|None = None
     texture_: texture.Texture|None = None
-    transform_: glm.Transform|None = None
-    size: glm.Vec3 = glm.Vec3(1.0, 1.0, 1.0)
+    transform_: maths.Transform|None = None
+    size: maths.Vec3 = maths.Vec3(1.0, 1.0, 1.0)
 
     def __post_init__(self):
         self.vbo_ = vbo.VboIbo(length=36)
         self.shader_ = shader.Shader()
         self.texture_ = texture.Texture()
-        self.transform_ = glm.Transform()
+        self.transform_ = maths.Transform()
 
         texture_src: str = 'grid512.bmp'
         vert_src: str = 'shader.vert'
@@ -202,16 +202,16 @@ def main() -> None:
 
         time = clock.Clock()
         cam = camera.Camera(
-            position=glm.Vec3(z=3.0),
+            position=maths.Vec3(z=3.0),
             aspect=utils.SCREEN_WIDTH/utils.SCREEN_HEIGHT
         )
 
         kb = keyboard.Keyboard()
         ms = mouse.Mouse()
         first_move = True
-        last_mp = glm.Vec3()
+        last_mp = maths.Vec3()
 
-        shape = Cube(size=glm.Vec3(1.0, 1.0, 0.5))
+        shape = Cube(size=maths.Vec3(1.0, 1.0, 0.5))
 
         bg_col = color.Color.from_rgba(75, 75, 75, 255)
 
@@ -227,17 +227,17 @@ def main() -> None:
 
             shape.draw()
 
-            shape.transform_.rotation = glm.Quaternion.from_axis(
+            shape.transform_.rotation = maths.Quaternion.from_axis(
                 time.ticks,
-                glm.Vec3(x=1.0, y=0.5, z=0.8)
+                maths.Vec3(x=1.0, y=0.5, z=0.8)
             )
 
             # shape.transform_.rotation = glm.Mat4.from_axis(time.ticks, glm.Vec3(x=1.0, y=0.5, z=0.8))
             
-            m: glm.Mat4 = shape.transform_.get_matrix()
-            v: glm.Mat4 = cam.view_matrix()
-            p: glm.Mat4 = cam.projection_matrix()
-            mvp: glm.Mat4 = m * v * p
+            m: maths.Mat4 = shape.transform_.get_matrix()
+            v: maths.Mat4 = cam.view_matrix()
+            p: maths.Mat4 = cam.projection_matrix()
+            mvp: maths.Mat4 = m * v * p
             shape.shader_.set_m4('mvp', mvp)
 
             # keyboard
@@ -270,7 +270,7 @@ def main() -> None:
                     first_move = False
                 else:
                     mx, my = glwin.get_mouse_pos()
-                    new_mp = glm.Vec3(x=mx, y=my) - last_mp
+                    new_mp = maths.Vec3(x=mx, y=my) - last_mp
                     last_mp.x = mx
                     last_mp.y = my
 
@@ -283,7 +283,7 @@ def main() -> None:
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
-    except (glm.Vec3Error, glm.Mat4Error, glm.QuatError) as math_err:
+    except (maths.Vec3Error, maths.Mat4Error, maths.QuatError) as math_err:
         logger.error(f'MATH ERROR: {math_err}')
 
     except texture.TextureError as texture_err:

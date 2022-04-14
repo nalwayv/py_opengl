@@ -1,27 +1,9 @@
 """
 Gl Math
----
-
-Classes
----
-Vec2
-
-Vec3
-
-Vec4
-
-Mat3
-
-Mat4
-
-Quaternion
-
-Transform
 """
 import math
 from dataclasses import dataclass
-from typing import Final
-
+from typing import Final, NamedTuple
 
 # --- CONSTANTS
 
@@ -32,9 +14,37 @@ TAU: Final[float] = 6.28318530717958647693
 EPSILON: Final[float] = 0.00000000000000022204
 MAX_FLOAT: Final[float] = 1.7976931348623157e+308
 MIN_FLOAT: Final[float] = 2.2250738585072014e-308
+E: Final[float] = 2.71828182845904523536
 INFINITY: Final[float] = math.inf
 NEGATIVE_INFINITY: Final[float] = -math.inf
-E: Final[float] = 2.71828182845904523536
+
+
+# ---
+
+
+class Point2D(NamedTuple):
+    x: float
+    y: float
+
+
+class Point3D(NamedTuple):
+    x: float
+    y: float
+    z: float
+
+
+class CatmullData(NamedTuple):
+    pos_a: float
+    pos_b: float
+    pos_c: float
+    pos_d: float
+
+
+class HermitData(NamedTuple):
+    value_a: float
+    tangent_a: float
+    value_b: float
+    tangent_b: float
 
 
 # --- FUNCTIONS
@@ -313,15 +323,17 @@ def clampi(val: int, low: int, high: int) -> int:
     return val
 
 
-def lerp(start: float, end: float, weight: float) -> float:
+def lerp(a: float, b: float, weight: float) -> float:
     """Return amount of *linear interpolation* between start and end based on weight
 
     Parameters
     ---
-    start : float
-        from
-    end : float
-        to
+    a : float
+        start
+
+    b : float
+        end
+        
     weight : float
         value between 0 and 1
 
@@ -330,7 +342,39 @@ def lerp(start: float, end: float, weight: float) -> float:
     float
         lerp amount
     """
-    return start + (end - start) * clampf(weight, 0.0, 1.0)
+    return a + weight * (b - a)
+
+
+def cubic_lerp(start: float, start_tan: float, to: float, to_tan: float, weight) -> float:
+    """Return cubic lerp
+
+    Parameters
+    ---
+    start : float
+
+    start_tan : float
+        start tangent
+
+    to : float
+
+    to_tan : float
+        to tangent
+
+    Returns
+    ---
+    float
+    """
+    a: float = start
+    b: float = start_tan
+    c: float = to
+    d: float = to_tan
+    t: float = weight
+    p: float = (d - c) - (a - b)
+
+    squared: float = t * t
+    cubed: float = squared * t
+
+    return cubed * p + squared * ((a - b) - p) + t * (c - a) + b
 
 
 def normalize(val: float, low: float, high: float) -> float:
@@ -527,7 +571,61 @@ def ping_pong(val: int, length:int) -> int:
     val = repeat(val, length * 2)
     val = length - absi(val - length)
     return val
-    
+
+
+def catmullrom(data: CatmullData, amount: float) -> float:
+    """catmull_rom interpolation using the specified positions
+
+    Parameters
+    ---
+    pos1 : float
+
+    pos2 : float
+
+    pos3 : float
+
+    pos4 : float
+
+    amount : float
+
+    Returns
+    ---
+    float
+    """
+    squared: float = amount * amount
+    cubed: float = squared * amount
+    return (
+        0.5 * (2.0 * data.pos_b + (data.pos_c - data.pos_a) * amount +
+        (2.0 * data.pos_a - 5.0 * data.pos_b + 4.0 * data.pos_c - data.pos_d) * squared +
+        (3.0 * data.pos_b - data.pos_a - 3.0 * data.pos_c + data.pos_d) * cubed))  
+
+
+def hetmit(data: HermitData, amount: float) -> float:
+    """hermite spline interpolation
+
+    Parameters
+    ---
+    data : HermitData
+
+    amount : float
+
+    Returns
+    ---
+    float
+    """
+    if amount == 0.0:
+        return data.value_a
+
+    if amount == 1.0:
+        return data.value_b
+
+    squared: float = amount * amount
+    cubed: float = squared * amount
+    return (
+        (2.0 * data.value_a - 2.0 * data.value_b + data.tangent_b + data.tangent_a) * cubed +
+        (3.0 * data.value_b - 3.0 * data.value_a - 2.0 * data.tangent_a - data.tangent_b) * squared +
+        data.tangent_a * amount + data.value_a)
+
 
 # --- VECTOR_2 (X, Y)
 
@@ -3056,7 +3154,6 @@ class Transform:
     position: Vec3 = Vec3()
     scale: float = 1.0
     rotation: Quaternion = Quaternion(w=1.0)
-    # rotation: Mat4 = Mat4()
 
     def get_matrix(self) -> Mat4:
         """Return transform matrix

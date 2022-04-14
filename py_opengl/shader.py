@@ -6,7 +6,7 @@ from pathlib import Path
 from OpenGL import GL
 from OpenGL.GL.shaders import compileShader, compileProgram
 
-from py_opengl import glm
+from py_opengl import maths
 
 class ShaderError(Exception):
     '''Custom error for Shader'''
@@ -64,7 +64,7 @@ class Shader:
         """
         GL.glUseProgram(self.shader_id)
 
-    def set_vec2(self, var_name: str, data: glm.Vec2) -> None:
+    def set_vec2(self, var_name: str, data: maths.Vec2) -> None:
         """Set a global uniform vec2 variable within the shader program
 
         Parameters
@@ -77,7 +77,7 @@ class Shader:
         location_id = GL.glGetUniformLocation(self.shader_id, var_name)
         GL.glUniform2f(location_id, data.x, data.y)
 
-    def set_vec3(self, var_name: str, data: glm.Vec3) -> None:
+    def set_vec3(self, var_name: str, data: maths.Vec3) -> None:
         """Set a global uniform vec3 variable within the shader program
 
         Parameters
@@ -90,7 +90,7 @@ class Shader:
         location_id = GL.glGetUniformLocation(self.shader_id, var_name)
         GL.glUniform3f(location_id, data.x, data.y, data.z)
 
-    def set_vec4(self, var_name: str, data: glm.Vec4) -> None:
+    def set_vec4(self, var_name: str, data: maths.Vec4) -> None:
         """Set a global uniform vec4 variable within the shader program
 
         Parameters
@@ -103,7 +103,7 @@ class Shader:
         location_id = GL.glGetUniformLocation(self.shader_id, var_name)
         GL.glUniform4f(location_id, data.x, data.y, data.z, data.w)
 
-    def set_m4(self, var_name: str, data: glm.Mat4) -> None:
+    def set_m4(self, var_name: str, data: maths.Mat4) -> None:
         """Set a global uniform mat4 variable within the shader program
 
         Parameters

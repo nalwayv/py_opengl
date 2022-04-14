@@ -4,7 +4,7 @@ Camera
 A perspective camera
 """
 from dataclasses import dataclass
-from py_opengl import glm
+from py_opengl import maths
 from enum import Enum, auto
 
 
@@ -40,13 +40,13 @@ class CameraZoom(Enum):
 
 @dataclass(eq=False, repr=False, slots=True)
 class Camera:
-    position: glm.Vec3 = glm.Vec3()
-    front: glm.Vec3 = glm.Vec3(z=-1.0)
-    up: glm.Vec3 = glm.Vec3(y=1.0)
-    right: glm.Vec3 = glm.Vec3(x=1.0)
+    position: maths.Vec3 = maths.Vec3()
+    front: maths.Vec3 = maths.Vec3(z=-1.0)
+    up: maths.Vec3 = maths.Vec3(y=1.0)
+    right: maths.Vec3 = maths.Vec3(x=1.0)
     aspect: float = 1.0
-    fovy: float = glm.PHI
-    yaw: float = -glm.PHI
+    fovy: float = maths.PHI
+    yaw: float = -maths.PHI
     pitch: float = 0.0
     znear: float = 0.01
     zfar: float = 1000.0
@@ -103,9 +103,9 @@ class Camera:
         """
         match dir:
             case CameraRotation.YAW:
-                self.yaw = self.yaw - glm.to_radians(value * sensativity)
+                self.yaw = self.yaw - maths.to_radians(value * sensativity)
             case CameraRotation.PITCH:
-                self.pitch = self.pitch + glm.to_radians(glm.clampf(value * sensativity, -89.0, 89.0))
+                self.pitch = self.pitch + maths.to_radians(maths.clampf(value * sensativity, -89.0, 89.0))
             case CameraRotation.ROLL: return
             case _: raise CameraError('unknown camera rotation')
 
@@ -127,32 +127,32 @@ class Camera:
         """
         match dir:
             case CameraZoom.OUT: 
-                self.fovy = glm.clampf(
-                    self.fovy + glm.to_radians(glm.clampf(value * sensativity, 1.0, 45.0)), 
+                self.fovy = maths.clampf(
+                    self.fovy + maths.to_radians(maths.clampf(value * sensativity, 1.0, 45.0)), 
                     0.1, 
-                    glm.PI
+                    maths.PI
                 )
             case CameraZoom.IN: 
-                self.fovy = glm.clampf(
-                    self.fovy - glm.to_radians(glm.clampf(value * sensativity, 1.0, 45.0)), 
+                self.fovy = maths.clampf(
+                    self.fovy - maths.to_radians(maths.clampf(value * sensativity, 1.0, 45.0)), 
                     0.1, 
-                    glm.PI
+                    maths.PI
                 )
             case _: raise CameraError('unknown camera zoom')
 
     def update(self) -> None:
         """Update camera's up, right and front fields
         """
-        self.front.x = glm.cos(self.pitch) * glm.cos(self.yaw)
-        self.front.y = glm.sin(self.pitch)
-        self.front.z = glm.cos(self.pitch) * glm.sin(self.yaw)
+        self.front.x = maths.cos(self.pitch) * maths.cos(self.yaw)
+        self.front.y = maths.sin(self.pitch)
+        self.front.z = maths.cos(self.pitch) * maths.sin(self.yaw)
 
         self.front.to_unit()
-        self.right = self.front.cross(glm.Vec3(y=1))
+        self.right = self.front.cross(maths.Vec3(y=1))
         self.right.to_unit()
         self.up = self.right.cross(self.front)
 
-    def projection_matrix(self) -> glm.Mat4:
+    def projection_matrix(self) -> maths.Mat4:
         """Return projection matrix
 
         Returns
@@ -161,10 +161,10 @@ class Camera:
             camera perspective matrix
         """
         # return glm.Mat4.ortho_projection(-1, 1, 1, -1, 1, 100)
-        return glm.Mat4.frustum_projection(self.fovy, self.aspect, self.znear, self.zfar)
+        return maths.Mat4.frustum_projection(self.fovy, self.aspect, self.znear, self.zfar)
 
 
-    def view_matrix(self) -> glm.Mat4:
+    def view_matrix(self) -> maths.Mat4:
         """Return view matrix
 
         Returns
@@ -172,4 +172,4 @@ class Camera:
         glm.Mat4
             cameras view matrix
         """
-        return glm.Mat4.look_at(self.position, self.position + self.front, self.up)
+        return maths.Mat4.look_at(self.position, self.position + self.front, self.up)

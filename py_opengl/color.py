@@ -2,7 +2,7 @@
 """
 
 from dataclasses import dataclass
-from py_opengl import glm
+from py_opengl import maths
 
 @dataclass(eq=False, repr=False, slots=True)
 class Color:
@@ -30,16 +30,16 @@ class Color:
         return 0xFF & (self._data >> 24)
 
     def set_red(self, value: int) -> None: 
-        self._data = (self._data & 0xFFFFFF00) | (glm.clampi(value, 0, 255))
+        self._data = (self._data & 0xFFFFFF00) | (maths.clampi(value, 0, 255))
 
     def set_green(self, value: int) -> None:
-        self._data = (self._data & 0xFFFF00FF) | (glm.clampi(value, 0, 255) << 8)
+        self._data = (self._data & 0xFFFF00FF) | (maths.clampi(value, 0, 255) << 8)
 
     def set_blue(self, value: int) -> None:
-        self._data = (self._data & 0xFF00FFFF) | (glm.clampi(value, 0, 255) << 16)
+        self._data = (self._data & 0xFF00FFFF) | (maths.clampi(value, 0, 255) << 16)
 
     def set_alpha(self, value: int) -> None:
-        self._data = (self._data & 0x00FFFFFF) | (glm.clampi(value, 0, 255) << 24)
+        self._data = (self._data & 0x00FFFFFF) | (maths.clampi(value, 0, 255) << 24)
 
     def get_data(self) -> tuple[int, int, int, int]:
         return (
