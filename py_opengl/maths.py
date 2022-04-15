@@ -11,7 +11,7 @@ from typing import Final, NamedTuple
 PI: Final[float] = 3.14159265358979323846
 PHI: Final[float] = 1.57079632679489661923
 TAU: Final[float] = 6.28318530717958647693
-EPSILON: Final[float] = 0.00000000000000022204
+EPSILON: Final[float] = 1e-6
 MAX_FLOAT: Final[float] = 1.7976931348623157e+308
 MIN_FLOAT: Final[float] = 2.2250738585072014e-308
 E: Final[float] = 2.71828182845904523536
@@ -31,20 +31,6 @@ class Point3D(NamedTuple):
     x: float
     y: float
     z: float
-
-
-class CatmullData(NamedTuple):
-    pos_a: float
-    pos_b: float
-    pos_c: float
-    pos_d: float
-
-
-class HermitData(NamedTuple):
-    value_a: float
-    tangent_a: float
-    value_b: float
-    tangent_b: float
 
 
 # --- FUNCTIONS
@@ -573,18 +559,18 @@ def ping_pong(val: int, length:int) -> int:
     return val
 
 
-def catmullrom(data: CatmullData, amount: float) -> float:
+def catmullrom(pos_a: float, pos_b: float, pos_c: float, pos_d: float, amount: float) -> float:
     """catmull_rom interpolation using the specified positions
 
     Parameters
     ---
-    pos1 : float
+    pos_a : float
 
-    pos2 : float
+    pos_b : float
 
-    pos3 : float
+    pos_c : float
 
-    pos4 : float
+    pos_d : float
 
     amount : float
 
@@ -595,17 +581,23 @@ def catmullrom(data: CatmullData, amount: float) -> float:
     squared: float = amount * amount
     cubed: float = squared * amount
     return (
-        0.5 * (2.0 * data.pos_b + (data.pos_c - data.pos_a) * amount +
-        (2.0 * data.pos_a - 5.0 * data.pos_b + 4.0 * data.pos_c - data.pos_d) * squared +
-        (3.0 * data.pos_b - data.pos_a - 3.0 * data.pos_c + data.pos_d) * cubed))  
+        0.5 * (2.0 * pos_b + (pos_c - pos_a) * amount +
+        (2.0 * pos_a - 5.0 * pos_b + 4.0 * pos_c - pos_d) * squared +
+        (3.0 * pos_b - pos_a - 3.0 * pos_c + pos_d) * cubed))  
 
 
-def hetmit(data: HermitData, amount: float) -> float:
+def hetmit(value_a: float, tangent_a: float, value_b: float, tangent_b: float, amount: float) -> float:
     """hermite spline interpolation
 
     Parameters
     ---
-    data : HermitData
+    value_a : float
+
+    tangent_a : float
+
+    value_b : float
+
+    tangent_b : float
 
     amount : float
 
@@ -614,17 +606,17 @@ def hetmit(data: HermitData, amount: float) -> float:
     float
     """
     if amount == 0.0:
-        return data.value_a
+        return value_a
 
     if amount == 1.0:
-        return data.value_b
+        return value_b
 
     squared: float = amount * amount
     cubed: float = squared * amount
     return (
-        (2.0 * data.value_a - 2.0 * data.value_b + data.tangent_b + data.tangent_a) * cubed +
-        (3.0 * data.value_b - 3.0 * data.value_a - 2.0 * data.tangent_a - data.tangent_b) * squared +
-        data.tangent_a * amount + data.value_a)
+        (2.0 * value_a - 2.0 * value_b + tangent_b + tangent_a) * cubed +
+        (3.0 * value_b - 3.0 * value_a - 2.0 * tangent_a - tangent_b) * squared +
+        tangent_a * amount + value_a)
 
 
 # --- VECTOR_2 (X, Y)
@@ -707,7 +699,7 @@ class Vec2:
         if is_zero(lsq):
             raise Vec2Error('length of this vec2 was zero')
 
-        inv = inv_sqrt(lsq)
+        inv: float = inv_sqrt(lsq)
         self.x *= inv
         self.y *= inv
 
@@ -840,7 +832,7 @@ class Vec2:
         ---
         float
         """
-        return sqr(self.x) + sqr(self.y) + sqr(self.z)
+        return sqr(self.x) + sqr(self.y)
 
     def length_sqrt(self) -> float:
         """Return the square root length
@@ -1102,20 +1094,17 @@ class Vec3:
         m1 = Vec3(
             c + u.x * u.x * (1 - c),
             u.x * u.y * (1 - c) - u.z * s,
-            u.x * u.z * (1 - c) + u.y * s
-        )
+            u.x * u.z * (1 - c) + u.y * s)
 
         m2 = Vec3(
             u.y * u.x * (1 - c) + u.z * s,
             c + u.y * u.y * (1 - c),
-            u.y * u.z * (1 - c) - u.x * s
-        )
+            u.y * u.z * (1 - c) - u.x * s)
 
         m3 = Vec3(
             u.z * u.x * (1 - c) - u.y * s,
             u.z * u.y * (1 - c) + u.x * s,
-            c + u.z * u.z * (1 - c)
-        )
+            c + u.z * u.z * (1 - c))
 
         x: float = self.dot(m1)
         y: float = self.dot(m2)
@@ -2786,21 +2775,21 @@ class Quaternion:
         ---
         Quaternion
         """
-        rx = to_radians(angles.x)
-        ry = to_radians(angles.y)
-        rz = to_radians(angles.z)
+        rx: float = to_radians(angles.x)
+        ry: float = to_radians(angles.y)
+        rz: float = to_radians(angles.z)
 
-        c1 = cos(rx * 0.5)
-        c2 = cos(ry * 0.5)
-        c3 = cos(rz * 0.5)
-        s1 = sin(rx * 0.5)
-        s2 = sin(ry * 0.5)
-        s3 = sin(rz * 0.5)
+        c1: float = cos(rx * 0.5)
+        c2: float = cos(ry * 0.5)
+        c3: float = cos(rz * 0.5)
+        s1: float = sin(rx * 0.5)
+        s2: float = sin(ry * 0.5)
+        s3: float = sin(rz * 0.5)
 
-        x = (s1 * c2 * c3) + (c1 * s2 * s3)
-        y = (c1 * s2 * c3) - (s1 * c2 * s3)
-        z = (c1 * c2 * s3) + (s1 * s2 * c3)
-        w = (c1 * c2 * c3) - (s1 * s2 * s3)
+        x: float = (s1 * c2 * c3) + (c1 * s2 * s3)
+        y: float = (c1 * s2 * c3) - (s1 * c2 * s3)
+        z: float = (c1 * c2 * s3) + (s1 * s2 * c3)
+        w: float = (c1 * c2 * c3) - (s1 * s2 * s3)
 
         return Quaternion(x, y, z, w)
 
@@ -2885,19 +2874,20 @@ class Quaternion:
             v4 = v4 * -1.0
         
         if (1.0 - cosine) > EPSILON:
-            omega = arccos(cosine)
-            sinom = sin(omega)
+            omega: float = arccos(cosine)
+            sinom: float = sin(omega)
             scale.x = sin((1.0 - weight) * omega) / sinom
             scale.y = sin(weight * omega) / sinom
         else:
             scale.x = 1.0 - weight
             scale.y = weight
-        
-        return Quaternion(
-            x = scale.x * begin.x + scale.y * v4.x,
-            y = scale.x * begin.y + scale.y * v4.y,
-            z = scale.x * begin.z + scale.y * v4.z,
-            w = scale.x * begin.w + scale.y * v4.w)
+
+        x: float = scale.x * begin.x + scale.y * v4.x
+        y: float = scale.x * begin.y + scale.y * v4.y
+        z: float = scale.x * begin.z + scale.y * v4.z
+        w: float = scale.x * begin.w + scale.y * v4.w
+
+        return Quaternion(x, y, z, w)
  
     def copy(self) -> 'Quaternion':
         """Return a copy of self
