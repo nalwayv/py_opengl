@@ -967,6 +967,20 @@ class Vec3:
     def from_v2(v2: Vec2) -> 'Vec3':
         return Vec3(x=v2.x, y=v2.y)
 
+    @staticmethod
+    def from_max(a: 'Vec3', b: 'Vec3') -> 'Vec3':
+        x = maxf(a.x, b.x)
+        y = maxf(a.y, b.y)
+        z = maxf(a.z, b.z)
+        return Vec3(x, y, z)
+
+    @staticmethod
+    def from_min(a: 'Vec3', b: 'Vec3') -> 'Vec3':
+        x = minf(a.x, b.x)
+        y = minf(a.y, b.y)
+        z = minf(a.z, b.z)
+        return Vec3(x, y, z)
+
     def lerp(self, to: 'Vec3', weight: float) -> 'Vec3':
         """Return lerp between begin and end vec3
 
@@ -2885,34 +2899,40 @@ class Quaternion:
         return Quaternion(x, y, z, w)
 
     @staticmethod
-    def from_euler(angles: Vec3) -> 'Quaternion':
+    def from_euler(x: float, y: float, z: float) -> 'Quaternion':
         """Create from euler angles
 
         Parameters
         ---
-        angles : Vec3
-
+        x : float
+            x rotation
+        
+        y : float
+            y rotation
+        
+        z : float
+            z rotation
+ 
         Returns
         ---
         Quaternion
         """
-        rx: float = to_radians(angles.x)
-        ry: float = to_radians(angles.y)
-        rz: float = to_radians(angles.z)
+        rx: float = to_radians(x) * 0.5
+        ry: float = to_radians(y) * 0.5
+        rz: float = to_radians(z) * 0.5
 
-        c1: float = cos(rx * 0.5)
-        c2: float = cos(ry * 0.5)
-        c3: float = cos(rz * 0.5)
-        s1: float = sin(rx * 0.5)
-        s2: float = sin(ry * 0.5)
-        s3: float = sin(rz * 0.5)
+        sx: float = sin(rx)
+        cx: float = cos(rx)
+        sy: float = sin(ry)
+        cy: float = cos(ry)
+        sz: float = sin(rz)
+        cz: float = cos(rz)
 
-        x: float = (s1 * c2 * c3) + (c1 * s2 * s3)
-        y: float = (c1 * s2 * c3) - (s1 * c2 * s3)
-        z: float = (c1 * c2 * s3) + (s1 * s2 * c3)
-        w: float = (c1 * c2 * c3) - (s1 * s2 * s3)
-
-        return Quaternion(x, y, z, w)
+        return Quaternion(
+            x = (sx * cy * cz) + (cx * sy * sz),
+            y = (cx * sy * cz) + (sx * cy * sz),
+            z = (cx * cy * sz) - (sx * sy * cz),
+            w = (cx * cy * cz) - (sx * sy * sz))
 
     @staticmethod
     def from_axis(angle_deg: float, axis: Vec3) -> 'Quaternion':
@@ -2966,7 +2986,6 @@ class Quaternion:
         v3: Vec3 = start.cross(to)
         return Quaternion(v3.x, v3.y, v3.z, 1.0 + dot)
 
-
     def lerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
         """Return the interpolation between two quaternions
 
@@ -3004,7 +3023,8 @@ class Quaternion:
         ---
         Quaternion
         """
-        scale: float = Vec2()
+        scale0: float = 0.0
+        scale1: float = 0.0
         v4: Vec4 = Vec4(to.x, to.y, to.z, to.w)
         cosine: float = self.dot(to)
 
@@ -3015,16 +3035,16 @@ class Quaternion:
         if (1.0 - cosine) > EPSILON:
             omega: float = arccos(cosine)
             sinom: float = sin(omega)
-            scale.x = sin((1.0 - weight) * omega) / sinom
-            scale.y = sin(weight * omega) / sinom
+            scale0 = sin((1.0 - weight) * omega) / sinom
+            scale1 = sin(weight * omega) / sinom
         else:
-            scale.x = 1.0 - weight
-            scale.y = weight
+            scale0 = 1.0 - weight
+            scale1 = weight
 
-        x: float = scale.x * self.x + scale.y * v4.x
-        y: float = scale.x * self.y + scale.y * v4.y
-        z: float = scale.x * self.z + scale.y * v4.z
-        w: float = scale.x * self.w + scale.y * v4.w
+        x: float = scale0 * self.x + scale1 * v4.x
+        y: float = scale0 * self.y + scale1 * v4.y
+        z: float = scale0 * self.z + scale1 * v4.z
+        w: float = scale0 * self.w + scale1 * v4.w
 
         return Quaternion(x, y, z, w)
  
@@ -3073,25 +3093,6 @@ class Quaternion:
         w: float = self.q * inv
         return Quaternion(x, y, z, w)
 
-    def to_unit(self) -> None:
-        """Normalize the length of self
-
-        Raises
-        ---
-        QuatError
-            length of self was zero
-        """
-        lsq: float = self.length_sqr()
-
-        if is_zero(lsq):
-            raise QuatError('length was zero')
-
-        inv: float = inv_sqrt(lsq)
-        self.x *= inv
-        self.y *= inv
-        self.z *= inv
-        self.w *= inv
-
     def unit(self) -> 'Quaternion':
         """Return a copy of self with normalized length
 
@@ -3110,6 +3111,25 @@ class Quaternion:
             raise QuatError('length was zero')
 
         return self.scale(inv_sqrt(lsq))
+
+    def to_unit(self) -> None:
+        """Normalize the length of self
+
+        Raises
+        ---
+        QuatError
+            length of self was zero
+        """
+        lsq: float = self.length_sqr()
+
+        if is_zero(lsq):
+            raise QuatError('length was zero')
+
+        inv: float = inv_sqrt(lsq)
+        self.x *= inv
+        self.y *= inv
+        self.z *= inv
+        self.w *= inv
 
     def to_euler(self) -> Vec3:
         """Return self as euler values

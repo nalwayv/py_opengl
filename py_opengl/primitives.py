@@ -3,26 +3,56 @@ from dataclasses import dataclass
 from py_opengl import maths
 from enum import Enum, auto
 
-class Shape(Enum):
+# ---
+
+
+class ShapeID(Enum):
+    LINE = auto()
     AABB = auto()
     SPHERE = auto()
     PLAIN = auto()
     RAY = auto()
+
+
+# --- LINE
+
+
+@dataclass(eq=False, repr=False, slots=True)
+class Line:
+    start: maths.Vec3 = maths.Vec3()
+    end: maths.Vec3 = maths.Vec3()
+    shape_id: ShapeID = ShapeID.LINE
+
+    def length(self) -> float:
+        return self.start.distance_sqrt(self.end)
+
 
 # --- AABB
 
 
 @dataclass(eq=False, repr=False, slots=True)
 class Aabb:
-    position: maths.Vec3 = maths.Vec3()
-    size: maths.Vec3 = maths.Vec3()
-    shape_id: Shape = Shape.AABB
+    center: maths.Vec3 = maths.Vec3()
+    half_extents: maths.Vec3 = maths.Vec3()
+    shape_id: ShapeID = ShapeID.AABB
 
     @staticmethod
     def from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'Aabb':
         return Aabb(
-            position=(min_pt + max_pt) * 0.5,
-            size=(max_pt - min_pt) * 0.5)
+            center=(min_pt + max_pt) * 0.5,
+            half_extents=(max_pt - min_pt) * 0.5)
+
+    @staticmethod
+    def merge(a: 'Aabb', b: 'Aabb') -> 'Aabb':
+        v0: maths.Vec3 = maths.Vec3.from_max(
+            a.center + a.half_extents,
+            b.center + b.half_extents)
+
+        v1: maths.Vec3 = maths.Vec3.from_min(
+            a.center - a.half_extents,
+            b.center - b.half_extents)
+
+        return Aabb.from_min_max(v0, v1)
 
     def copy(self) -> 'Aabb':
         """Return a copy of self
@@ -32,8 +62,8 @@ class Aabb:
         Abbb
         """
         return Aabb(
-            position=self.position.copy(),
-            size=self.size.copy())
+            center=self.center.copy(),
+            half_extents=self.half_extents.copy())
 
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         pt_min: maths.Vec3 = self.get_min()
@@ -49,8 +79,8 @@ class Aabb:
         return maths.Vec3(pts[0], pts[1], pts[2])        
 
     def get_min(self) -> maths.Vec3:
-        pt1: maths.Vec3 = self.position + self.size
-        pt2: maths.Vec3 = self.position - self.size
+        pt1: maths.Vec3 = self.center + self.half_extents
+        pt2: maths.Vec3 = self.center - self.half_extents
         
         x: float = maths.minf(pt1.x, pt2.x)
         y: float = maths.minf(pt1.y, pt2.y)
@@ -59,8 +89,8 @@ class Aabb:
         return maths.Vec3(x, y, z)
 
     def get_max(self) -> maths.Vec3:
-        pt1: maths.Vec3 = self.position + self.size
-        pt2: maths.Vec3 = self.position - self.size
+        pt1: maths.Vec3 = self.center + self.half_extents
+        pt2: maths.Vec3 = self.center - self.half_extents
         
         x: float = maths.maxf(pt1.x, pt2.x)
         y: float = maths.maxf(pt1.y, pt2.y)
@@ -98,12 +128,12 @@ class Aabb:
 
     def intersect_plain(self, plain: 'Plain') -> bool:
         len_sq: float = (
-            self.size.x * maths.absf(plain.normal.x) +
-            self.size.y * maths.absf(plain.normal.y) +
-            self.size.z * maths.absf(plain.normal.z)
+            self.half_extents.x * maths.absf(plain.normal.x) +
+            self.half_extents.y * maths.absf(plain.normal.y) +
+            self.half_extents.z * maths.absf(plain.normal.z)
         )
 
-        dot: float = plain.normal.dot(self.position)
+        dot: float = plain.normal.dot(self.center)
         dis: float = dot - plain.direction
 
         return maths.absf(dis) <= len_sq
@@ -116,7 +146,7 @@ class Aabb:
 class Sphere:
     position: maths.Vec3 = maths.Vec3()
     radius: float = 1.0
-    shape_id: Shape = Shape.SPHERE
+    shape_id: ShapeID = ShapeID.SPHERE
 
     def copy(self) -> 'Sphere':
         """Return a copy of self
@@ -169,11 +199,20 @@ class PlainError(Exception):
 class Plain:
     normal: maths.Vec3 = maths.Vec3(x=1.0)
     direction: float = 0.0
-    shape_id: Shape = Shape.PLAIN
+    shape_id: ShapeID = ShapeID.PLAIN
 
-    def __post_init__(self):
-        if not self.normal.is_unit():
-            self.normal.to_unit()
+    @staticmethod
+    def from_points(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plain':
+        v0: maths.Vec3 = b - a
+        v1: maths.Vec3 = c - a
+        
+        normal: maths.Vec3 = v0.cross(v1)
+        if not normal.is_unit():
+            normal.to_unit()
+
+        direction: float = normal.dot(a)
+        
+        return Plain(normal, direction)
 
     def copy(self) -> 'Plain':
         """Return a copy of self
@@ -223,9 +262,10 @@ class Plain:
             return self.copy()
 
         inv: float = maths.inv_sqrt(len_sqr)
-        return Plain(
-            normal=self.normal * inv,
-            direction=self.direction * inv)
+        normal: maths.Vec3 = self.normal * inv
+        direction: float = self.direction * inv
+
+        return Plain(normal, direction)
 
     def to_unit(self) -> None:
         """Normalize the length of self
@@ -257,11 +297,11 @@ class Plain:
 
     def intersect_aabb(self, aabb: 'Aabb') -> bool:
         len_sq: float = (
-            aabb.size.x * maths.absf(self.normal.x) +
-            aabb.size.y * maths.absf(self.normal.y) +
-            aabb.size.z * maths.absf(self.normal.z))
+            aabb.half_extents.x * maths.absf(self.normal.x) +
+            aabb.half_extents.y * maths.absf(self.normal.y) +
+            aabb.half_extents.z * maths.absf(self.normal.z))
 
-        dot: float = self.normal.dot(aabb.position)
+        dot: float = self.normal.dot(aabb.center)
         dis: float = dot - self.direction
 
         return maths.absf(dis) <= len_sq
@@ -274,7 +314,7 @@ class Plain:
 class Ray:
     origin: maths.Vec3 = maths.Vec3()
     direction: maths.Vec3 = maths.Vec3(z=1.0)
-    shape_id: Shape = Shape.RAY
+    shape_id: ShapeID = ShapeID.RAY
 
     @staticmethod
     def from_points(origin: maths.Vec3, target:maths.Vec3) -> 'Ray':
