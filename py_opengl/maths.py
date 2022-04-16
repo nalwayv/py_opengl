@@ -5,6 +5,7 @@ import math
 from dataclasses import dataclass
 from typing import Final, NamedTuple
 
+
 # --- CONSTANTS
 
 
@@ -31,6 +32,13 @@ class Point3D(NamedTuple):
     x: float
     y: float
     z: float
+
+
+class Point4D(NamedTuple):
+    x: float
+    y: float
+    z: float
+    w: float
 
 
 # --- FUNCTIONS
@@ -70,7 +78,6 @@ def is_zero(val: float) -> bool:
     Parameters
     ---
     val : float
-        check this float value
 
     Returns
     ---
@@ -86,7 +93,6 @@ def is_one(val: float) -> bool:
     Parameters
     ---
     val : float
-        check this float value
 
     Returns
     ---
@@ -102,9 +108,8 @@ def is_equil(x: float, y: float) -> bool:
     Parameters
     ---
     x : float
-        first float value
+
     y : float
-        seconf float value
 
     Returns
     ---
@@ -124,89 +129,72 @@ def is_infinite(val) -> bool:
     return math.isinf(val)
 
 
-def to_radians(val: float) -> float:
-    """Return value in radians
+def to_radians(degrees: float) -> float:
+    """Convert degreese to radians
 
     Parameters
     ---
-    val : float
-        value in degreese
+    degrees : float
 
     Returns
     ---
     float
-        value in radians
     """
-    return val * 0.01745329251994329577
+    return degrees * 0.01745329251994329577
 
 
-def to_degreese(val: float) -> float:
-    """Return value in degreese
+def to_degreese(radians: float) -> float:
+    """Convert radians to degrees
 
     Parameters
     ---
-    val : float
-        value in radians
+    radians : float
 
     Returns
     ---
     float
-        value in degreese
     """
-    return val * 57.2957795130823208768
+    return radians * 57.2957795130823208768
 
 
 def sqr(val: float) -> float:
-    """Return value passed in squared with itself
+    """Return the value squared
 
     Parameters
     ---
     val : float
-        value to be squared
 
     Returns
     ---
     float
-        squared result
     """     
     return val * val
 
 
 def sqrt(val: float) -> float:
-    """Return the sqrt of value passed in
+    """Return the sqrt of value
 
     Parameters
     ---
     val : float
-        value to find the sqrt of
 
     Returns
     ---
     float
-        its sqrt value
     """
     return math.sqrt(val)
 
 
 def inv_sqrt(val: float) -> float:
-    """Return the inverse sqrt of the value passed in
+    """Return the inverse sqrt of the value
 
     Parameters
     ---
     val : float
-        value to find the inv sqrt of
-
-    Example
-    ---
-    ```python
-    inv = inv_sqrt(25)
-    print(25 * inv)
-    ```
 
     Returns
     ---
     float
-        its inv sqrt value
     """
     return 1.0 / sqrt(val)
 
@@ -219,7 +207,6 @@ def maxf(x: float, y: float) -> float:
     x : float
         
     y : float
-        
 
     Returns
     ---
@@ -237,7 +224,6 @@ def maxi(x: int, y: int) -> int:
         
     y : int
         
-
     Returns
     ---
     int
@@ -254,7 +240,6 @@ def minf(x: float, y: float) -> float:
         
     y : float
         
-
     Returns
     ---
     float
@@ -280,12 +265,11 @@ def mini(x: int, y: int) -> int:
 
 
 def clampf(val: float, low: float, high: float) -> float:
-    """Clamp value between low and high
+    """Clamp float value between low and high
 
     Returns
     ---
     float
-        clamped value
     """
     if val <= low:
         return low
@@ -295,12 +279,11 @@ def clampf(val: float, low: float, high: float) -> float:
 
 
 def clampi(val: int, low: int, high: int) -> int:
-    """Clamp value between low and high
+    """Clamp int value between low and high
 
     Returns
     ---
     int
-        clamped value
     """
     if val <= low:
         return low
@@ -309,16 +292,14 @@ def clampi(val: int, low: int, high: int) -> int:
     return val
 
 
-def lerp(a: float, b: float, weight: float) -> float:
+def lerp(start: float, to: float, weight: float) -> float:
     """Return amount of *linear interpolation* between start and end based on weight
 
     Parameters
     ---
-    a : float
-        start
+    start : float
 
-    b : float
-        end
+    to : float
         
     weight : float
         value between 0 and 1
@@ -326,9 +307,8 @@ def lerp(a: float, b: float, weight: float) -> float:
     Returns
     ---
     float
-        lerp amount
     """
-    return a + weight * (b - a)
+    return start + weight * (to - start)
 
 
 def cubic_lerp(start: float, start_tan: float, to: float, to_tan: float, weight) -> float:
@@ -369,16 +349,14 @@ def normalize(val: float, low: float, high: float) -> float:
     Parameters
     ---
     val : float
-        value to be normalized
+
     low : float
-        low value
+
     high : float
-        high value
 
     Returns
     ---
     float
-        normalized value
     """
     return (val - low) / (high - low)
 
@@ -389,12 +367,10 @@ def tan(val: float) -> float:
     Parameters
     ---
     val : float
-        value to find tan of
 
     Returns
     ---
     float
-        the tangent of value in radians
     """
     return math.tan(val)
 
@@ -409,7 +385,6 @@ def sin(val: float) -> float:
     Returns
     ---
     float
-        the sine of value in radians
     """
     return math.sin(val)
 
@@ -424,7 +399,6 @@ def cos(val: float) -> float:
     Returns
     ---
     float
-        the cosine of value in radians
     """
     return math.cos(val)
 
@@ -477,7 +451,6 @@ def arctan2(y: float, x: float) -> float:
     Returns
     ---
     float
-        the value in radians
     """
     return math.atan2(y, x)
 
@@ -501,15 +474,6 @@ def stepify(val: float, steps: float) -> float:
 def wrap(val: int, low: int, high: int) -> int:
     """wrap int value between low and high - 1
 
-    Example
-    ---
-    wrap(6, 1, 5) => 2
-
-    wrap(5, 1, 6) => 1
-    
-    wrap(7, 2, 5) => 4
-
-
     Parameters
     ---
     value : int
@@ -517,6 +481,14 @@ def wrap(val: int, low: int, high: int) -> int:
     low : int
     
     high : int
+
+    Example
+    ---
+    wrap(6, 1, 5) => 2
+
+    wrap(5, 1, 6) => 1
+    
+    wrap(7, 2, 5) => 4
 
     Returns
     ---
@@ -664,9 +636,20 @@ class Vec2:
     @staticmethod
     def one() -> 'Vec2':
         return Vec2(1.0, 1.0)
-    
+
     @staticmethod
-    def lerp(begin: 'Vec2', end: 'Vec2', weight: float) -> 'Vec2':
+    def zero() -> 'Vec2':
+        return Vec2(0.0, 0.0)
+
+    @staticmethod
+    def unit_x() -> 'Vec2':
+        return Vec2(x=1.0)
+
+    @staticmethod
+    def unit_y() -> 'Vec2':
+        return Vec2(y=1.0)
+
+    def lerp(self, to: 'Vec2', weight: float) -> 'Vec2':
         """Return lerp between begin end end vec3
 
         Parameters
@@ -682,9 +665,9 @@ class Vec2:
         ---
         Vec2
         """
-        lx: float = lerp(begin.x, end.x, weight)
-        ly: float = lerp(begin.y, end.y, weight)
-        return Vec2(lx, ly)
+        x: float = lerp(self.x, to.x, weight)
+        y: float = lerp(self.y, to.y, weight)
+        return Vec2(x, y)
     
     def to_unit(self) -> None:
         """Normalize length
@@ -969,11 +952,22 @@ class Vec3:
         return Vec3(1.0, 1.0, 1.0)
 
     @staticmethod
+    def unit_x() -> 'Vec3':
+        return Vec3(x=1.0)
+
+    @staticmethod
+    def unit_y() -> 'Vec3':
+        return Vec3(y=1.0)
+
+    @staticmethod
+    def unit_z() -> 'Vec3':
+        return Vec3(z=1.0)
+
+    @staticmethod
     def from_v2(v2: Vec2) -> 'Vec3':
         return Vec3(x=v2.x, y=v2.y)
 
-    @staticmethod
-    def lerp(begin: 'Vec3', end: 'Vec3', weight: float) -> 'Vec3':
+    def lerp(self, to: 'Vec3', weight: float) -> 'Vec3':
         """Return lerp between begin and end vec3
 
         Parameters
@@ -990,10 +984,10 @@ class Vec3:
         Vec3
             
         """
-        lx: float = lerp(begin.x, end.x, weight)
-        ly: float = lerp(begin.y, end.y, weight)
-        lz: float = lerp(begin.z, end.z, weight)
-        return Vec3(lx, ly, lz)
+        x: float = lerp(self.x, to.x, weight)
+        y: float = lerp(self.y, to.y, weight)
+        z: float = lerp(self.z, to.z, weight)
+        return Vec3(x, y, z)
 
     def to_unit(self) -> None:
         """Normalize length
@@ -1272,9 +1266,24 @@ class Vec4:
     def from_v3(v3: Vec3) -> 'Vec4':
         return Vec4(x=v3.x, y=v3.y, z=v3.z)
 
+    @staticmethod
+    def unit_x() -> 'Vec4':
+        return Vec4(x=1.0)
 
     @staticmethod
-    def lerp(begin: 'Vec4', end: 'Vec4', weight: float) -> 'Vec4':
+    def unit_y() -> 'Vec4':
+        return Vec4(y=1.0)
+
+    @staticmethod
+    def unit_z() -> 'Vec4':
+        return Vec4(z=1.0)
+
+    @staticmethod
+    def unit_w() -> 'Vec4':
+        return Vec4(w=1.0)
+
+
+    def lerp(self, to: 'Vec4', weight: float) -> 'Vec4':
         """Return lerp between begin ben and end vec4
 
         Parameters
@@ -1290,10 +1299,10 @@ class Vec4:
         ---
         Vec4
         """
-        x = lerp(begin.x, end.x, weight)
-        y = lerp(begin.y, end.y, weight)
-        z = lerp(begin.z, end.z, weight)
-        w = lerp(begin.w, end.w, weight)
+        x = lerp(self.x, to.x, weight)
+        y = lerp(self.y, to.y, weight)
+        z = lerp(self.z, to.z, weight)
+        w = lerp(self.w, to.w, weight)
         return Vec4(x, y, z, w)
 
     def copy(self) -> 'Vec4':
@@ -2215,22 +2224,62 @@ class Mat4:
         return Mat4(ax=c, ay=-s, bx=s, by=c, cz=1.0, dw=1.0)   
   
     @staticmethod
-    def from_axis(angle_deg: float, axis: Vec3) -> 'Mat4':
+    def from_axis(angle_deg: float, unit_axis: Vec3) -> 'Mat4':
         """Create a rotated matrix
 
         Parameters
         ----------
         angle_deg : float
-            angle in degreese
+
         axis : Vec3
-            unit axis
 
         Returns
         -------
         Mat4
             rotated mat4
         """
-        return Quaternion.from_axis(angle_deg, axis).to_mat4()
+        return Quaternion.from_axis(angle_deg, unit_axis).to_mat4()
+
+    @staticmethod
+    def from_quat(qx: float, qy: float, qz: float, qw: float) -> 'Mat4':
+        x2: float = sqr(qx)
+        y2: float = sqr(qy)
+        z2: float = sqr(qz)
+        w2: float = sqr(qw)
+
+        xy: float = qx * qy
+        xz: float = qx * qz
+        xw: float = qx * qw
+
+        yz: float = qy * qz
+        yw: float = qy * qw
+
+        zw: float = qz * qw
+
+        s2: float = 2.0 / (x2 + y2 + z2 + w2)
+
+        ax: float = 1.0 - (s2 * (y2 + z2))
+        ay: float = s2 * (xy + zw)
+        az: float = s2 * (xz - yw)
+        aw: float = 0.0
+        bx: float = s2 * (xy - zw)
+        by: float = 1.0 - (s2 * (x2 + z2))
+        bz: float = s2 * (yz + xw)
+        bw: float = 0.0
+        cx: float = s2 * (xz + yw)
+        cy: float = s2 * (yz - xw)
+        cz: float = 1.0 - (s2 * (x2 + y2))
+        cw: float = 0.0
+        dx: float = 0.0
+        dy: float = 0.0
+        dz: float = 0.0
+        dw: float = 1.0
+
+        return Mat4(
+            ax, ay, az, aw,
+            bx, by, bz, bw,
+            cx, cy, cz, cw,
+            dx, dy, dz, dw)
 
     @staticmethod
     def look_at(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
@@ -2530,6 +2579,69 @@ class Mat4:
             raise Mat4Error('length of this Mat4 was zero')
         return self.scale(1.0 / det)
 
+    def get_translation(self) -> Vec3:
+        """Return translation
+
+        Retruns
+        ---
+        Vec3
+        """
+        return Vec3(self.dx, self.dy, self.dz)
+
+    def get_rotation(self) -> Vec4:
+        """Get rotation from matrix
+        
+        Returns
+        ---
+        Vec4
+        """
+        if self.ax + self.by + self.cz > 0:
+            s: float = sqrt(self.ax + self.by + self.cz + 1.0) * 2.0
+            w: float = 0.25 * s
+            x: float = (self.bz - self.cy) / s
+            y: float = (self.cx - self.az) / s
+            z: float = (self.ay - self.bx) / s
+
+            return Vec4(x, y, z, w)
+
+        if self.ax > self.by and self.ax > self.cz:
+            s: float = sqrt(1.0 + self.ax - self.by - self.cz) * 2.0
+            w: float = (self.bz - self.cy) / s
+            x: float = 0.25 * s
+            y: float = (self.ay + self.bx) / s
+            z: float = (self.cx + self.az) / s
+
+            return Vec4(x, y, z, w)
+            
+        if self.by > self.cz: 
+            s: float = sqrt(1.0 + self.by - self.ax - self.cz) * 2.0
+            w: float = (self.cx - self.az) / s
+            x: float = (self.ay + self.bx) / s
+            y: float = 0.25 * s
+            z: float = (self.bz + self.cy) / s
+
+            return Vec4(x, y, z, w)
+
+        s: float = sqrt(1.0 + self.cz - self.ax - self.by) * 2.0
+        w: float = (self.ay - self.bx) / s
+        x: float = (self.cx + self.az) / s
+        y: float = (self.bz + self.cy) / s
+        z: float = 0.25 * s
+
+        return Vec4(x, y, z, w)
+
+    def get_scale(self) -> Vec3:
+        """Return scaler from matrix
+        """
+        x: float = sqrt(sqr(self.ax) + sqr(self.ay) + sqr(self.az))
+        y: float = sqrt(sqr(self.bx) + sqr(self.by) + sqr(self.bz))
+        z: float = sqrt(sqr(self.cx) + sqr(self.cy) + sqr(self.cz))
+
+        if self.determinant() < 0:
+            x = x * -1.0
+
+        return Vec3(x, y, z)
+
     def row0(self) -> Vec4:
         """Return the first row of float values
 
@@ -2661,6 +2773,15 @@ class Mat4:
             b30 - b31 - b32 + b33 +
             b40 - b41 - b42 + b43 +
             b50 - b51 - b52 + b53)
+
+    def trace(self) -> float:
+        """Return the sum of the trace values
+
+        Returns
+        ---
+        float
+        """
+        return self.ax + self.by + self.cz + self.dw
 
     def array(self) -> list[float]:
         """Return self as a list of floats
@@ -2827,7 +2948,26 @@ class Quaternion:
         return Quaternion(x, y, z, w)
 
     @staticmethod
-    def lerp(begin: 'Quaternion', end: 'Quaternion', weight: float) -> 'Quaternion':
+    def rotate_to(start: Vec3, to: Vec3) -> 'Quaternion':
+        dot: float = start.dot(to)
+
+        if dot < -0.999999:
+            v3: Vec3 = Vec3.unit_x().cross(start)
+
+            if v3.length_sqrt() < EPSILON:
+                v3 = Vec3.unit_y().cross(start)
+        
+            v3.to_unit()
+            return Quaternion.from_axis(to_degreese(PI), v3)
+
+        if dot > 0.999999:
+            return Quaternion(w=1.0)
+        
+        v3: Vec3 = start.cross(to)
+        return Quaternion(v3.x, v3.y, v3.z, 1.0 + dot)
+
+
+    def lerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
         """Return the interpolation between two quaternions
 
         Parameters
@@ -2842,15 +2982,14 @@ class Quaternion:
         ---
         Quaternion
         """
-        x: float = lerp(begin.x, end.x, weight)
-        y: float = lerp(begin.y, end.y, weight)
-        z: float = lerp(begin.z, end.z, weight)
-        w: float = lerp(begin.w, end.w, weight)
+        x: float = lerp(self.x, to.x, weight)
+        y: float = lerp(self.y, to.y, weight)
+        z: float = lerp(self.z, to.z, weight)
+        w: float = lerp(self.w, to.w, weight)
 
         return Quaternion(x, y, z, w)
 
-    @staticmethod
-    def slerp(begin: 'Quaternion', end: 'Quaternion', weight: float) -> 'Quaternion':
+    def slerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
         """Return the spherical linear interpolation between two quaternions
 
         Parameters
@@ -2866,8 +3005,8 @@ class Quaternion:
         Quaternion
         """
         scale: float = Vec2()
-        v4: Vec4 = Vec4(end.x, end.y, end.z, end.w)
-        cosine: float = begin.dot(end)
+        v4: Vec4 = Vec4(to.x, to.y, to.z, to.w)
+        cosine: float = self.dot(to)
 
         if cosine < 0.0:
             cosine *= -1.0
@@ -2882,10 +3021,10 @@ class Quaternion:
             scale.x = 1.0 - weight
             scale.y = weight
 
-        x: float = scale.x * begin.x + scale.y * v4.x
-        y: float = scale.x * begin.y + scale.y * v4.y
-        z: float = scale.x * begin.z + scale.y * v4.z
-        w: float = scale.x * begin.w + scale.y * v4.w
+        x: float = scale.x * self.x + scale.y * v4.x
+        y: float = scale.x * self.y + scale.y * v4.y
+        z: float = scale.x * self.z + scale.y * v4.z
+        w: float = scale.x * self.w + scale.y * v4.w
 
         return Quaternion(x, y, z, w)
  
@@ -3053,17 +3192,28 @@ class Quaternion:
 
         s2: float = 2.0 / (x2 + y2 + z2 + w2)
 
+        ax: float = 1.0 - (s2 * (y2 + z2))
+        ay: float = s2 * (xy + zw)
+        az: float = s2 * (xz - yw)
+        aw: float = 0.0
+        bx: float = s2 * (xy - zw)
+        by: float = 1.0 - (s2 * (x2 + z2))
+        bz: float = s2 * (yz + xw)
+        bw: float = 0.0
+        cx: float = s2 * (xz + yw)
+        cy: float = s2 * (yz - xw)
+        cz: float = 1.0 - (s2 * (x2 + y2))
+        cw: float = 0.0
+        dx: float = 0.0
+        dy: float = 0.0
+        dz: float = 0.0
+        dw: float = 1.0
+
         return Mat4(
-            ax = 1.0 - (s2 * (y2 + z2)),
-            ay = s2 * (xy + zw),
-            az = s2 * (xz - yw),
-            bx = s2 * (xy - zw),
-            by = 1.0 - (s2 * (x2 + z2)),
-            bz = s2 * (yz + xw),
-            cx = s2 * (xz + yw),
-            cy = s2 * (yz - xw),
-            cz = 1.0 - (s2 * (x2 + y2)),
-            dw = 1.0)
+            ax, ay, az, aw,
+            bx, by, bz, bw,
+            cx, cy, cz, cw,
+            dx, dy, dz, dw)
 
     def length_sqr(self) -> float:
         """Return the squared length
@@ -3100,14 +3250,31 @@ class Quaternion:
             (self.z * other.z) +
             (self.w * other.w))
 
-    def angle(self) -> float:
+    def get_rotation_axis_angle(self) -> float:
         """Return the current angle of self in radians
 
         Returns
         ---
         float
         """
-        return 2.0 * arccos(self.w)
+        return arccos(self.w) * 2.0
+
+    def get_rotation_axis(self) -> Vec3:
+        """Return the current axis
+
+        Returns
+        ---
+        Vec3
+        """
+        s: float = sin(self.get_axis_angle() * 0.5)
+        if not is_zero(s):
+            inv: float = 1.0 / s
+            x: float = self.x * inv
+            y: float = self.y * inv
+            z: float = self.z * inv
+            return Vec3(x, y, z)
+
+        return Vec3.unit_x()
 
     def is_equil(self, other: 'Quaternion') -> bool:
         """Check if the components of self are the same as other's components
