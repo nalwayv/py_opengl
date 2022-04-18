@@ -2969,9 +2969,11 @@ class Quaternion:
 
     @staticmethod
     def rotate_to(start: Vec3, to: Vec3) -> 'Quaternion':
+        """Return rotation between two vec3's
+        """
         dot: float = start.dot(to)
 
-        if dot < -0.999999:
+        if dot < -1.0 + EPSILON:
             v3: Vec3 = Vec3.unit_x().cross(start)
 
             if v3.length_sqrt() < EPSILON:
@@ -2980,7 +2982,7 @@ class Quaternion:
             v3.to_unit()
             return Quaternion.from_axis(to_degreese(PI), v3)
 
-        if dot > 0.999999:
+        if dot > absf(-1.0 + EPSILON):
             return Quaternion(w=1.0)
         
         v3: Vec3 = start.cross(to)
@@ -3007,6 +3009,11 @@ class Quaternion:
         w: float = lerp(self.w, to.w, weight)
 
         return Quaternion(x, y, z, w)
+
+    def nlerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
+        """Return normalized lerp
+        """
+        return self.lerp(to, weight).unit()
 
     def slerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
         """Return the spherical linear interpolation between two quaternions

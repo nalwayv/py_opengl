@@ -96,9 +96,8 @@ class Cube:
         self.texture_ = texture.Texture()
         self.transform_ = maths.Transform()
 
-        texture_src: str = 'grid512.bmp'
-        vert_src: str = 'shader.vert'
-        frag_src: str = 'shader.frag'
+        self.texture_.compile('grid512.bmp')
+        self.shader_.compile('shader.vert', 'shader.frag')
 
         hw: float = self.size.x * 0.5
         hh: float = self.size.y * 0.5
@@ -140,8 +139,6 @@ class Cube:
             20, 21, 22,   22, 23, 20
         ]
 
-        self.texture_.compile(texture_src)
-        self.shader_.compile(vert_src, frag_src)
         self.vbo_.setup(verts, color, tex_coords, indices)
 
     def draw(self) -> None:
@@ -212,7 +209,7 @@ def main() -> None:
         first_move = True
         last_mp = maths.Vec3()
 
-        shape = Cube(size=maths.Vec3(1.0, 1.0, 0.5))
+        shape = Cube()
 
         bg_col = color.Color.from_rgba(75, 75, 75, 255)
 
