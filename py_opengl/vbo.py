@@ -56,7 +56,7 @@ class Vbo:
         GL.glBufferData(GL.GL_ARRAY_BUFFER, size_of, utils.c_arrayF(arr), GL.GL_STATIC_DRAW)
 
         at = len(self.vbos) - 1
-        GL.glVertexAttribPointer(at, self.components, GL.GL_FLOAT, normal, 0, utils.c_cast(0))
+        GL.glVertexAttribPointer(at, self.components, GL.GL_FLOAT, normal, 0, utils.C_VOID_POINTER)
         GL.glEnableVertexAttribArray(at)
 
 
@@ -74,16 +74,19 @@ class VboIbo:
         GL.glBindVertexArray(self.vao_id)
         match mode:
            case VboDrawMode.TRIANGLES:
-               GL.glDrawElements(GL.GL_TRIANGLES, self.length, GL.GL_UNSIGNED_INT, utils.c_cast(0))
+               GL.glDrawElements(GL.GL_TRIANGLES, self.length, GL.GL_UNSIGNED_INT, utils.C_VOID_POINTER)
 
            case VboDrawMode.LINE_LOOP:
-               GL.glDrawElements(GL.GL_LINE_LOOP, self.length, GL.GL_UNSIGNED_INT, utils.c_cast(0))
+               GL.glDrawElements(GL.GL_LINE_LOOP, self.length, GL.GL_UNSIGNED_INT, utils.C_VOID_POINTER)
 
            case VboDrawMode.LINE_STRIP:
-               GL.glDrawElements(GL.GL_LINE_STRIP, self.length, GL.GL_UNSIGNED_INT, utils.c_cast(0))
+               GL.glDrawElements(GL.GL_LINE_STRIP, self.length, GL.GL_UNSIGNED_INT, utils.C_VOID_POINTER)
 
-           case VboDrawMode.DEFAULT: return
-           case _: return
+           case VboDrawMode.DEFAULT:
+               return
+
+           case _:
+               return
 
     def clean(self) -> None:
         """Clean vbo of currently stored vbo's
@@ -102,8 +105,7 @@ class VboIbo:
             verts: list[float],
             color: list[float],
             tex_coords: list[float],
-            indices: list[int]
-        ) -> None:
+            indices: list[int]) -> None:
         """Setup vbo
         """
         vsize: int = len(verts) * utils.FLOAT_SIZE
@@ -123,22 +125,24 @@ class VboIbo:
         self.vbo_ids = [
             GL.glGenBuffers(1),
             GL.glGenBuffers(1),
-            GL.glGenBuffers(1),
-        ]
+            GL.glGenBuffers(1)]
 
+        # verts
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo_ids[0])
         GL.glBufferData(GL.GL_ARRAY_BUFFER, vsize, utils.c_arrayF(verts), GL.GL_STATIC_DRAW)
-        GL.glVertexAttribPointer(0, components, GL.GL_FLOAT, normal, 0, utils.c_cast(0))
+        GL.glVertexAttribPointer(0, components, GL.GL_FLOAT, normal, 0, utils.C_VOID_POINTER)
         GL.glEnableVertexAttribArray(0)
 
+        # color
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo_ids[1])
         GL.glBufferData(GL.GL_ARRAY_BUFFER, csize, utils.c_arrayF(color), GL.GL_STATIC_DRAW)
-        GL.glVertexAttribPointer(1, components, GL.GL_FLOAT, normal, 0, utils.c_cast(0))
+        GL.glVertexAttribPointer(1, components, GL.GL_FLOAT, normal, 0, utils.C_VOID_POINTER)
         GL.glEnableVertexAttribArray(1)
 
+        # texture coords
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo_ids[2])
         GL.glBufferData(GL.GL_ARRAY_BUFFER, tsize, utils.c_arrayF(tex_coords), GL.GL_STATIC_DRAW)
-        GL.glVertexAttribPointer(2, components_texture, GL.GL_FLOAT, normal, 0, utils.c_cast(0))
+        GL.glVertexAttribPointer(2, components_texture, GL.GL_FLOAT, normal, 0, utils.C_VOID_POINTER)
         GL.glEnableVertexAttribArray(2)
 
         # ibo

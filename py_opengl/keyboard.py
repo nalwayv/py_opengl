@@ -6,6 +6,18 @@ key being pressed, held or released
 """
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from typing import Final
+
+import glfw
+
+
+# ---
+
+
+KEYBOARD_SIZE: Final[int] = 531
+
+
+# ---
 
 
 class KeyState(Enum):
@@ -15,65 +27,26 @@ class KeyState(Enum):
     DEFAULT = auto()
 
 
+# ---
+
+
 @dataclass(eq=False, repr=False, slots=True)
 class Keyboard:
     states: list[int] = field(default_factory=list)
 
     def __post_init__(self):
-        self.states = [0xFF]*301
+        self.states = [glfw.KEY_UNKNOWN] * KEYBOARD_SIZE
 
     def _set_current_state_at(self, key: int, value: int) -> None:
-        """Set glfw key number stored current state
-
-        Parameters
-        ---
-        key : int
-            glfw key number
-        value : int
-            glfw key state
-        """
         self.states[key] = (self.states[key] & 0xFFFFFF00) | value
 
     def _set_previous_state_at(self, key: int, value: int) -> None:
-        """Set glfw key number stored previous state
-
-        Parameters
-        ---
-        key : int
-            glfw key number
-        value : int
-            glfw key state
-        """
         self.states[key] = (self.states[key] & 0xFFFF00FF) | (value << 8)
 
     def _get_current_state_at(self, key: int) -> int:
-        """Get glfw key number stored current state
-
-        Parameters
-        ---
-        key : int
-            glfw key number
-
-        Returns
-        ---
-        int
-            currently stored current state for that key
-        """
         return 0xFF & self.states[key]
 
     def _get_previous_state_at(self, key: int) -> int:
-        """Get glfw key button number stored previous state
-
-        Parameters
-        ---
-        key : int
-            glfw key number
-
-        Returns
-        ---
-        int
-            currently stored previous state for that key
-        """
         return 0xFF & (self.states[key] >> 8)
 
     def get_state(self, glfw_key_state: tuple[int, int]) -> KeyState:
@@ -102,13 +75,13 @@ class Keyboard:
         KeyState
             is its current state held, pressed or released
         """
-        key, state = glfw_key_state
-        if key > 301:
+        key, current = glfw_key_state
+        if key > KEYBOARD_SIZE:
             return KeyState.DEFAULT
 
-        tmp = self._get_current_state_at(key)
-        self._set_previous_state_at(key, tmp)
-        self._set_current_state_at(key, state)
+        prev = self._get_current_state_at(key)
+        self._set_previous_state_at(key, prev)
+        self._set_current_state_at(key, current)
 
         if self._get_previous_state_at(key) == 0:
             if self._get_current_state_at(key) == 0:
@@ -162,3 +135,34 @@ class Keyboard:
         bool
         """
         return self.get_state(key_state) is KeyState.RELEASED
+
+# can be slow with callback function
+# Keyboard_CALLBACK = Callable[[Any, int, int, int, int], None]
+# Keyboard_DICT = Dict[int, Keyboard_CALLBACK]
+# class KeyboardS:
+#     _instance: Any|None = None
+    
+#     def __new__(cls: type['KeyboardS'], window: Any|None = None) -> 'KeyboardS':
+#         if cls._instance is None:
+#             cls._instance = super(KeyboardS, cls).__new__(cls)
+
+#             cls.data: Keyboard_DICT = {}
+#             cls.window: Any|None = window
+#             cls.states:list[int] = [0] * KEYBOARD_SIZE
+
+#             # set glfw key_callback
+#             def cb(window, key: int, scancode: int, action: int, mods: int):
+#                 if not cls._instance:
+#                     return
+
+#                 # if key is found call its cb function
+#                 if key in cls._instance.data:
+#                     cls._instance.data[key](window, key, scancode, action, mods)
+            
+#             if cls.window:
+#                 glfw.set_key_callback(cls.window, cb)
+
+#         return cls._instance
+
+#     def add_key(self, key: int, cbfun: Keyboard_CALLBACK) -> None:
+#         self.data[key] = cbfun

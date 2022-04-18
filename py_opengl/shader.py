@@ -41,18 +41,16 @@ class Shader:
 
         if not v_file.exists():
             raise ShaderError('vert file was not found within shaders folder')
+        
         if not f_file.exists():
             raise ShaderError('frag file was not found within shaders folder')
 
         with(
             open(v_file.as_posix(), mode='r') as v,
-            open(f_file.as_posix(), mode='r') as f
-        ):
-
+            open(f_file.as_posix(), mode='r') as f):
             self.shader_id = compileProgram(
                 compileShader(v, GL.GL_VERTEX_SHADER),
-                compileShader(f, GL.GL_FRAGMENT_SHADER)
-            )
+                compileShader(f, GL.GL_FRAGMENT_SHADER))
 
     def clean(self) -> None:
         """Clean shader by deleteing the stored shader program id

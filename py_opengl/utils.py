@@ -16,6 +16,12 @@ FLOAT_SIZE: Final[int] = ctypes.sizeof(ctypes.c_float)
 UINT_SIZE: Final[int] = ctypes.sizeof(ctypes.c_uint)
 
 
+# --- C TYPES
+
+
+C_VOID_POINTER: Final[ctypes.c_void_p] = ctypes.c_void_p(0)
+
+
 # --- C HELPERS FUNCTION
 
 

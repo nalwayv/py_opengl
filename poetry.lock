@@ -30,7 +30,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "glfw"
-version = "2.4.0"
+version = "2.5.3"
 description = "A ctypes-based wrapper for GLFW3."
 category = "main"
 optional = false
@@ -179,15 +179,15 @@ colorama = [
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
 glfw = [
-    {file = "glfw-2.4.0-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-macosx_10_6_intel.whl", hash = "sha256:e18431ab0d57eec6dffd031246b07f9f81356468e0f2377e49d9def2c05c686f"},
-    {file = "glfw-2.4.0-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-macosx_11_0_arm64.whl", hash = "sha256:db3e992f56e9603e18ca7d994018aa1486de7f078b4bfe9e7a21d4fecb2368ae"},
-    {file = "glfw-2.4.0-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-manylinux2010_i686.whl", hash = "sha256:242cd2b2e8cf7fb7de9d692fafe233dee607de90ca837d5d162f810e9e124b4f"},
-    {file = "glfw-2.4.0-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-manylinux2010_x86_64.whl", hash = "sha256:4bfd157450fde9ece284f501932815f49a2474716156c564b6a4b739acd76c3b"},
-    {file = "glfw-2.4.0-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-manylinux2014_aarch64.whl", hash = "sha256:75ac4b51bee309f2477d657e54ba771c00f74519cf991b6de8ce848ce0c2080c"},
-    {file = "glfw-2.4.0-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-manylinux2014_x86_64.whl", hash = "sha256:2a5c24642b44304e8013d10bd102298bb9d9c42ab20ec24e913d1f19b648e8ee"},
-    {file = "glfw-2.4.0-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-win32.whl", hash = "sha256:8c40b94f4b804c4eb90f1eae3b4a61148d6f29bce46b18cbcda9fb592ceff6b9"},
-    {file = "glfw-2.4.0-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-win_amd64.whl", hash = "sha256:24a90d02aa31a0409543f4dcb8a92f342dee59a678032470401741ea0869dedc"},
-    {file = "glfw-2.4.0.tar.gz", hash = "sha256:79011ef01c2045e685a8c7f2db7755e3c3a848d7cf349439703fa1203c350fd5"},
+    {file = "glfw-2.5.3-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-macosx_10_6_intel.whl", hash = "sha256:797528a7e433c1684cad2807838824e73c0c1fd8e12b01ee0b22ad203f46bf87"},
+    {file = "glfw-2.5.3-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-macosx_11_0_arm64.whl", hash = "sha256:1763af8d00e1b1517fccceb768e5470ce754a993bd8020878dca444f9523726b"},
+    {file = "glfw-2.5.3-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-manylinux2010_i686.whl", hash = "sha256:847cbe034f5e2b2f3bc02224e630972bf12ec7f8a1303d63bd6f3f722699be8f"},
+    {file = "glfw-2.5.3-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-manylinux2010_x86_64.whl", hash = "sha256:5f0b185ec29b2e68df87b0ebe37841e50af72be78636c72f9c0298ef2b229676"},
+    {file = "glfw-2.5.3-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-manylinux2014_aarch64.whl", hash = "sha256:1158fe9ebec38f5b0ae146d0c781491bb8ef41d1f59e626e707e0708f1865050"},
+    {file = "glfw-2.5.3-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-manylinux2014_x86_64.whl", hash = "sha256:0ad3af6bc0d99a4bfee0de5176d8aee887b04b8e18af3fc90272b96e69464ef7"},
+    {file = "glfw-2.5.3-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-win32.whl", hash = "sha256:25945014ef3fba24ca11249f41018350857d459297ada5820e3553ed838af608"},
+    {file = "glfw-2.5.3-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38-none-win_amd64.whl", hash = "sha256:fe9500b9e31847987a77e686569ad1470435688eaa5ebb87ea80cff2ff3300f3"},
+    {file = "glfw-2.5.3.tar.gz", hash = "sha256:02cf5e7523e867f5253d2df065cb4590250ce744ca2f8bfdcbad4a1727f1e0b5"},
 ]
 iniconfig = [
     {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},

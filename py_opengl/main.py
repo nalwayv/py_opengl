@@ -1,6 +1,7 @@
 """PY OPENGL
 """
 from dataclasses import dataclass
+from typing import Any
 
 import glfw
 from loguru import logger
@@ -194,8 +195,8 @@ def main() -> None:
 
         glwin = window.GlWindow(
             width=utils.SCREEN_WIDTH,
-            height=utils.SCREEN_HEIGHT
-        )
+            height=utils.SCREEN_HEIGHT)
+
         glfw.make_context_current(glwin.window)
         glwin.center_screen_position()
         glwin.set_window_resize_callback(cb_window_resize)
@@ -203,10 +204,10 @@ def main() -> None:
         time = clock.Clock()
         cam = camera.Camera(
             position=maths.Vec3(z=3.0),
-            aspect=utils.SCREEN_WIDTH/utils.SCREEN_HEIGHT
-        )
+            aspect=utils.SCREEN_WIDTH/utils.SCREEN_HEIGHT)
 
         kb = keyboard.Keyboard()
+
         ms = mouse.Mouse()
         first_move = True
         last_mp = maths.Vec3()
@@ -228,17 +229,14 @@ def main() -> None:
             shape.draw()
 
             shape.transform_.rotation = maths.Quaternion.from_axis(
-                time.ticks,
-                maths.Vec3(x=1.0, y=0.5, z=0.8)
-            )
-
-            # shape.transform_.rotation = glm.Mat4.from_axis(time.ticks, glm.Vec3(x=1.0, y=0.5, z=0.8))
+                float(time.ticks),
+                maths.Vec3(x=1.0, y=0.5, z=0.8))
             
             m: maths.Mat4 = shape.transform_.get_matrix()
             v: maths.Mat4 = cam.view_matrix()
             p: maths.Mat4 = cam.projection_matrix()
-            mvp: maths.Mat4 = m * v * p
-            shape.shader_.set_m4('mvp', mvp)
+
+            shape.shader_.set_m4('mvp', m * v * p)
 
             # keyboard
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
@@ -260,9 +258,7 @@ def main() -> None:
                 cam.move_by(camera.CameraDirection.DOWN, 1.4, time.delta)
 
             # mouse
-            if ms.is_button_held(
-                    glwin.get_mouse_state(glfw.MOUSE_BUTTON_LEFT)
-            ):
+            if ms.is_button_held(glwin.get_mouse_state(glfw.MOUSE_BUTTON_LEFT)):
                 if first_move:
                     mx, my = glwin.get_mouse_pos()
                     last_mp.x = mx
@@ -280,8 +276,8 @@ def main() -> None:
             cam.update()
 
             # ---
-            glfw.swap_buffers(glwin.window)
             glfw.poll_events()
+            glfw.swap_buffers(glwin.window)
 
     except (maths.Vec3Error, maths.Mat4Error, maths.QuatError) as math_err:
         logger.error(f'MATH ERROR: {math_err}')
