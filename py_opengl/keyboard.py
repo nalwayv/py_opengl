@@ -136,7 +136,8 @@ class Keyboard:
         """
         return self.get_state(key_state) is KeyState.RELEASED
 
-# can be slow with callback function
+# messing with callback 
+#
 # Keyboard_CALLBACK = Callable[[Any, int, int, int, int], None]
 # Keyboard_DICT = Dict[int, Keyboard_CALLBACK]
 # class KeyboardS:
