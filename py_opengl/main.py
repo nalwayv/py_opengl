@@ -1,11 +1,11 @@
 """PY OPENGL
 """
 from dataclasses import dataclass
-from typing import Any
 
 import glfw
 from loguru import logger
 from OpenGL import GL
+from pathlib import Path
 
 from py_opengl import utils
 from py_opengl import maths
@@ -19,45 +19,46 @@ from py_opengl import window
 from py_opengl import texture
 from py_opengl import color
 
+
 # --- SHAPE
 
 
-@dataclass(eq=False, repr=False, slots=True)
+@dataclass(eq= False, repr= False, slots= True)
 class Triangle:
-    vbo_: vbo.VboIbo|None = None
-    shader_: shader.Shader|None = None
-    texture_: texture.Texture|None = None
-    transform_: maths.Transform|None = None
+    vbo_: vbo.Vbo|None= None
+    shader_: shader.Shader|None= None
+    texture_: texture.Texture|None= None
+    transform_: maths.Transform|None= None
 
     def __post_init__(self):
-        self.vbo_ = vbo.VboIbo(length=9)
-        self.shader_ = shader.Shader()
-        self.texture_ = texture.Texture()
-        self.transform_ = maths.Transform()
+        self.vbo_= vbo.Vbo(length=9)
+        self.shader_= shader.Shader()
+        self.texture_= texture.Texture()
+        self.transform_= maths.Transform()
 
-        texture_src: str = 'wall.jpg'
-        vert_src: str = 'shader.vert'
-        frag_src: str = 'shader.frag'
+        texture_src: str= 'wall.jpg'
+        vert_src: str= 'shader.vert'
+        frag_src: str= 'shader.frag'
 
-        verts: list[float] = [
+        verts: list[float]= [
             0.5, -0.5, 0.0,
             -0.5, -0.5, 0.0,
             0.0, 0.5, 0.0
         ]
 
-        color: list[float] = [
+        color: list[float]= [
             1.0, 0.0, 0.0,
             0.0, 1.0, 0.0,
             0.0, 0.0, 1.0
         ]
 
-        tex_coords: list[float] = [
+        tex_coords: list[float]= [
             0.0, 0.0,
             1.0, 0.0,
             0.5, 1.0,
         ]
 
-        indices: list[int] = [
+        indices: list[int]= [
             0, 1, 2,
             3, 4, 5,
             6, 7, 8
@@ -82,28 +83,28 @@ class Triangle:
         self.vbo_.clean()
 
 
-@dataclass(eq=False, repr=False, slots=True)
+@dataclass(eq= False, repr= False, slots= True)
 class Cube:
-    vbo_: vbo.VboIbo|None = None
-    shader_: shader.Shader|None = None
-    texture_: texture.Texture|None = None
-    transform_: maths.Transform|None = None
+    vbo_: vbo.Vbo|None= None
+    shader_: shader.Shader|None= None
+    texture_: texture.Texture|None= None
+    transform_: maths.Transform|None= None
     size: maths.Vec3 = maths.Vec3(1.0, 1.0, 1.0)
 
     def __post_init__(self):
-        self.vbo_ = vbo.VboIbo(length=36)
-        self.shader_ = shader.Shader()
-        self.texture_ = texture.Texture()
-        self.transform_ = maths.Transform()
+        self.vbo_= vbo.Vbo(length=36)
+        self.shader_= shader.Shader()
+        self.texture_= texture.Texture()
+        self.transform_= maths.Transform()
 
         self.texture_.compile('grid512.bmp')
         self.shader_.compile('shader.vert', 'shader.frag')
 
-        hw: float = self.size.x * 0.5
-        hh: float = self.size.y * 0.5
-        hd: float = self.size.z * 0.5
+        hw: float= self.size.x * 0.5
+        hh: float= self.size.y * 0.5
+        hd: float= self.size.z * 0.5
 
-        verts: list[float] = [
+        verts: list[float]= [
              hw, hh, hd,  -hw, hh, hd,  -hw,-hh, hd,  hw,-hh, hd,
              hw, hh, hd,   hw,-hh, hd,   hw,-hh,-hd,  hw, hh,-hd,
              hw, hh, hd,   hw, hh,-hd,  -hw, hh,-hd, -hw, hh, hd,
@@ -112,7 +113,7 @@ class Cube:
              hw,-hh,-hd,  -hw,-hh,-hd,  -hw, hh,-hd,  hw, hh,-hd
         ]
 
-        color: list[float] = [
+        color: list[float]= [
             1.0, 1.0, 1.0,   1.0, 1.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 1.0,
             1.0, 1.0, 1.0,   1.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 1.0, 1.0,
             1.0, 1.0, 1.0,   0.0, 1.0, 1.0,   0.0, 1.0, 0.0,   1.0, 1.0, 0.0,
@@ -121,7 +122,7 @@ class Cube:
             0.0, 0.0, 1.0,   0.0, 0.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 1.0
         ]
 
-        tex_coords: list[float] = [
+        tex_coords: list[float]= [
             1.0, 0.0,   0.0, 0.0,   0.0, 1.0,   1.0, 1.0,
             0.0, 0.0,   0.0, 1.0,   1.0, 1.0,   1.0, 0.0,
             1.0, 1.0,   1.0, 0.0,   0.0, 0.0,   0.0, 1.0,
@@ -130,7 +131,7 @@ class Cube:
             0.0, 1.0,   1.0, 1.0,   1.0, 0.0,   0.0, 0.0
         ]
    
-        indices: list[int] = [
+        indices: list[int]= [
              0,  1,  2,    2,  3,  0,
              4,  5,  6,    6,  7,  4,
              8,  9, 10,   10, 11,  8,
@@ -165,11 +166,10 @@ def cb_window_resize(window, width, height):
     Parameters
     ---
     window : GLFWwindow*
-        glfw window
+
     width : float
-        its width
+    
     height : float
-        its height
     """
     GL.glViewport(0, 0, width, height)
 
@@ -190,28 +190,31 @@ def main() -> None:
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
 
-        glwin = window.GlWindow(
-            width=utils.SCREEN_WIDTH,
-            height=utils.SCREEN_HEIGHT)
+        glwin= window.GlWindow(
+            width= utils.SCREEN_WIDTH,
+            height= utils.SCREEN_HEIGHT
+        )
 
         glfw.make_context_current(glwin.window)
         glwin.center_screen_position()
         glwin.set_window_resize_callback(cb_window_resize)
 
-        time = clock.Clock()
-        cam = camera.Camera(
-            position=maths.Vec3(z=3.0),
-            aspect=utils.SCREEN_WIDTH/utils.SCREEN_HEIGHT)
+        time= clock.Clock()
+        cam= camera.Camera(
+            position= maths.Vec3(z=3.0),
+            aspect= utils.SCREEN_WIDTH/utils.SCREEN_HEIGHT
+        )
 
-        kb = keyboard.Keyboard()
+        kb= keyboard.Keyboard()
 
-        ms = mouse.Mouse()
-        first_move = True
-        last_mp = maths.Vec3()
+        ms= mouse.Mouse()
+        first_move= True
+        last_mp= maths.Vec3()
 
-        shape = Cube()
+        shape= Cube()
 
-        bg_col = color.Color.from_rgba(75, 75, 75, 255)
+        bg_col= color.Color.from_rgba(75, 75, 75, 255)
+
 
         while not glwin.should_close():
             time.update()
@@ -225,13 +228,13 @@ def main() -> None:
 
             shape.draw()
 
-            shape.transform_.rotation = maths.Quaternion.from_axis(
+            shape.transform_.rotation= maths.Quaternion.from_axis(
                 float(time.ticks),
                 maths.Vec3(x=1.0, y=0.5, z=0.8))
             
-            m: maths.Mat4 = shape.transform_.get_matrix()
-            v: maths.Mat4 = cam.view_matrix()
-            p: maths.Mat4 = cam.projection_matrix()
+            m: maths.Mat4= shape.transform_.get_matrix()
+            v: maths.Mat4= cam.view_matrix()
+            p: maths.Mat4= cam.projection_matrix()
 
             shape.shader_.set_m4('mvp', m * v * p)
 
@@ -257,15 +260,15 @@ def main() -> None:
             # mouse
             if ms.is_button_held(glwin.get_mouse_state(glfw.MOUSE_BUTTON_LEFT)):
                 if first_move:
-                    mx, my = glwin.get_mouse_pos()
-                    last_mp.x = mx
-                    last_mp.y = my
+                    mx, my= glwin.get_mouse_pos()
+                    last_mp.x= mx
+                    last_mp.y= my
                     first_move = False
                 else:
-                    mx, my = glwin.get_mouse_pos()
-                    new_mp = maths.Vec3(x=mx, y=my) - last_mp
-                    last_mp.x = mx
-                    last_mp.y = my
+                    mx, my= glwin.get_mouse_pos()
+                    new_mp= maths.Vec3(x=mx, y=my) - last_mp
+                    last_mp.x= mx
+                    last_mp.y= my
 
                     cam.rotate_by(camera.CameraRotation.YAW, new_mp.x, 0.2)
                     cam.rotate_by(camera.CameraRotation.PITCH, new_mp.y, 0.2)

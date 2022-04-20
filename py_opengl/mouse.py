@@ -7,19 +7,26 @@ mouse button being pressed, held or released
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
+
+# ---
+
+
 class MouseState(Enum):
-    PRESSED = auto()
-    RELEASED = auto()
-    HELD = auto()
-    DEFAULT = auto()
+    PRESSED= auto()
+    RELEASED= auto()
+    HELD= auto()
+    DEFAULT= auto()
 
 
-@dataclass(eq=False, repr=False, slots=True)
+# ---
+
+
+@dataclass(eq= False, repr= False, slots= True)
 class Mouse:
-    states: list[int] = field(default_factory=list)
+    states: list[int]= field(default_factory=list)
 
     def __post_init__(self):
-        self.states = [0xFF]*3
+        self.states= [0xFF]*3
 
 
     def _set_current_state_at(self, key: int, value: int) -> None:
@@ -32,7 +39,7 @@ class Mouse:
         value : int
             glfw mouse button state
         """
-        self.states[key] = (self.states[key] & 0xFFFFFF00) | value
+        self.states[key]= (self.states[key] & 0xFFFFFF00) | value
 
 
     def _set_previous_state_at(self, key: int, value: int) -> None:
@@ -45,7 +52,7 @@ class Mouse:
         value : int
             glfw mouse button state
         """
-        self.states[key] = (self.states[key] & 0xFFFF00FF) | (value << 8)
+        self.states[key]= (self.states[key] & 0xFFFF00FF) | (value << 8)
 
 
     def _get_current_state_at(self, key: int) -> int:
@@ -106,27 +113,29 @@ class Mouse:
         MouseState
             is its current state held, pressed or released
         """
-        key, state = glfw_mouse_state
-        if key > 3:
-            return MouseState.DEFAULT
+        key, current= glfw_mouse_state
+        result= MouseState.DEFAULT
 
-        tmp = self._get_current_state_at(key)
-        self._set_previous_state_at(key, tmp)
-        self._set_current_state_at(key, state)
+        if key < 3:
+            prev = self._get_current_state_at(key)
+            self._set_previous_state_at(key, prev)
+            self._set_current_state_at(key, current)
 
-        if self._get_previous_state_at(key) == 0:
-            if self._get_current_state_at(key) == 0:
-                return MouseState.DEFAULT
+            if self._get_previous_state_at(key) == 0:
+                if self._get_current_state_at(key) == 0:
+                    result= MouseState.DEFAULT
+                else:
+                    # pressed
+                    result= MouseState.PRESSED
             else:
-                # pressed
-                return MouseState.PRESSED
-        else:
-            if self._get_current_state_at(key) == 0:
-                # released
-                return MouseState.RELEASED
-            else:
-                # held
-                return MouseState.HELD
+                if self._get_current_state_at(key) == 0:
+                    # released
+                    result= MouseState.RELEASED
+                else:
+                    # held
+                    result= MouseState.HELD
+
+        return result
 
     def is_button_held(self, key_state: tuple[int, int]) -> bool:
         """Helper function for mouse button held down state

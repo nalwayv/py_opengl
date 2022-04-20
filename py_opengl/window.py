@@ -5,8 +5,8 @@ from typing import Any, Callable
 
 import glfw
 
-# notes
-# https://www.glfw.org/docs/latest/input_guide.html#input_keyboard
+
+# ---
 
 
 class GlWindowError(Exception):
@@ -20,12 +20,12 @@ class GlWindowError(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq=False, repr=False, slots=True)
+@dataclass(eq= False, repr= False, slots= True)
 class GlWindow:
-    window: Any|None = None
-    width: int = 0
-    height: int = 0
-    title: str = "glfw_window"
+    window: Any|None= None
+    width: int= 0
+    height: int= 0
+    title: str= "glfw_window"
 
     def __post_init__(self):
         self.window = glfw.create_window(
@@ -39,15 +39,15 @@ class GlWindow:
         if not self.window:
             raise GlWindowError('failed to init glfw window')
 
-    def set_window_resize_callback(self, cb: Callable[[Any, float, float], None]) -> None:
+    def set_window_resize_callback(self, cbfun: Callable[[Any, float, float], None]) -> None:
         """Set glfw window callback for window resize
 
         Parameters
         ---
-        cb : Callable[[Any, float, float], None]
-            callback function that takes current glfw window and its current width and height
+        cbfun : Callable[[Any, float, float], None]
+
         """
-        glfw.set_window_size_callback(self.window, cb)
+        glfw.set_window_size_callback(self.window, cbfun)
 
     def should_close(self) -> bool:
         """Close window
@@ -64,8 +64,8 @@ class GlWindow:
         """
         video = glfw.get_video_mode(glfw.get_primary_monitor())
 
-        x: float = (video.size.width // 2) - (self.width // 2)
-        y: float = (video.size.height // 2) - (self.height // 2)
+        x: float= (video.size.width // 2) - (self.width // 2)
+        y: float= (video.size.height // 2) - (self.height // 2)
 
         glfw.set_window_pos(self.window, x, y)
 
@@ -81,40 +81,38 @@ class GlWindow:
 
 
     def get_mouse_state(self, button: int) -> tuple[int, int]:
-        """Get glfw mouse button state
+        """Get glfw mouse button state plus return button number passed in
+
+        GLFW_RELEASE = 0
+        
+        GLFW_PRESS = 1
 
         Parameters
         ---
         button : int
-            glfw mouse button
 
         Returns
         ---
         tuple[int, int]
-            mouse button passed and its current glfw state
 
-            GLFW_RELEASE = 0
-
-            GLFW_PRESS = 1
         """
         return (button, glfw.get_mouse_button(self.window, button))
 
 
     def get_key_state(self, key: int) -> tuple[int, int]:
-        """Return glfw key state
+        """Return glfw key state plus key number passed in
+
+        GLFW_RELEASE = 0
+
+        GLFW_PRESS = 1
 
         Parameters
         ---
         key : int
-            glfw key
 
         Returns
         ---
         tuple[int, int]
-            key passed and its current glfw state
 
-            GLFW_RELEASE = 0
-
-            GLFW_PRESS = 1
         """
         return (key, glfw.get_key(self.window, key))

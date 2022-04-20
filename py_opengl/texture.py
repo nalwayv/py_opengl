@@ -6,6 +6,10 @@ from pathlib import Path
 from OpenGL import GL
 from PIL import Image
 
+
+# ---
+
+
 # pillow api ref
 # https://pillow.readthedocs.io/en/stable/reference/index.html
 
@@ -16,11 +20,12 @@ class TextureError(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq=False, repr=False, slots=True)
+
+@dataclass(eq= False, repr= False, slots= True)
 class Texture:
-    width: float = 0.0
-    height: float = 0.0
-    texture_id: int = 0
+    width: float= 0.0
+    height: float= 0.0
+    texture_id: int= 0
 
     def compile(self, file_name: str) -> None:
         """Create and compile a texture for opengl to use within a shader
@@ -28,25 +33,24 @@ class Texture:
         Parameters
         ---
         file_name : str
-            file name of image that should be located within
-            the *./images* directory
 
         Raises
         ---
         TextureError
-            texture file not found
+            texture file is not located within *images* folder
+
         """
-        file = Path(f'py_opengl/images/{file_name}').absolute()
+        file: Path= Path(f'py_opengl/images/{file_name}').absolute()
 
         if not file.exists():
             raise TextureError('that texture was not found within images folder')
 
         # use pillow to open tetxure image file
         with Image.open(file.as_posix()) as im:
-            self.texture_id = GL.glGenTextures(1)
-            self.width, self.height = im.size
-            border: int = 0
-            level: int = 0
+            self.texture_id= GL.glGenTextures(1)
+            self.width, self.height= im.size
+            border: int= 0
+            level: int= 0
 
             GL.glBindTexture(GL.GL_TEXTURE_2D, self.texture_id)
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)

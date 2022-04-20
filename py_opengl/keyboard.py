@@ -21,27 +21,27 @@ KEYBOARD_SIZE: Final[int] = 531
 
 
 class KeyState(Enum):
-    PRESSED = auto()
-    RELEASED = auto()
-    HELD = auto()
-    DEFAULT = auto()
+    PRESSED= auto()
+    RELEASED= auto()
+    HELD= auto()
+    DEFAULT= auto()
 
 
 # ---
 
 
-@dataclass(eq=False, repr=False, slots=True)
+@dataclass(eq= False, repr= False, slots= True)
 class Keyboard:
-    states: list[int] = field(default_factory=list)
+    states: list[int]= field(default_factory=list)
 
     def __post_init__(self):
-        self.states = [glfw.KEY_UNKNOWN] * KEYBOARD_SIZE
+        self.states= [glfw.KEY_UNKNOWN] * KEYBOARD_SIZE
 
     def _set_current_state_at(self, key: int, value: int) -> None:
-        self.states[key] = (self.states[key] & 0xFFFFFF00) | value
+        self.states[key]= (self.states[key] & 0xFFFFFF00) | value
 
     def _set_previous_state_at(self, key: int, value: int) -> None:
-        self.states[key] = (self.states[key] & 0xFFFF00FF) | (value << 8)
+        self.states[key]= (self.states[key] & 0xFFFF00FF) | (value << 8)
 
     def _get_current_state_at(self, key: int) -> int:
         return 0xFF & self.states[key]
@@ -75,27 +75,29 @@ class Keyboard:
         KeyState
             is its current state held, pressed or released
         """
-        key, current = glfw_key_state
-        if key > KEYBOARD_SIZE:
-            return KeyState.DEFAULT
+        key, current= glfw_key_state
+        result= KeyState.DEFAULT
 
-        prev = self._get_current_state_at(key)
-        self._set_previous_state_at(key, prev)
-        self._set_current_state_at(key, current)
+        if key < KEYBOARD_SIZE:
+            prev= self._get_current_state_at(key)
+            self._set_previous_state_at(key, prev)
+            self._set_current_state_at(key, current)
 
-        if self._get_previous_state_at(key) == 0:
-            if self._get_current_state_at(key) == 0:
-                return KeyState.DEFAULT
+            if self._get_previous_state_at(key) == 0:
+                if self._get_current_state_at(key) == 0:
+                    result= KeyState.DEFAULT
+                else:
+                    # pressed
+                    result= KeyState.PRESSED
             else:
-                # pressed
-                return KeyState.PRESSED
-        else:
-            if self._get_current_state_at(key) == 0:
-                # released
-                return KeyState.RELEASED
-            else:
-                # held
-                return KeyState.HELD
+                if self._get_current_state_at(key) == 0:
+                    # released
+                    result= KeyState.RELEASED
+                else:
+                    # held
+                    result= KeyState.HELD
+
+        return result
 
     def is_key_held(self, key_state: tuple[int, int]) -> bool:
         """Helper function for key held down state
