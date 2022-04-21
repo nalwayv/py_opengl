@@ -1,10 +1,8 @@
-"""
-Gl Math
+"""Maths
 """
 import math
 from dataclasses import dataclass
 from typing import Final, NamedTuple
-
 
 # --- CONSTANTS
 
@@ -1959,7 +1957,7 @@ class Mat3:
         return self.ax + self.by + self.cz
 
     def array(self) -> list[float]:
-        """Return self as a list of floats
+        """
 
         Returns
         ---
@@ -1972,7 +1970,7 @@ class Mat3:
         ]
 
     def multi_array(self) -> list[list[float]]:
-        """Return self as a list of list floats
+        """
 
         Returns
         ---
@@ -2934,7 +2932,7 @@ class Mat4:
         return self.ax + self.by + self.cz + self.dw
 
     def array(self) -> list[float]:
-        """Return self as a list of floats
+        """
 
         Returns
         ---
@@ -2948,7 +2946,7 @@ class Mat4:
         ]
 
     def multi_array(self) -> list[list[float]]:
-        """Return self as a list of list floats
+        """
 
         Returns
         ---

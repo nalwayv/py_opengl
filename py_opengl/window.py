@@ -1,4 +1,4 @@
-"""GLFW Window
+"""Window
 """
 from dataclasses import dataclass
 from typing import Any, Callable

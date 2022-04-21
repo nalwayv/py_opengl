@@ -1,8 +1,4 @@
-"""
-Mouse
----
-With help from glfw get the current state of a 
-mouse button being pressed, held or released
+"""Mouse
 """
 from dataclasses import dataclass, field
 from enum import Enum, auto

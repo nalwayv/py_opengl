@@ -1,4 +1,4 @@
-"""Color RGB
+"""Color RGBA
 """
 
 from dataclasses import dataclass

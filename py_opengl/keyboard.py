@@ -1,8 +1,4 @@
-"""
-Keyboard
----
-With help from glfw get the current state of a 
-key being pressed, held or released
+"""Keyboard
 """
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -138,34 +134,28 @@ class Keyboard:
         """
         return self.get_state(key_state) is KeyState.RELEASED
 
-# messing with callback 
-#
 # Keyboard_CALLBACK = Callable[[Any, int, int, int, int], None]
-# Keyboard_DICT = Dict[int, Keyboard_CALLBACK]
+# Keyboard_DICT = dict[int, Keyboard_CALLBACK]
 # class KeyboardS:
 #     _instance: Any|None = None
     
-#     def __new__(cls: type['KeyboardS'], window: Any|None = None) -> 'KeyboardS':
+#     def __new__(cls: type['KeyboardS']) -> 'KeyboardS':
 #         if cls._instance is None:
 #             cls._instance = super(KeyboardS, cls).__new__(cls)
-
-#             cls.data: Keyboard_DICT = {}
-#             cls.window: Any|None = window
-#             cls.states:list[int] = [0] * KEYBOARD_SIZE
-
-#             # set glfw key_callback
-#             def cb(window, key: int, scancode: int, action: int, mods: int):
-#                 if not cls._instance:
-#                     return
-
-#                 # if key is found call its cb function
-#                 if key in cls._instance.data:
-#                     cls._instance.data[key](window, key, scancode, action, mods)
-            
-#             if cls.window:
-#                 glfw.set_key_callback(cls.window, cb)
-
 #         return cls._instance
+
+
+#     def setup_window(self, window: Any|None = None):
+#         self.data: Keyboard_DICT = {}
+#         self.window: Any|None = window
+
+#         def cb(window, key: int, scancode: int, action: int, mods: int):
+#             # if key is found call its cb function
+#             if key in self.data:
+#                 self.data[key](window, key, scancode, action, mods)
+        
+#         glfw.set_key_callback(self.window, cb)
+
 
 #     def add_key(self, key: int, cbfun: Keyboard_CALLBACK) -> None:
 #         self.data[key] = cbfun

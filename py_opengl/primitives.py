@@ -1,4 +1,5 @@
-""""""
+"""Primatives
+"""
 from dataclasses import dataclass
 from py_opengl import maths
 from enum import Enum, auto

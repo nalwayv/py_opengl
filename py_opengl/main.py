@@ -1,11 +1,10 @@
-"""PY OPENGL
+"""Main
 """
 from dataclasses import dataclass
 
 import glfw
 from loguru import logger
 from OpenGL import GL
-from pathlib import Path
 
 from py_opengl import utils
 from py_opengl import maths
@@ -40,19 +39,19 @@ class Triangle:
         vert_src: str= 'shader.vert'
         frag_src: str= 'shader.frag'
 
-        verts: list[float]= [
+        verts: list[float]=  [
             0.5, -0.5, 0.0,
             -0.5, -0.5, 0.0,
             0.0, 0.5, 0.0
         ]
 
-        color: list[float]= [
+        color: list[float]=  [
             1.0, 0.0, 0.0,
             0.0, 1.0, 0.0,
             0.0, 0.0, 1.0
         ]
 
-        tex_coords: list[float]= [
+        tex_coords: list[float]=  [
             0.0, 0.0,
             1.0, 0.0,
             0.5, 1.0,
@@ -104,7 +103,7 @@ class Cube:
         hh: float= self.size.y * 0.5
         hd: float= self.size.z * 0.5
 
-        verts: list[float]= [
+        verts: list[float]=  [
              hw, hh, hd,  -hw, hh, hd,  -hw,-hh, hd,  hw,-hh, hd,
              hw, hh, hd,   hw,-hh, hd,   hw,-hh,-hd,  hw, hh,-hd,
              hw, hh, hd,   hw, hh,-hd,  -hw, hh,-hd, -hw, hh, hd,
@@ -113,7 +112,7 @@ class Cube:
              hw,-hh,-hd,  -hw,-hh,-hd,  -hw, hh,-hd,  hw, hh,-hd
         ]
 
-        color: list[float]= [
+        color: list[float]=  [
             1.0, 1.0, 1.0,   1.0, 1.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 1.0,
             1.0, 1.0, 1.0,   1.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 1.0, 1.0,
             1.0, 1.0, 1.0,   0.0, 1.0, 1.0,   0.0, 1.0, 0.0,   1.0, 1.0, 0.0,
@@ -122,7 +121,7 @@ class Cube:
             0.0, 0.0, 1.0,   0.0, 0.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 1.0
         ]
 
-        tex_coords: list[float]= [
+        tex_coords: list[float]=  [
             1.0, 0.0,   0.0, 0.0,   0.0, 1.0,   1.0, 1.0,
             0.0, 0.0,   0.0, 1.0,   1.0, 1.0,   1.0, 0.0,
             1.0, 1.0,   1.0, 0.0,   0.0, 0.0,   0.0, 1.0,

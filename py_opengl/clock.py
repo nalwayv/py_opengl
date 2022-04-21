@@ -1,7 +1,4 @@
-"""
-Clock
----
-A Simple clock to get delta time and ticks based on glfw.get_time()
+"""Clock
 """
 import glfw
 from dataclasses import dataclass

@@ -1,7 +1,4 @@
-"""
-Camera
----
-A perspective camera
+"""Camera
 """
 from dataclasses import dataclass
 from py_opengl import maths
