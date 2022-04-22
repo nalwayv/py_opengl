@@ -19,7 +19,9 @@ from py_opengl import texture
 from py_opengl import color
 
 
+
 # --- SHAPE
+
 
 
 @dataclass(eq= False, repr= False, slots= True)
@@ -156,7 +158,9 @@ class Cube:
         self.vbo_.clean()
 
 
+
 # --- CALLBACKS
+
 
 
 def cb_window_resize(window, width, height):
@@ -173,7 +177,9 @@ def cb_window_resize(window, width, height):
     GL.glViewport(0, 0, width, height)
 
 
+
 # --- MAIN
+
 
 
 def main() -> None:
@@ -198,22 +204,25 @@ def main() -> None:
         glwin.center_screen_position()
         glwin.set_window_resize_callback(cb_window_resize)
 
+        bg_col= color.Color.from_rgba(75, 75, 75, 255)
+        
         time= clock.Clock()
+
         cam= camera.Camera(
             position= maths.Vec3(z=3.0),
             aspect= utils.SCREEN_WIDTH/utils.SCREEN_HEIGHT
         )
 
-        kb= keyboard.Keyboard()
+        kb: keyboard.Keyboard= keyboard.Keyboard()
 
-        ms= mouse.Mouse()
-        first_move= True
-        last_mp= maths.Vec3()
+        ms: mouse.Mouse= mouse.Mouse()
+        first_move: bool= True
+        last_mp:maths.Vec3= maths.Vec3.zero()
 
-        shape= Cube()
-
-        bg_col= color.Color.from_rgba(75, 75, 75, 255)
-
+        shape: Cube= Cube()
+        offset: float= 1.0
+        speed: float= 1.0
+        ang: float= 0.0
 
         while not glwin.should_close():
             time.update()
@@ -227,10 +236,15 @@ def main() -> None:
 
             shape.draw()
 
-            shape.transform_.rotation= maths.Quaternion.from_axis(
-                float(time.ticks),
-                maths.Vec3(x=1.0, y=0.5, z=0.8))
-            
+            shape.transform_.angle = float(time.ticks)
+            shape.transform_.axis = maths.Vec3(1.0, 0.5, 0.8)
+
+            shape.transform_.position= maths.Vec3(
+                x= maths.sin(ang) * offset,
+                y= maths.cos(ang) * offset
+            )
+            ang += (speed * time.delta)
+
             m: maths.Mat4= shape.transform_.get_matrix()
             v: maths.Mat4= cam.view_matrix()
             p: maths.Mat4= cam.projection_matrix()

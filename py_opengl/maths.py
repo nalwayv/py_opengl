@@ -2377,7 +2377,52 @@ class Mat4:
         Mat4
             rotated mat4
         """
-        return Quaternion.from_axis(angle_deg, unit_axis).to_mat4()
+        if not unit_axis.is_unit():
+            unit_axis.to_unit()
+
+        rad: float= to_radians(angle_deg)
+        x: float= unit_axis.x
+        y: float= unit_axis.y
+        z: float= unit_axis.z
+        c: float= cos(rad)
+        s: float= sin(rad)
+        t: float = 1.0 - c
+
+        xx: float= t * sqr(x)
+        xy: float= t * x * y
+        xz: float= t * x * z
+        yy: float= t * sqr(y)
+        yz: float= t * y * z
+        zz: float= t * sqr(z)
+
+        sin_x: float= s * x
+        sin_y: float= s * y
+        sin_z: float= s * z
+        
+        ax: float= xx + c
+        ay: float= xy - sin_z
+        az: float= xz + sin_y
+        aw: float= 0.0
+        bx: float= xy + sin_z
+        by: float= yy + c
+        bz: float= yz - sin_x
+        bw: float= 0.0
+        cx: float= xz - sin_y
+        cy: float= yz + sin_x
+        cz: float= zz + c
+        cw: float= 0.0
+        dx: float= 0.0
+        dy: float= 0.0
+        dz: float= 0.0
+        dw: float= 1.0
+
+        return Mat4 (
+            ax, ay, az, aw,
+            bx, by, bz, bw,
+            cx, cy, cz, cw,
+            dx, dy, dz, dw
+        )
+
 
     @staticmethod
     def from_quat(qx: float, qy: float, qz: float, qw: float) -> 'Mat4':
@@ -3487,8 +3532,9 @@ class Quaternion:
 @dataclass(eq= False, repr= False, slots= True)
 class Transform:
     position: Vec3= Vec3()
-    scale: float= 1.0
-    rotation: Quaternion= Quaternion(w=1.0)
+    scale: Vec3= Vec3(1.0, 1.0, 1.0)
+    angle: float= 0.0
+    axis: Vec3= Vec3()
 
     def get_matrix(self) -> Mat4:
         """Return transform matrix
@@ -3497,10 +3543,11 @@ class Transform:
         ---
         glm.Mat4
         """
+            # self.rotation.to_mat4() *
         return (
             Mat4.create_translation(self.position) *
-            self.rotation.to_mat4() *
-            Mat4.create_scaler(Vec3(self.scale, self.scale, self.scale))
+            Mat4.from_axis(self.angle, self.axis) *
+            Mat4.create_scaler(self.scale)
         )
     
     def get_matrix_inverse(self) -> Mat4:
@@ -3512,4 +3559,3 @@ class Transform:
         """
         matrix: Mat4= self.get_matrix()
         return matrix.inverse()
-    
