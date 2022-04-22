@@ -1,6 +1,7 @@
 """Main
 """
 from dataclasses import dataclass
+from abc import ABC, abstractmethod
 
 import glfw
 from loguru import logger
@@ -24,8 +25,18 @@ from py_opengl import color
 
 
 
+class IObject(ABC):
+    @abstractmethod
+    def draw() -> None:
+        """Draw to screen"""
+
+    @abstractmethod
+    def clean() -> None:
+        """Clean up data used by object"""
+
+
 @dataclass(eq= False, repr= False, slots= True)
-class Triangle:
+class Triangle(IObject):
     vbo_: vbo.Vbo|None= None
     shader_: shader.Shader|None= None
     texture_: texture.Texture|None= None
@@ -70,22 +81,18 @@ class Triangle:
         self.vbo_.setup(verts, color, tex_coords, indices)
 
     def draw(self) -> None:
-        """Draw to screen
-        """
         self.texture_.use()
         self.shader_.use()
         self.vbo_.use(vbo.VboDrawMode.TRIANGLES)
 
     def clean(self) -> None:
-        """Clean up
-        """
         self.shader_.clean()
         self.texture_.clean()
         self.vbo_.clean()
 
 
 @dataclass(eq= False, repr= False, slots= True)
-class Cube:
+class Cube(IObject):
     vbo_: vbo.Vbo|None= None
     shader_: shader.Shader|None= None
     texture_: texture.Texture|None= None
@@ -144,15 +151,11 @@ class Cube:
         self.vbo_.setup(verts, color, tex_coords, indices)
 
     def draw(self) -> None:
-        """Draw to screen
-        """
         self.texture_.use()
         self.shader_.use()
         self.vbo_.use(vbo.VboDrawMode.TRIANGLES)
 
     def clean(self) -> None:
-        """Clean up
-        """
         self.texture_.clean()
         self.shader_.clean()
         self.vbo_.clean()
@@ -234,6 +237,7 @@ def main() -> None:
 
             # ---
 
+            # shape
             shape.draw()
 
             shape.transform_.angle = float(time.ticks)
