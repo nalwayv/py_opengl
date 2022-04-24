@@ -349,8 +349,11 @@ def main() -> None:
             # shape
             shape.draw()
 
-            shape.transform_.angle = float(time.ticks)
-            shape.transform_.axis = maths.Vec3(x=0.5,y=1)
+            shape.transform_.angle= float(time.ticks)
+            shape.transform_.axis= maths.Vec3(
+                x= 0.5,
+                y= 1.0
+            )
 
             shape.transform_.position= maths.Vec3(
                 x= maths.sin(ang) * offset,
@@ -398,25 +401,6 @@ def main() -> None:
                     
                     cam.rotate_by(camera.CameraRotation.YAW, new_mp.x, 0.2)
                     cam.rotate_by(camera.CameraRotation.PITCH, new_mp.y, 0.2)
-                    
-                    # ray_nds: maths.Vec3= maths.Vec3(
-                    #     x= 2.0 * new_mp.x / float(utils.SCREEN_WIDTH) - 1.0,
-                    #     y= 1.0 - (2.0 * new_mp.y) / float(utils.SCREEN_HEIGHT),
-                    #     z= 1.0
-                    # )
-
-                    # ray_clip: maths.Vec4= maths.Vec4.from_v2(ray_nds.xy(), -1.0, 1.0)
-
-                    # ray_eye: maths.Vec4= cam.projection_matrix().inverse().multiply_v4(ray_clip)
-                    # ray_eye.y= -1.0
-                    # ray_eye.z= 0.0
-
-                    # ray_world: maths.Vec3= cam.view_matrix().inverse().multiply_v4(ray_eye).xyz()
-
-                    # if not ray_world.is_unit():
-                    #     ray_world.to_unit()
-
-                    # print(ray_world.to_str())
 
             cam.update()
 
