@@ -5,9 +5,12 @@ from enum import Enum, auto
 
 from OpenGL import GL
 from py_opengl import utils
+from py_opengl import maths
+
 
 
 # ---
+
 
 
 class VboDrawMode(Enum):
@@ -17,7 +20,9 @@ class VboDrawMode(Enum):
     DEFAULT= auto()
 
 
+
 # ---
+
 
 
 @dataclass(eq= False, repr= False, slots= True)
@@ -63,14 +68,21 @@ class Vbo:
 
     def setup(
         self,
-        verts: list[float],
-        color: list[float],
-        normals: list[float],
-        tex_coords: list[float],
-        indices: list[int]
+        verts_pts: list[maths.Pt3],
+        color_pts: list[maths.Pt3],
+        normals_pts: list[maths.Pt3],
+        tex_coords_pts: list[maths.Pt2],
+        indices_pts: list[maths.Pt3Int]
     ) -> None:
         """Setup vbo
         """
+        # flattern arrays
+        verts: list[float]= [y for s in verts_pts for y in s.to_list()]
+        color: list[float]= [y for s in color_pts for y in s.to_list()]
+        normals: list[float]= [y for s in normals_pts for y in s.to_list()]
+        tex_coords: list[float]= [y for s in tex_coords_pts for y in s.to_list()]
+        indices: list[int]= [y for s in indices_pts for y in s.to_list()]
+
         vsize: int= len(verts) * utils.FLOAT_SIZE
         csize: int= len(color) * utils.FLOAT_SIZE
         nsize: int= len(normals) * utils.FLOAT_SIZE

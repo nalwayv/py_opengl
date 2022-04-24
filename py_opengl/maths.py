@@ -2,9 +2,12 @@
 """
 import math
 from dataclasses import dataclass
-from typing import Final, NamedTuple
+from typing import Final
+
+
 
 # --- CONSTANTS
+
 
 
 PI: Final[float]= 3.14159265358979323846
@@ -18,28 +21,9 @@ INFINITY: Final[float]= math.inf
 NEGATIVE_INFINITY: Final[float]= -math.inf
 
 
-# ---
-
-
-class Point2D(NamedTuple):
-    x: float
-    y: float
-
-
-class Point3D(NamedTuple):
-    x: float
-    y: float
-    z: float
-
-
-class Point4D(NamedTuple):
-    x: float
-    y: float
-    z: float
-    w: float
-
 
 # --- FUNCTIONS
+
 
 
 def absf(x: float) -> float:
@@ -595,6 +579,81 @@ def hetmit(value_a: float, tangent_a: float, value_b: float, tangent_b: float, a
 
 
 
+# --- POINTS
+
+
+
+@dataclass(eq= False, repr= False, slots= True)
+class Pt2:
+    """Points 2D
+    """
+    x: float= 0.0
+    y: float= 0.0
+
+    def to_list(self) -> list[float]:
+        return [self.x, self.y]
+
+@dataclass(eq= False, repr= False, slots= True)
+class Pt2Int:
+    """Int Points 2D
+    """
+    x: int= 0
+    y: int= 0
+
+    def to_list(self) -> list[int]:
+        return [self.x, self.y]
+
+@dataclass(eq= False, repr= False, slots= True)
+class Pt3:
+    """Points 3D
+    """
+    x: float= 0.0
+    y: float= 0.0
+    z: float= 0.0
+
+    def to_list(self) -> list[float]:
+        return [self.x, self.y, self.z]
+
+
+@dataclass(eq= False, repr= False, slots= True)
+class Pt3Int:
+    """Int Points 3D
+    """
+    x: int= 0
+    y: int= 0
+    z: int= 0
+
+    def to_list(self) -> list[int]:
+        return [self.x, self.y, self.z]
+
+
+@dataclass(eq= False, repr= False, slots= True)
+class Pt4:
+    """Points 4D
+    """
+    x: float= 0.0
+    y: float= 0.0
+    z: float= 0.0
+    w: float= 0.0
+
+    def to_list(self) -> list[float]:
+        return [self.x, self.y, self.z, self.w]
+
+
+@dataclass(eq= False, repr= False, slots= True)
+class Pt4Int:
+    """Int Points 4D
+    """
+    x: int= 0
+    y: int= 0
+    z: int= 0
+    w: int= 0
+
+    def to_list(self) -> list[int]:
+        return [self.x, self.y, self.z, self.w]
+
+
+
 # --- VECTOR_2 (X, Y)
 
 
@@ -658,6 +717,15 @@ class Vec2:
     @staticmethod
     def unit_y() -> 'Vec2':
         return Vec2(y=1.0)
+
+    def to_list(self) -> list[float]:
+        """Return list[float] of *xy* components
+        
+        Returns
+        ---
+        list[float]
+        """
+        return [self.x, self.y]
 
     def to_str(self) -> str:
         """Return string format
@@ -1015,6 +1083,10 @@ class Vec3:
         z: float= minf(a.z, b.z)
 
         return Vec3(x, y, z)
+
+    def to_list(self) -> list[float]:
+        """Return list[float] of *xyz* components"""
+        return [self.x, self.y, self.z]
 
     def to_str(self) -> str:
         """Return string format
@@ -1390,6 +1462,15 @@ class Vec4:
             z= xyz.z,
             w= w
         )
+
+    def to_list(self) -> list[float]:
+        """Return list[float] of *xyzw* components
+
+        Returns
+        ---
+        list[float]
+        """
+        return [self.x, self.y, self.z, self.w]
 
     def to_str(self) -> str:
         """Return string format

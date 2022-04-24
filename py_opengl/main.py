@@ -43,48 +43,44 @@ class Triangle(IObject):
     transform_: maths.Transform|None= None
 
     def __post_init__(self):
-        self.vbo_= vbo.Vbo(length=9)
+        verts_pts: list[maths.Pt3]=  [
+            maths.Pt3( 0.5, -0.5, 0.0),
+            maths.Pt3(-0.5, -0.5, 0.0),
+            maths.Pt3( 0.0,  0.5, 0.0)
+        ]
+
+        color_pts: list[maths.Pt3]=  [
+            maths.Pt3(1.0, 0.0, 0.0),
+            maths.Pt3(0.0, 1.0, 0.0),
+            maths.Pt3(0.0, 0.0, 1.0)
+        ]
+
+        normals_pts: list[maths.Pt3]=  [
+            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(1.0, 1.0, 1.0)
+        ]
+
+        tex_coords_pts: list[maths.Pt2]=  [
+            maths.Pt2(0.0, 0.0),
+            maths.Pt2(1.0, 0.0),
+            maths.Pt2(0.5, 1.0),
+        ]
+
+        indices_pts: list[maths.Pt3Int]= [
+            maths.Pt3Int(0, 1, 2),
+            maths.Pt3Int(3, 4, 5),
+            maths.Pt3Int(6, 7, 8)
+        ]
+
+        self.vbo_= vbo.Vbo(length=len(indices_pts) * 3)
         self.shader_= shader.Shader()
         self.texture_= texture.Texture()
         self.transform_= maths.Transform()
 
-        texture_src: str= 'wall.jpg'
-        vert_src: str= 'shader.vert'
-        frag_src: str= 'shader.frag'
-
-        verts: list[float]=  [
-            0.5, -0.5, 0.0,
-            -0.5, -0.5, 0.0,
-            0.0, 0.5, 0.0
-        ]
-
-        color: list[float]=  [
-            1.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 0.0, 1.0
-        ]
-
-        normals: list[float]=  [
-            1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0
-        ]
-
-        tex_coords: list[float]=  [
-            0.0, 0.0,
-            1.0, 0.0,
-            0.5, 1.0,
-        ]
-
-        indices: list[int]= [
-            0, 1, 2,
-            3, 4, 5,
-            6, 7, 8
-        ]
-
-        self.texture_.compile(texture_src)
-        self.shader_.compile(vert_src, frag_src)
-        self.vbo_.setup(verts, color, normals, tex_coords, indices)
+        self.texture_.compile('grid512.bmp')
+        self.shader_.compile('shader.vert', 'shader.frag')
+        self.vbo_.setup(verts_pts, color_pts, normals_pts, tex_coords_pts, indices_pts)
 
     def draw(self) -> None:
         self.texture_.use()
@@ -106,64 +102,162 @@ class Cube(IObject):
     size: maths.Vec3 = maths.Vec3(1.0, 1.0, 1.0)
 
     def __post_init__(self):
-        self.vbo_= vbo.Vbo(length=36)
+
+        hw: float= self.size.x * 0.5
+        hh: float= self.size.y * 0.5
+        hd: float= self.size.z * 0.5
+
+        verts_pts: list[maths.Pt3]=  [
+            maths.Pt3( hw, hh, hd), 
+            maths.Pt3(-hw, hh, hd),
+            maths.Pt3(-hw,-hh, hd), 
+            maths.Pt3( hw,-hh, hd),
+
+            maths.Pt3( hw, hh, hd), 
+            maths.Pt3( hw,-hh, hd), 
+            maths.Pt3( hw,-hh,-hd), 
+            maths.Pt3( hw, hh,-hd),
+
+            maths.Pt3( hw, hh, hd),
+            maths.Pt3( hw, hh,-hd),
+            maths.Pt3(-hw, hh,-hd),
+            maths.Pt3(-hw, hh, hd),
+
+            maths.Pt3(-hw, hh, hd),
+            maths.Pt3(-hw, hh,-hd),
+            maths.Pt3(-hw,-hh,-hd),
+            maths.Pt3(-hw,-hh, hd),
+
+            maths.Pt3(-hw,-hh,-hd),
+            maths.Pt3( hw,-hh,-hd),
+            maths.Pt3( hw,-hh, hd),
+            maths.Pt3(-hw,-hh, hd),
+
+            maths.Pt3( hw,-hh,-hd),
+            maths.Pt3(-hw,-hh,-hd),
+            maths.Pt3(-hw, hh,-hd),
+            maths.Pt3( hw, hh,-hd)
+        ]
+
+        color_pts: list[maths.Pt3]=  [
+            maths.Pt3(1.0, 1.0, 1.0), 
+            maths.Pt3(1.0, 1.0, 0.0), 
+            maths.Pt3(1.0, 0.0, 0.0), 
+            maths.Pt3(1.0, 0.0, 1.0),
+
+            maths.Pt3(1.0, 1.0, 1.0), 
+            maths.Pt3(1.0, 0.0, 1.0), 
+            maths.Pt3(0.0, 0.0, 1.0),
+            maths.Pt3(0.0, 1.0, 1.0),
+
+            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(0.0, 1.0, 1.0),
+            maths.Pt3(0.0, 1.0, 0.0),
+            maths.Pt3(1.0, 1.0, 0.0),
+
+            maths.Pt3(1.0, 1.0, 0.0), 
+            maths.Pt3(0.0, 1.0, 0.0), 
+            maths.Pt3(0.0, 0.0, 0.0), 
+            maths.Pt3(1.0, 0.0, 0.0),
+
+            maths.Pt3(0.0, 0.0, 0.0), 
+            maths.Pt3(0.0, 0.0, 1.0), 
+            maths.Pt3(1.0, 0.0, 1.0), 
+            maths.Pt3(1.0, 0.0, 0.0),
+
+            maths.Pt3(0.0, 0.0, 1.0), 
+            maths.Pt3(0.0, 0.0, 0.0), 
+            maths.Pt3(0.0, 1.0, 0.0), 
+            maths.Pt3(0.0, 1.0, 1.0)
+        ]
+
+        normals_pts: list[maths.Pt3]=  [
+            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(1.0, 1.0, 1.0),
+
+            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(1.0, 1.0, 1.0),
+
+            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(1.0, 1.0, 1.0),
+
+            maths.Pt3(1.0, 1.0, 1.0),   
+            maths.Pt3(1.0, 1.0, 1.0),   
+            maths.Pt3(1.0, 1.0, 1.0),   
+            maths.Pt3(1.0, 1.0, 1.0),
+
+            maths.Pt3(1.0, 1.0, 1.0),   
+            maths.Pt3(1.0, 1.0, 1.0),   
+            maths.Pt3(1.0, 1.0, 1.0),   
+            maths.Pt3(1.0, 1.0, 1.0),
+
+            maths.Pt3(1.0, 1.0, 1.0),   
+            maths.Pt3(1.0, 1.0, 1.0),   
+            maths.Pt3(1.0, 1.0, 1.0),   
+            maths.Pt3(1.0, 1.0, 1.0)
+        ]
+
+        tex_coords_pts: list[maths.Pt2]=  [
+            maths.Pt2(1.0, 0.0),
+            maths.Pt2(0.0, 0.0),
+            maths.Pt2(0.0, 1.0),
+            maths.Pt2(1.0, 1.0),
+
+            maths.Pt2(0.0, 0.0),
+            maths.Pt2(0.0, 1.0),
+            maths.Pt2(1.0, 1.0),
+            maths.Pt2(1.0, 0.0),
+
+            maths.Pt2(1.0, 1.0),
+            maths.Pt2(1.0, 0.0),
+            maths.Pt2(0.0, 0.0),
+            maths.Pt2(0.0, 1.0),
+
+            maths.Pt2(1.0, 0.0),
+            maths.Pt2(0.0, 0.0),
+            maths.Pt2(0.0, 1.0),
+            maths.Pt2(1.0, 1.0),
+
+            maths.Pt2(0.0, 1.0),
+            maths.Pt2(1.0, 1.0),
+            maths.Pt2(1.0, 0.0),
+            maths.Pt2(0.0, 0.0),
+
+            maths.Pt2(0.0, 1.0),
+            maths.Pt2(1.0, 1.0),
+            maths.Pt2(1.0, 0.0),
+            maths.Pt2(0.0, 0.0)
+        ]
+   
+        indices_pts: list[maths.Pt3Int]= [
+            maths.Pt3Int( 0,  1,  2),
+            maths.Pt3Int( 2,  3,  0),
+            maths.Pt3Int( 4,  5,  6),
+            maths.Pt3Int( 6,  7,  4),
+            maths.Pt3Int( 8,  9, 10),
+            maths.Pt3Int(10, 11,  8),
+            maths.Pt3Int(12, 13, 14),
+            maths.Pt3Int(14, 15, 12),
+            maths.Pt3Int(16, 17, 18),
+            maths.Pt3Int(18, 19, 16),
+            maths.Pt3Int(20, 21, 22),
+            maths.Pt3Int(22, 23, 20)
+        ]
+
+        self.vbo_= vbo.Vbo(length=len(indices_pts) * 3)
         self.shader_= shader.Shader()
         self.texture_= texture.Texture()
         self.transform_= maths.Transform()
 
         self.texture_.compile('grid512.bmp')
         self.shader_.compile('shader.vert', 'shader.frag')
-
-        hw: float= self.size.x * 0.5
-        hh: float= self.size.y * 0.5
-        hd: float= self.size.z * 0.5
-
-        verts: list[float]=  [
-             hw, hh, hd,  -hw, hh, hd,  -hw,-hh, hd,  hw,-hh, hd,
-             hw, hh, hd,   hw,-hh, hd,   hw,-hh,-hd,  hw, hh,-hd,
-             hw, hh, hd,   hw, hh,-hd,  -hw, hh,-hd, -hw, hh, hd,
-            -hw, hh, hd,  -hw, hh,-hd,  -hw,-hh,-hd, -hw,-hh, hd,
-            -hw,-hh,-hd,   hw,-hh,-hd,   hw,-hh, hd, -hw,-hh, hd,
-             hw,-hh,-hd,  -hw,-hh,-hd,  -hw, hh,-hd,  hw, hh,-hd
-        ]
-
-        color: list[float]=  [
-            1.0, 1.0, 1.0,   1.0, 1.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 1.0,
-            1.0, 1.0, 1.0,   1.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,   0.0, 1.0, 1.0,   0.0, 1.0, 0.0,   1.0, 1.0, 0.0,
-            1.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 0.0, 0.0,   1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0,   0.0, 0.0, 1.0,   1.0, 0.0, 1.0,   1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0,   0.0, 0.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 1.0
-        ]
-
-        normals: list[float]=  [
-            1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0
-        ]
-
-        tex_coords: list[float]=  [
-            1.0, 0.0,   0.0, 0.0,   0.0, 1.0,   1.0, 1.0,
-            0.0, 0.0,   0.0, 1.0,   1.0, 1.0,   1.0, 0.0,
-            1.0, 1.0,   1.0, 0.0,   0.0, 0.0,   0.0, 1.0,
-            1.0, 0.0,   0.0, 0.0,   0.0, 1.0,   1.0, 1.0,
-            0.0, 1.0,   1.0, 1.0,   1.0, 0.0,   0.0, 0.0,
-            0.0, 1.0,   1.0, 1.0,   1.0, 0.0,   0.0, 0.0
-        ]
-   
-        indices: list[int]= [
-             0,  1,  2,    2,  3,  0,
-             4,  5,  6,    6,  7,  4,
-             8,  9, 10,   10, 11,  8,
-            12, 13, 14,   14, 15, 12,
-            16, 17, 18,   18, 19, 16,
-            20, 21, 22,   22, 23, 20
-        ]
-
-        self.vbo_.setup(verts, color, normals, tex_coords, indices)
+        self.vbo_.setup(verts_pts, color_pts, normals_pts, tex_coords_pts, indices_pts)
 
     def draw(self) -> None:
         self.texture_.use()
