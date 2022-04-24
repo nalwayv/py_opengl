@@ -659,6 +659,15 @@ class Vec2:
     def unit_y() -> 'Vec2':
         return Vec2(y=1.0)
 
+    def to_str(self) -> str:
+        """Return string format
+
+        Returns
+        ---
+        str
+        """
+        return f"X: {self.x}, Y: {self.y}"
+
     def lerp(self, to: 'Vec2', weight: float) -> 'Vec2':
         """Return lerp between begin end end vec3
 
@@ -988,8 +997,8 @@ class Vec3:
         return Vec3(z=1.0)
 
     @staticmethod
-    def from_v2(v2: Vec2) -> 'Vec3':
-        return Vec3(x=v2.x, y=v2.y)
+    def from_v2(v2: Vec2, z: float) -> 'Vec3':
+        return Vec3(x= v2.x, y= v2.y, z= z)
 
     @staticmethod
     def from_max(a: 'Vec3', b: 'Vec3') -> 'Vec3':
@@ -1006,6 +1015,15 @@ class Vec3:
         z: float= minf(a.z, b.z)
 
         return Vec3(x, y, z)
+
+    def to_str(self) -> str:
+        """Return string format
+
+        Returns
+        ---
+        str
+        """
+        return f"X: {self.x}, Y: {self.y}, Z: {self.z}"
 
     def lerp(self, to: 'Vec3', weight: float) -> 'Vec3':
         """Return lerp between begin and end vec3
@@ -1028,6 +1046,15 @@ class Vec3:
         z: float= lerp(self.z, to.z, weight)
     
         return Vec3(x, y, z)
+
+    def xy(self) -> Vec2:
+        """Return *xy* components
+
+        Returns
+        ---
+        Vec3
+        """
+        return Vec2(self.x, self.y)
 
     def to_unit(self) -> None:
         """Normalize length
@@ -1347,12 +1374,49 @@ class Vec4:
         return Vec4(w= 1.0)
 
     @staticmethod
-    def from_v3(v3: Vec3) -> 'Vec4':
+    def from_v2(xy: Vec2, z: float, w: float) -> 'Vec4':
         return Vec4(
-            x= v3.x,
-            y= v3.y,
-            z= v3.z
+            x= xy.x,
+            y= xy.y,
+            z= z,
+            w= w
         )
+
+    @staticmethod
+    def from_v3(xyz: Vec3, w: float) -> 'Vec4':
+        return Vec4(
+            x= xyz.x,
+            y= xyz.y,
+            z= xyz.z,
+            w= w
+        )
+
+    def to_str(self) -> str:
+        """Return string format
+
+        Returns
+        ---
+        str
+        """
+        return f"X: {self.x}, Y: {self.y} Z: {self.z}, W: {self.w}"
+
+    def xy(self) -> Vec2:
+        """Return *xy* components
+
+        Returns
+        ---
+        Vec3
+        """
+        return Vec2(self.x, self.y)
+
+    def xyz(self) -> Vec3:
+        """Return *xyz* components
+
+        Returns
+        ---
+        Vec3
+        """
+        return Vec3(self.x, self.y, self.z)
 
     def lerp(self, to: 'Vec4', weight: float) -> 'Vec4':
         """Return lerp between begin ben and end vec4
@@ -2834,6 +2898,43 @@ class Mat4:
 
         return Vec3(x, y, z)
 
+    def multiply_v4(self, v4: Vec4) -> Vec4:
+        """Return mat4 multiplyed by vec4
+        
+        Returns
+        ---
+        Vec4
+        """
+        x: float= (
+            v4.x * self.ax +
+            v4.y * self.bx +
+            v4.z * self.cx +
+            v4.w * self.dx
+        )
+
+        y: float= (
+            v4.x * self.ay +
+            v4.y * self.by +
+            v4.z * self.cy +
+            v4.w * self.dy
+        )
+
+        z: float= (
+            v4.x * self.az +
+            v4.y * self.bz +
+            v4.z * self.cz +
+            v4.w * self.dz
+        )
+
+        w: float= (
+            v4.x * self.aw +
+            v4.y * self.bw +
+            v4.z * self.cw +
+            v4.w * self.dw
+        )
+        
+        return Vec4(x, y, z, w)
+
     def row0(self) -> Vec4:
         """Return the first row of float values
 
@@ -3534,7 +3635,7 @@ class Transform:
     position: Vec3= Vec3()
     scale: Vec3= Vec3(1.0, 1.0, 1.0)
     angle: float= 0.0
-    axis: Vec3= Vec3()
+    axis: Vec3= Vec3(1.0, 1.0, 1.0)
 
     def get_matrix(self) -> Mat4:
         """Return transform matrix
@@ -3543,7 +3644,9 @@ class Transform:
         ---
         glm.Mat4
         """
-            # self.rotation.to_mat4() *
+        
+        # Quaternion.from_axis(self.angle, self.axis).to_mat4()
+
         return (
             Mat4.create_translation(self.position) *
             Mat4.from_axis(self.angle, self.axis) *

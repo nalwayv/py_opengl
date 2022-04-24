@@ -64,6 +64,12 @@ class Triangle(IObject):
             0.0, 0.0, 1.0
         ]
 
+        normals: list[float]=  [
+            1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0
+        ]
+
         tex_coords: list[float]=  [
             0.0, 0.0,
             1.0, 0.0,
@@ -78,7 +84,7 @@ class Triangle(IObject):
 
         self.texture_.compile(texture_src)
         self.shader_.compile(vert_src, frag_src)
-        self.vbo_.setup(verts, color, tex_coords, indices)
+        self.vbo_.setup(verts, color, normals, tex_coords, indices)
 
     def draw(self) -> None:
         self.texture_.use()
@@ -130,6 +136,15 @@ class Cube(IObject):
             0.0, 0.0, 1.0,   0.0, 0.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 1.0
         ]
 
+        normals: list[float]=  [
+            1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, 1.0
+        ]
+
         tex_coords: list[float]=  [
             1.0, 0.0,   0.0, 0.0,   0.0, 1.0,   1.0, 1.0,
             0.0, 0.0,   0.0, 1.0,   1.0, 1.0,   1.0, 0.0,
@@ -148,7 +163,7 @@ class Cube(IObject):
             20, 21, 22,   22, 23, 20
         ]
 
-        self.vbo_.setup(verts, color, tex_coords, indices)
+        self.vbo_.setup(verts, color, normals, tex_coords, indices)
 
     def draw(self) -> None:
         self.texture_.use()
@@ -224,7 +239,7 @@ def main() -> None:
 
         shape: Cube= Cube()
         offset: float= 1.0
-        speed: float= 1.0
+        speed: float= 0.15
         ang: float= 0.0
 
         while not glwin.should_close():
@@ -241,7 +256,7 @@ def main() -> None:
             shape.draw()
 
             shape.transform_.angle = float(time.ticks)
-            shape.transform_.axis = maths.Vec3(1.0, 0.5, 0.8)
+            shape.transform_.axis = maths.Vec3(x=0.5,y=1)
 
             shape.transform_.position= maths.Vec3(
                 x= maths.sin(ang) * offset,
@@ -286,9 +301,28 @@ def main() -> None:
                     new_mp= maths.Vec3(x=mx, y=my) - last_mp
                     last_mp.x= mx
                     last_mp.y= my
-
+                    
                     cam.rotate_by(camera.CameraRotation.YAW, new_mp.x, 0.2)
                     cam.rotate_by(camera.CameraRotation.PITCH, new_mp.y, 0.2)
+                    
+                    # ray_nds: maths.Vec3= maths.Vec3(
+                    #     x= 2.0 * new_mp.x / float(utils.SCREEN_WIDTH) - 1.0,
+                    #     y= 1.0 - (2.0 * new_mp.y) / float(utils.SCREEN_HEIGHT),
+                    #     z= 1.0
+                    # )
+
+                    # ray_clip: maths.Vec4= maths.Vec4.from_v2(ray_nds.xy(), -1.0, 1.0)
+
+                    # ray_eye: maths.Vec4= cam.projection_matrix().inverse().multiply_v4(ray_clip)
+                    # ray_eye.y= -1.0
+                    # ray_eye.z= 0.0
+
+                    # ray_world: maths.Vec3= cam.view_matrix().inverse().multiply_v4(ray_eye).xyz()
+
+                    # if not ray_world.is_unit():
+                    #     ray_world.to_unit()
+
+                    # print(ray_world.to_str())
 
             cam.update()
 
@@ -296,17 +330,8 @@ def main() -> None:
             glfw.poll_events()
             glfw.swap_buffers(glwin.window)
 
-    except (maths.Vec3Error, maths.Mat4Error, maths.QuatError) as math_err:
-        logger.error(f'MATH ERROR: {math_err}')
-
-    except texture.TextureError as texture_err:
-        logger.error(f'TEXTURE ERROR: {texture_err}')
-
-    except camera.CameraError as camera_err:
-        logger.error(f'CAMERA ERROR: {camera_err}')
-
-    except window.GlWindowError as window_err:
-        logger.error(f'WINDOW ERROR: {window_err}')
+    except Exception as err:
+        logger.error(f"ERROR: {err}")
 
     finally:
         logger.debug('CLOSED')

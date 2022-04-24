@@ -65,6 +65,7 @@ class Vbo:
         self,
         verts: list[float],
         color: list[float],
+        normals: list[float],
         tex_coords: list[float],
         indices: list[int]
     ) -> None:
@@ -72,6 +73,7 @@ class Vbo:
         """
         vsize: int= len(verts) * utils.FLOAT_SIZE
         csize: int= len(color) * utils.FLOAT_SIZE
+        nsize: int= len(normals) * utils.FLOAT_SIZE
         tsize: int= len(tex_coords) * utils.FLOAT_SIZE
         isize: int= len(indices) * utils.UINT_SIZE
         components: int= 3
@@ -85,6 +87,7 @@ class Vbo:
         # vbos
         self.vbo_ids.clear()
         self.vbo_ids = [
+            GL.glGenBuffers(1),
             GL.glGenBuffers(1),
             GL.glGenBuffers(1),
             GL.glGenBuffers(1)
@@ -102,11 +105,17 @@ class Vbo:
         GL.glVertexAttribPointer(1, components, GL.GL_FLOAT, normal, 0, utils.C_VOID_POINTER)
         GL.glEnableVertexAttribArray(1)
 
-        # texture coords
+        # normals
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo_ids[2])
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, tsize, utils.c_arrayF(tex_coords), GL.GL_STATIC_DRAW)
-        GL.glVertexAttribPointer(2, components_texture, GL.GL_FLOAT, normal, 0, utils.C_VOID_POINTER)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, nsize, utils.c_arrayF(normals), GL.GL_STATIC_DRAW)
+        GL.glVertexAttribPointer(2, components, GL.GL_FLOAT, normal, 0, utils.C_VOID_POINTER)
         GL.glEnableVertexAttribArray(2)
+
+        # texture coords
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo_ids[3])
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, tsize, utils.c_arrayF(tex_coords), GL.GL_STATIC_DRAW)
+        GL.glVertexAttribPointer(3, components_texture, GL.GL_FLOAT, normal, 0, utils.C_VOID_POINTER)
+        GL.glEnableVertexAttribArray(3)
 
         # ibo
         self.ibo_id = GL.glGenBuffers(1)
