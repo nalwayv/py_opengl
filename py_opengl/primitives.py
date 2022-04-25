@@ -1,10 +1,14 @@
 """Primatives
 """
 from dataclasses import dataclass
+from pydoc import plain
 from py_opengl import maths
 from enum import Enum, auto
 
+
+
 # ---
+
 
 
 class ShapeID(Enum):
@@ -15,7 +19,9 @@ class ShapeID(Enum):
     RAY= auto()
 
 
+
 # --- LINE
+
 
 
 @dataclass(eq= False, repr= False, slots= True)
@@ -28,7 +34,9 @@ class Line:
         return self.start.distance_sqrt(self.end)
 
 
+
 # --- AABB
+
 
 
 @dataclass(eq= False, repr= False, slots= True)
@@ -148,7 +156,9 @@ class Aabb:
         return maths.absf(dis) <= len_sq
 
 
+
 # --- SPHERE
+
 
 
 @dataclass(eq= False, repr= False, slots= True)
@@ -199,7 +209,9 @@ class Sphere:
         return dis < r2
 
 
+
 # --- PLAIN
+
 
 
 class PlainError(Exception):
@@ -214,6 +226,10 @@ class Plain:
     normal: maths.Vec3= maths.Vec3(x=1.0)
     direction: float= 0.0
     shape_id: ShapeID= ShapeID.PLAIN
+
+    def __post_init__(self):
+        if not self.normal.is_unit():
+            self.normal.to_unit()
 
     @staticmethod
     def from_points(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plain':
@@ -333,7 +349,9 @@ class Plain:
         return maths.absf(dis) <= len_sq
 
 
+
 # --- RAY3D
+
 
 
 @dataclass(eq=False, repr=False, slots=True)
@@ -341,6 +359,10 @@ class Ray:
     origin: maths.Vec3= maths.Vec3()
     direction: maths.Vec3= maths.Vec3(z=1.0)
     shape_id: ShapeID= ShapeID.RAY
+
+    def __post_init__(self):
+        if not self.direction.is_unit():
+            self.direction.to_unit()
 
     @staticmethod
     def from_points(origin: maths.Vec3, target:maths.Vec3) -> 'Ray':
@@ -372,12 +394,7 @@ class Ray:
         ---
         Vec3
         """
-        dir: maths.Vec3= self.direction.copy()
-
-        if not dir.is_unit():
-            dir.to_unit()
-
-        return self.origin + (dir * t)
+        return self.origin + (self.direction * t)
     
     def cast_aabb(self, aabb: Aabb) -> tuple[bool, maths.Vec3]:
         amin: maths.Vec3= aabb.get_min()
@@ -385,16 +402,12 @@ class Ray:
         tmin: float= maths.MIN_FLOAT
         tmax: float= maths.MAX_FLOAT
 
-        dir: maths.Vec3= self.direction.copy()
-        if not dir.is_unit():
-            dir.to_unit()
-
         for idx in range(3):
-            if maths.is_zero(dir[idx]):
+            if maths.is_zero(self.direction[idx]):
                 if self.origin[idx] < amin[idx] or self.origin[idx] > amax[idx]:
                     return False, maths.Vec3.zero()
             else:
-                inv: float= 1.0 / dir[idx]
+                inv: float= 1.0 / self.direction[idx]
 
                 t1: float= (amin[idx] - self.origin[idx]) * inv
                 t2: float= (amax[idx] - self.origin[idx]) * inv
@@ -411,16 +424,11 @@ class Ray:
                 if tmin > tmax:
                     return False, maths.Vec3.zero()
     
-        return True, self.get_point(tmin)
+        return True, self.get_hit(tmin)
 
     def cast_sphere(self, sph: Sphere) -> tuple[bool, maths.Vec3]:
-        dir: maths.Vec3= self.direction.copy()
-
-        if not dir.is_unit():
-            dir.to_unit()
-
         a: maths.Vec3= sph.position - self.origin
-        b: float= a.dot(dir)
+        b: float= a.dot(self.direction)
         c: float= a.length_sqr() - maths.sqr(sph.radius)
 
         if c > 0.0 and b > 0.0:
@@ -434,4 +442,18 @@ class Ray:
         if t < 0.0:
             t= 0.0
 
-        return True, self.get_point(t)
+        return True, self.get_hit(t)
+
+    def cast_plain(self, pl: Plain) -> tuple[bool, maths.Vec3]:
+        nd: float= self.direction.dot(pl.normal)
+        pn: float= self.origin.dot(pl.normal)
+ 
+        if nd >= 0.0:
+            return False, maths.Vec3.zero()
+        
+        t: float= (pl.direction - pn) / nd
+        
+        if t >= 0.0:
+            return False, maths.Vec3.zero()
+
+        return True, self.get_hit(t)

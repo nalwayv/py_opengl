@@ -172,35 +172,35 @@ class Cube(IObject):
         ]
 
         normals_pts: list[maths.Pt3]=  [
-            maths.Pt3(1.0, 1.0, 1.0),
-            maths.Pt3(1.0, 1.0, 1.0),
-            maths.Pt3(1.0, 1.0, 1.0),
-            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(0.0, 0.0, 1.0),
+            maths.Pt3(0.0, 0.0, 1.0),
+            maths.Pt3(0.0, 0.0, 1.0),
+            maths.Pt3(0.0, 0.0, 1.0),
 
-            maths.Pt3(1.0, 1.0, 1.0),
-            maths.Pt3(1.0, 1.0, 1.0),
-            maths.Pt3(1.0, 1.0, 1.0),
-            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(0.0, 1.0, 0.0),
+            maths.Pt3(0.0, 1.0, 0.0),
+            maths.Pt3(0.0, 1.0, 0.0),
+            maths.Pt3(0.0, 1.0, 0.0),
 
-            maths.Pt3(1.0, 1.0, 1.0),
-            maths.Pt3(1.0, 1.0, 1.0),
-            maths.Pt3(1.0, 1.0, 1.0),
-            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(1.0, 0.0, 0.0),
+            maths.Pt3(1.0, 0.0, 0.0),
+            maths.Pt3(1.0, 0.0, 0.0),
+            maths.Pt3(1.0, 0.0, 0.0),
 
-            maths.Pt3(1.0, 1.0, 1.0),   
-            maths.Pt3(1.0, 1.0, 1.0),   
-            maths.Pt3(1.0, 1.0, 1.0),   
-            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(0.0, 0.0, 1.0),   
+            maths.Pt3(0.0, 0.0, 1.0),   
+            maths.Pt3(0.0, 0.0, 1.0),   
+            maths.Pt3(0.0, 0.0, 1.0),
 
-            maths.Pt3(1.0, 1.0, 1.0),   
-            maths.Pt3(1.0, 1.0, 1.0),   
-            maths.Pt3(1.0, 1.0, 1.0),   
-            maths.Pt3(1.0, 1.0, 1.0),
+            maths.Pt3(0.0, 1.0, 0.0),   
+            maths.Pt3(0.0, 1.0, 0.0),   
+            maths.Pt3(0.0, 1.0, 0.0),   
+            maths.Pt3(0.0, 1.0, 0.0),
 
-            maths.Pt3(1.0, 1.0, 1.0),   
-            maths.Pt3(1.0, 1.0, 1.0),   
-            maths.Pt3(1.0, 1.0, 1.0),   
-            maths.Pt3(1.0, 1.0, 1.0)
+            maths.Pt3(1.0, 0.0, 0.0),   
+            maths.Pt3(1.0, 0.0, 0.0),   
+            maths.Pt3(1.0, 0.0, 0.0),   
+            maths.Pt3(1.0, 0.0, 0.0)
         ]
 
         tex_coords_pts: list[maths.Pt2]=  [
@@ -251,7 +251,7 @@ class Cube(IObject):
         ]
 
         self.vbo_= vbo.Vbo(length=len(indices_pts) * 3)
-        self.shader_= shader.Shader()
+        self.shader_= shader.Shader() 
         self.texture_= texture.Texture()
         self.transform_= maths.Transform()
 
@@ -367,7 +367,6 @@ def main() -> None:
 
             shape.shader_.set_m4('mvp', m * v * p)
 
-            # keyboard
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
                 cam.move_by(camera.CameraDirection.IN, 1.4, time.delta)
 

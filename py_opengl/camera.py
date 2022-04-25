@@ -154,9 +154,14 @@ class Camera:
         self.front.y= maths.sin(self.pitch)
         self.front.z= maths.cos(self.pitch) * maths.sin(self.yaw)
 
-        self.front.to_unit()
+        if not self.front.is_unit():
+            self.front.to_unit()
+
         self.right= self.front.cross(maths.Vec3(y=1))
-        self.right.to_unit()
+        
+        if not self.right.is_unit():
+            self.right.to_unit()
+        
         self.up= self.right.cross(self.front)
 
     def projection_matrix(self) -> maths.Mat4:
@@ -167,8 +172,7 @@ class Camera:
         glm.Mat4
             camera perspective matrix
         """
-        # return glm.Mat4.ortho_projection(-1, 1, 1, -1, 1, 100)
-        return maths.Mat4.frustum_projection(self.fovy, self.aspect, self.znear, self.zfar)
+        return maths.Mat4.create_perspective(self.fovy, self.aspect, self.znear, self.zfar)
 
 
     def view_matrix(self) -> maths.Mat4:
@@ -179,4 +183,4 @@ class Camera:
         glm.Mat4
             cameras view matrix
         """
-        return maths.Mat4.look_at(self.position, self.position + self.front, self.up)
+        return maths.Mat4.create_look_at(self.position, self.position + self.front, self.up)

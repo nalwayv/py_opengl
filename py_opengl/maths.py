@@ -2612,14 +2612,16 @@ class Mat4:
         )
 
     @staticmethod
-    def look_at(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
+    def create_look_at(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
         """Create a mat4 matrix *look at* field of view
 
         Returns
         ---
         Mat4
         """
-        z: Vec3 = (eye - target).unit()
+        z: Vec3 = (eye - target)
+        if not z.is_unit():
+            z.to_unit()
 
         if z.is_zero():
             return Mat4.identity()
@@ -2639,8 +2641,8 @@ class Mat4:
         )
 
     @staticmethod
-    def frustum_projection(fov: float, aspect: float, near: float, far: float) -> 'Mat4':
-        """Create a mat4 matrix *frustum projection* field of view
+    def create_perspective(fov: float, aspect: float, near: float, far: float) -> 'Mat4':
+        """Create a mat4 matrix *perspective* field of view
 
         Returns
         ---
@@ -2648,47 +2650,51 @@ class Mat4:
 
         Raises
         ---
+
         Mat4Error
-            if fov is below zero or fov more then PI
-        Mat4Error
-            if znear or zfar are less or equil to zero or znear is more or equil to zfar
+            if values like aspect equil zero
         """
-        if fov <= 0.0 or fov > PI:
-            raise Mat4Error('m4 projection fov out of range')
+        inv_r: float= 1.0 / to_radians(fov * 0.5)
+        dz: float= far - near
+        s: float= sin(inv_r)
 
-        if near <= 0.0 or far <= 0.0 or near >= far:
-            raise Mat4Error('m4 projection aspect out of range')
+        if is_zero(dz) or is_zero(s) or is_zero(aspect):
+            raise Mat4Error("m4 projection values were zero")
 
-        y: float= 1.0 / tan(fov * 0.5)
-        x: float= y / aspect
-        r: float= far / (far - near)
-        n: float= near * r
+        c: float= cos(inv_r) / s
 
-        return Mat4(ax= x, by= y, cz= r, cw= -1.0, dz= n)
+        return Mat4(
+            ax= c/aspect,
+            by= c,
+            cz= -(far+near) / dz,
+            cw= -1.0,
+            dz= -2.0 * near * far / dz,
+            dw= 0.0
+        )
 
     @staticmethod
-    def ortho_projection(left: float, right: float, top: float, bottom: float, near: float, far: float) -> 'Mat4':
-        """Create a mat4 matrix *ortho_projection* field of view
+    def create_ortho(left: float, right: float, top: float, bottom: float, near: float, far: float) -> 'Mat4':
+        """Create a mat4 matrix *ortho* field of view
 
         Returns
         ---
         Mat4
         """
-        rl_inv: float= 1.0 / (right - left)
-        tb_inv: float= 1.0 / (top - bottom)
-        fn_inv: float= 1.0 / (far - near)
+        inv_rl: float= 1.0 / (right - left)
+        inv_tb: float= 1.0 / (top - bottom)
+        inv_fn: float= 1.0 / (far - near)
 
         rl: float= right + left
         tb: float= top + bottom
         fn: float= far + near
 
         return Mat4(
-            ax= 2.0 * rl_inv,
-            by= 2.0 * tb_inv,
-            cz= -2.0 * fn_inv,
-            dx= -rl * rl_inv,
-            dy= -tb * tb_inv,
-            dz= -fn * fn_inv,
+            ax= 2.0 * inv_rl,
+            by= 2.0 * inv_tb,
+            cz= -2.0 * inv_fn,
+            dx= -rl * inv_rl,
+            dy= -tb * inv_tb,
+            dz= -fn * inv_fn,
             dw= 1.0
         )
 
