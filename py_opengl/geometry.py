@@ -1,4 +1,4 @@
-"""Primatives
+"""Geometry
 """
 from dataclasses import dataclass
 from pydoc import plain
@@ -9,7 +9,7 @@ from enum import Enum, auto
 # ---
 
 
-class ShapeID(Enum):
+class GeometryID(Enum):
     LINE= auto()
     AABB= auto()
     SPHERE= auto()
@@ -24,7 +24,7 @@ class ShapeID(Enum):
 class Line:
     start: maths.Vec3= maths.Vec3()
     end: maths.Vec3= maths.Vec3()
-    shape_id: ShapeID= ShapeID.LINE
+    id: GeometryID= GeometryID.LINE
 
     def length(self) -> float:
         return self.start.distance_sqrt(self.end)
@@ -33,42 +33,42 @@ class Line:
 # --- AABB
 
 @dataclass(eq= False, repr= True, slots= True)
-class Aabb:
+class AABB:
     """AABB using center and size extent
     
 
-    Aabb(center= Vec2(2.5, 2.5), half_size= Vec2(2.5, 2.5))
+    Aabb(center= Vec3(0, 0, 0), size= Vec3(2.5, 2.5, 2.5))
 
-    get_min == Vec2(0, 0)\n
-    get_max == Vec2(5, 5)
+    get_min == Vec3(-2.5, -2.5, -2.5)\n
+    get_max == Vec3(2.5, 2.5, 2.5)
     
     """
     center: maths.Vec3= maths.Vec3()
     size: maths.Vec3= maths.Vec3()
 
-    shape_id: ShapeID= ShapeID.AABB
+    id: GeometryID= GeometryID.AABB
 
     @staticmethod
-    def from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'Aabb':
-        return Aabb(
+    def from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'AABB':
+        return AABB(
             center= (min_pt + max_pt) * 0.5,
             size= ((min_pt - max_pt) * 0.5).abs()
         )
 
-    def union(self, other: 'Aabb') -> 'Aabb':
-        return Aabb.from_min_max(
+    def union(self, other: 'AABB') -> 'AABB':
+        return AABB.from_min_max(
             maths.Vec3.from_min(self.get_min(), other.get_min()),
             maths.Vec3.from_max(self.get_max(), other.get_max())
         )
 
-    def expand(self, by: float) -> 'Aabb':
+    def expand(self, by: float) -> 'AABB':
         if by < 0.0:
             by = maths.absf(by)
 
         p0: maths.Vec3= self.get_min() - maths.Vec3(by,by,by)
         p1: maths.Vec3= self.get_max() + maths.Vec3(by,by,by)
 
-        return Aabb.from_min_max(p0, p1)
+        return AABB.from_min_max(p0, p1)
 
     def get_size_x(self) -> float:
         p0= self.get_min()
@@ -85,14 +85,14 @@ class Aabb:
         p1= self.get_max()
         return p1.z - p0.z
 
-    def copy(self) -> 'Aabb':
+    def copy(self) -> 'AABB':
         """Return a copy of self
 
         Returns
         ---
         Abbb
         """
-        return Aabb(
+        return AABB(
             center= self.center.copy(),
             size= self.size.copy()
         )
@@ -133,7 +133,7 @@ class Aabb:
 
         return maths.Vec3.from_max(p0, p1)
 
-    def intersect_aabb(self, other: 'Aabb') -> bool:
+    def intersect_aabb(self, other: 'AABB') -> bool:
         amin: maths.Vec3= self.get_min()
         amax: maths.Vec3= self.get_max()
 
@@ -187,7 +187,7 @@ class Aabb:
 class Sphere:
     position: maths.Vec3= maths.Vec3()
     radius: float= 1.0
-    shape_id: ShapeID= ShapeID.SPHERE
+    id: GeometryID= GeometryID.SPHERE
 
     def area(self) -> float:
         """Return area
@@ -225,7 +225,7 @@ class Sphere:
 
         return dis < r2
 
-    def intersect_aabb(self, aabb: 'Aabb') -> bool:
+    def intersect_aabb(self, aabb: 'AABB') -> bool:
         close_pt: maths.Vec3 = aabb.closest_pt(self.position)
         dis: float= (self.position - close_pt).length_sqr()
         r2: float= maths.sqr(self.radius)
@@ -256,7 +256,7 @@ class PlainError(Exception):
 class Plain:
     normal: maths.Vec3= maths.Vec3(x=1.0)
     direction: float= 0.0
-    shape_id: ShapeID= ShapeID.PLAIN
+    id: GeometryID= GeometryID.PLAIN
 
     def __post_init__(self):
         if not self.normal.is_unit():
@@ -367,7 +367,7 @@ class Plain:
 
         return len_sq < maths.sqr(sph.radius)
 
-    def intersect_aabb(self, aabb: 'Aabb') -> bool:
+    def intersect_aabb(self, aabb: 'AABB') -> bool:
         len_sq: float = (
             aabb.size.x * maths.absf(self.normal.x) +
             aabb.size.y * maths.absf(self.normal.y) +
@@ -389,7 +389,7 @@ class Plain:
 class Ray:
     origin: maths.Vec3= maths.Vec3()
     direction: maths.Vec3= maths.Vec3(z=1.0)
-    shape_id: ShapeID= ShapeID.RAY
+    id: GeometryID= GeometryID.RAY
 
     def __post_init__(self):
         if not self.direction.is_unit():
@@ -437,7 +437,7 @@ class Ray:
         """
         return self.origin + (self.direction * t)
     
-    def cast_aabb(self, aabb: Aabb) -> tuple[bool, maths.Vec3]:
+    def cast_aabb(self, aabb: AABB) -> tuple[bool, maths.Vec3]:
         amin: maths.Vec3= aabb.get_min()
         amax: maths.Vec3= aabb.get_max()
         tmin: float= maths.MIN_FLOAT
