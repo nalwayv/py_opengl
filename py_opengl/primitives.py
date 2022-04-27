@@ -6,9 +6,7 @@ from py_opengl import maths
 from enum import Enum, auto
 
 
-
 # ---
-
 
 
 class ShapeID(Enum):
@@ -19,9 +17,7 @@ class ShapeID(Enum):
     RAY= auto()
 
 
-
 # --- LINE
-
 
 
 @dataclass(eq= False, repr= False, slots= True)
@@ -34,37 +30,60 @@ class Line:
         return self.start.distance_sqrt(self.end)
 
 
-
 # --- AABB
 
-
-
-@dataclass(eq= False, repr= False, slots= True)
+@dataclass(eq= False, repr= True, slots= True)
 class Aabb:
+    """AABB using center and size extent
+    
+
+    Aabb(center= Vec2(2.5, 2.5), half_size= Vec2(2.5, 2.5))
+
+    get_min == Vec2(0, 0)\n
+    get_max == Vec2(5, 5)
+    
+    """
     center: maths.Vec3= maths.Vec3()
-    half_extents: maths.Vec3= maths.Vec3()
+    size: maths.Vec3= maths.Vec3()
+
     shape_id: ShapeID= ShapeID.AABB
 
     @staticmethod
     def from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'Aabb':
         return Aabb(
             center= (min_pt + max_pt) * 0.5,
-            half_extents= (max_pt - min_pt) * 0.5
+            size= ((min_pt - max_pt) * 0.5).abs()
         )
 
-    @staticmethod
-    def merge(a: 'Aabb', b: 'Aabb') -> 'Aabb':
-        v0: maths.Vec3= maths.Vec3.from_max(
-            a.center + a.half_extents,
-            b.center + b.half_extents
+    def union(self, other: 'Aabb') -> 'Aabb':
+        return Aabb.from_min_max(
+            maths.Vec3.from_min(self.get_min(), other.get_min()),
+            maths.Vec3.from_max(self.get_max(), other.get_max())
         )
 
-        v1: maths.Vec3= maths.Vec3.from_min(
-            a.center - a.half_extents,
-            b.center - b.half_extents
-        )
+    def expand(self, by: float) -> 'Aabb':
+        if by < 0.0:
+            by = maths.absf(by)
 
-        return Aabb.from_min_max(v0, v1)
+        p0: maths.Vec3= self.get_min() - maths.Vec3(by,by,by)
+        p1: maths.Vec3= self.get_max() + maths.Vec3(by,by,by)
+
+        return Aabb.from_min_max(p0, p1)
+
+    def get_size_x(self) -> float:
+        p0= self.get_min()
+        p1= self.get_max()
+        return p1.x - p0.x
+
+    def get_size_y(self) -> float:
+        p0= self.get_min()
+        p1= self.get_max()
+        return p1.y - p0.y
+
+    def get_size_z(self) -> float:
+        p0= self.get_min()
+        p1= self.get_max()
+        return p1.z - p0.z
 
     def copy(self) -> 'Aabb':
         """Return a copy of self
@@ -75,41 +94,44 @@ class Aabb:
         """
         return Aabb(
             center= self.center.copy(),
-            half_extents= self.half_extents.copy()
+            size= self.size.copy()
         )
 
+    def perimeter(self) -> float:
+        p0: maths.Vec3= self.get_min()
+        p1: maths.Vec3= self.get_max()
+        
+        x: float= p1.x - p0.x
+        y: float= p1.y - p0.y
+        z: float= p1.z - p0.z
+
+        # cuboid 4(l * b * h)
+        return 4.0 * (x + y + z)
+
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
-        pt_min: maths.Vec3= self.get_min()
-        pt_max: maths.Vec3= self.get_max()
+        p0: maths.Vec3= self.get_min()
+        p1: maths.Vec3= self.get_max()
         pts: list[float]= [0.0, 0.0, 0.0]
 
         for i in range(3):
             val: float= pt[i]
-            val= maths.minf(val, pt_min[i])
-            val= maths.maxf(val, pt_max[i])
+            val= maths.minf(val, p0[i])
+            val= maths.maxf(val, p1[i])
             pts[i]= val
 
         return maths.Vec3(pts[0], pts[1], pts[2])        
 
     def get_min(self) -> maths.Vec3:
-        pt1: maths.Vec3= self.center + self.half_extents
-        pt2: maths.Vec3= self.center - self.half_extents
-        
-        x: float= maths.minf(pt1.x, pt2.x)
-        y: float= maths.minf(pt1.y, pt2.y)
-        z: float= maths.minf(pt1.z, pt2.z)
+        p0: maths.Vec3= self.center + self.size
+        p1: maths.Vec3= self.center - self.size
 
-        return maths.Vec3(x, y, z)
+        return maths.Vec3.from_min(p0, p1)
 
     def get_max(self) -> maths.Vec3:
-        pt1: maths.Vec3= self.center + self.half_extents
-        pt2: maths.Vec3= self.center - self.half_extents
-        
-        x: float= maths.maxf(pt1.x, pt2.x)
-        y: float= maths.maxf(pt1.y, pt2.y)
-        z: float= maths.maxf(pt1.z, pt2.z)
+        p0: maths.Vec3= self.center + self.size
+        p1: maths.Vec3= self.center - self.size
 
-        return maths.Vec3(x, y, z)
+        return maths.Vec3.from_max(p0, p1)
 
     def intersect_aabb(self, other: 'Aabb') -> bool:
         amin: maths.Vec3= self.get_min()
@@ -145,9 +167,9 @@ class Aabb:
 
     def intersect_plain(self, plain: 'Plain') -> bool:
         len_sq: float = (
-            self.half_extents.x * maths.absf(plain.normal.x) +
-            self.half_extents.y * maths.absf(plain.normal.y) +
-            self.half_extents.z * maths.absf(plain.normal.z)
+            self.size.x * maths.absf(plain.normal.x) +
+            self.size.y * maths.absf(plain.normal.y) +
+            self.size.z * maths.absf(plain.normal.z)
         )
 
         dot: float= plain.normal.dot(self.center)
@@ -166,6 +188,15 @@ class Sphere:
     position: maths.Vec3= maths.Vec3()
     radius: float= 1.0
     shape_id: ShapeID= ShapeID.SPHERE
+
+    def area(self) -> float:
+        """Return area
+
+        Returns
+        ---
+        float
+        """
+        return maths.PI * maths.sqr(self.radius)
 
     def copy(self) -> 'Sphere':
         """Return a copy of self
@@ -338,9 +369,9 @@ class Plain:
 
     def intersect_aabb(self, aabb: 'Aabb') -> bool:
         len_sq: float = (
-            aabb.half_extents.x * maths.absf(self.normal.x) +
-            aabb.half_extents.y * maths.absf(self.normal.y) +
-            aabb.half_extents.z * maths.absf(self.normal.z)
+            aabb.size.x * maths.absf(self.normal.x) +
+            aabb.size.y * maths.absf(self.normal.y) +
+            aabb.size.z * maths.absf(self.normal.z)
         )
 
         dot: float= self.normal.dot(aabb.center)
@@ -376,6 +407,16 @@ class Ray:
             origin= o,
             direction= d
         )
+
+    def set_direction(self, unit_dir: maths.Vec3) -> None:
+        if unit_dir.is_zero():
+            return
+
+        if not unit_dir.is_unit():
+            unit_dir.to_unit()
+
+        self.direction.x = unit_dir.x
+        self.direction.y = unit_dir.y
 
     def copy(self) -> 'Ray':
         return Ray(

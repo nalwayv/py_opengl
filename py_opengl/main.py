@@ -270,9 +270,7 @@ class Cube(IObject):
         self.vbo_.clean()
 
 
-
 # --- CALLBACKS
-
 
 
 def cb_window_resize(window, width, height):
@@ -289,9 +287,7 @@ def cb_window_resize(window, width, height):
     GL.glViewport(0, 0, width, height)
 
 
-
 # --- MAIN
-
 
 
 def main() -> None:
@@ -349,18 +345,15 @@ def main() -> None:
             # shape
             shape.draw()
 
-            shape.transform_.angle= float(time.ticks)
-            shape.transform_.axis= maths.Vec3(
-                x= 0.5,
-                y= 1.0
-            )
-
-            shape.transform_.position= maths.Vec3(
-                x= maths.sin(ang) * offset,
-                y= maths.cos(ang) * offset
+            shape.transform_.set_rotation(float(time.ticks), maths.Vec3(x= 0.5, y= 1.0))
+            shape.transform_.set_translation(
+                maths.Vec3(
+                    x= maths.sin(ang) * offset,
+                    y= maths.cos(ang) * offset
+                )
             )
             ang += (speed * time.delta)
-
+   
             m: maths.Mat4= shape.transform_.get_matrix()
             v: maths.Mat4= cam.view_matrix()
             p: maths.Mat4= cam.projection_matrix()

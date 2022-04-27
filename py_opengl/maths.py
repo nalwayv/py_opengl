@@ -4,6 +4,8 @@ import math
 from dataclasses import dataclass
 from typing import Final
 
+from py_opengl import utils
+
 
 
 # --- CONSTANTS
@@ -1001,7 +1003,7 @@ class Vec3Error(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq= False, repr= False, slots= True)
+@dataclass(eq= False, repr= True, slots= True)
 class Vec3:
     x: float= 0.0
     y: float= 0.0
@@ -1084,6 +1086,15 @@ class Vec3:
 
         return Vec3(x, y, z)
 
+    def abs(self) -> 'Vec3':
+        """Return a copy of self with positive values
+        
+        Returns
+        ---
+        Vec3
+        """
+        return Vec3(absf(self.x), absf(self.y), absf(self.z))
+        
     def to_list(self) -> list[float]:
         """Return list[float] of *xyz* components"""
         return [self.x, self.y, self.z]
@@ -2512,13 +2523,13 @@ class Mat4:
         """Create a rotated matrix
 
         Parameters
-        ----------
+        ---
         angle_deg : float
 
         axis : Vec3
 
         Returns
-        -------
+        ---
         Mat4
             rotated mat4
         """
@@ -3310,38 +3321,33 @@ class Quaternion:
         )
 
     @staticmethod
-    def from_axis(angle_deg: float, axis: Vec3) -> 'Quaternion':
+    def from_axis(angle_deg: float, unit_axis: Vec3) -> 'Quaternion':
         """Create a quaternion from an angle and axis of rotation
 
         Parameters
         ---
         angle_deg : float
-            angle in degrees
 
-        axis : Vec3
-            axis of rotation
+        unit_axis : Vec3
 
         Returns
         ---
         Quaternion
 
         """
-        cpy: Vec3 = axis.copy()
-
-        if not cpy.is_unit():
-            cpy.to_unit()
+        if not unit_axis.is_unit():
+            unit_axis.to_unit()
 
         angle_rad: float= to_radians(angle_deg * 0.5)
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
 
         return Quaternion(
-            x= cpy.x * s,
-            y= cpy.y * s,
-            z= cpy.z * s,
+            x= unit_axis.x * s,
+            y= unit_axis.y * s,
+            z= unit_axis.z * s,
             w= c
         )
-
 
     @staticmethod
     def rotate_to(start: Vec3, to: Vec3) -> 'Quaternion':
@@ -3721,8 +3727,28 @@ class Quaternion:
 class Transform:
     position: Vec3= Vec3()
     scale: Vec3= Vec3(1.0, 1.0, 1.0)
-    angle: float= 0.0
-    axis: Vec3= Vec3(1.0, 1.0, 1.0)
+    angle_deg: float= 0.0
+    unit_axis: Vec3= Vec3(1.0, 1.0, 1.0)
+
+    def set_translation(self, v3: Vec3) -> None:
+        self.position.x= v3.x
+        self.position.y= v3.y
+        self.position.z= v3.z
+
+    def set_rotation(self, angle_deg: float, unit_axis: Vec3) -> None:
+        self.angle_deg= angle_deg
+
+        if not unit_axis.is_unit():
+            unit_axis.to_unit()
+
+        self.unit_axis.x= unit_axis.x
+        self.unit_axis.y= unit_axis.y
+        self.unit_axis.z= unit_axis.z
+
+    def set_scale(self, scale: Vec3) -> None:
+        self.scale.x= scale.x
+        self.scale.y= scale.y
+        self.scale.z= scale.z
 
     def get_matrix(self) -> Mat4:
         """Return transform matrix
@@ -3736,7 +3762,7 @@ class Transform:
 
         return (
             Mat4.create_translation(self.position) *
-            Mat4.from_axis(self.angle, self.axis) *
+            Mat4.from_axis(self.angle_deg, self.unit_axis) *
             Mat4.create_scaler(self.scale)
         )
     
