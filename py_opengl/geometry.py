@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 # from typing import Final, Optional
 from enum import Enum, auto
+from pydoc import plain
 # from abc import ABC, abstractmethod
 
 from py_opengl import maths
@@ -326,17 +327,27 @@ class Plain:
             self.normal.to_unit()
 
     @staticmethod
-    def from_points(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plain':
+    def create_from_normal_and_point(unit_v3: maths.Vec3, pt: maths.Vec3):
+        if not unit_v3.is_unit():
+            unit_v3.to_unit()
+            
+        n: maths.Vec3= unit_v3.copy()
+        d: float= n.dot(pt)
+
+        return Plain(normal=n, direction=d)
+
+    @staticmethod
+    def create_from_points(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plain':
         v0: maths.Vec3= b - a
         v1: maths.Vec3= c - a
         
-        normal: maths.Vec3= v0.cross(v1)
-        if not normal.is_unit():
-            normal.to_unit()
+        n: maths.Vec3= v0.cross(v1)
+        if not n.is_unit():
+            n.to_unit()
 
-        direction: float= normal.dot(a)
+        d: float= n.dot(a)
         
-        return Plain(normal, direction)
+        return Plain(normal= n, direction= d)
 
     def copy(self) -> 'Plain':
         """Return a copy of self
@@ -358,14 +369,6 @@ class Plain:
 
         return x + y + z + w
 
-    def dot_coord(self, v3: maths.Vec3) -> float:
-        x: float= self.normal.x * v3.x
-        y: float= self.normal.y * v3.y
-        z: float= self.normal.z * v3.z
-        w: float= self.direction
-
-        return x + y + z + w
-
     def dot_normal(self, v3: maths.Vec3) -> float:
         x: float= self.normal.x * v3.x
         y: float= self.normal.y * v3.y
@@ -376,6 +379,10 @@ class Plain:
     def closest_point(self, point: maths.Vec3) -> maths.Vec3:
         scale: float= (self.normal.dot(point) - self.direction) / self.normal.length_sqr()
         return point - (self.normal * scale)
+
+    def project_point_onto_plain(self, pt: maths.Vec3) -> maths.Vec3:
+        scale: float= pt.dot(self.normal) - self.direction
+        return pt - (self.normal * scale)
 
     def unit(self) -> 'Plain':
         """Return a copy of self that has been normalized
@@ -443,9 +450,7 @@ class Plain:
         return maths.absf(dis) <= len_sq
 
 
-
 # --- RAY3D
-
 
 
 @dataclass(eq=False, repr=False, slots=True)

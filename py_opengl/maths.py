@@ -21,232 +21,91 @@ NEGATIVE_INFINITY: Final[float]= -math.inf
 
 # --- FUNCTIONS
 
+def tan(val: float) -> float:
+    return math.tan(val)
+
+
+def sin(val: float) -> float:
+    return math.sin(val)
+
+
+def cos(val: float) -> float:
+    return math.cos(val)
+
+
+def arccos(val: float) -> float:
+    return math.acos(val)
+
+
+def arcsin(val: float) -> float:
+    return math.asin(val)
+
+
+def arctan2(y: float, x: float) -> float:
+    return math.atan2(y, x)
+
 
 def absf(x: float) -> float:
-    """Return the absolute of value x
-
-    Parameters
-    ---
-    x : float
-
-    Returns
-    ---
-    float
-    """
     return float(abs(x))
 
 
 def absi(x: int) -> int:
-    """Return the absolute of value x
-
-    Parameters
-    ---
-    x : int
-
-    Returns
-    ---
-    int
-    """
     return int(abs(x))
 
 
 def is_zero(val: float) -> bool:
-    """Check if values is zero
-
-    Parameters
-    ---
-    val : float
-
-    Returns
-    ---
-    bool
-        is zero or not
-    """
     return absf(val) <= EPSILON
 
 
 def is_one(val: float) -> bool:
-    """Check if value is one
-
-    Parameters
-    ---
-    val : float
-
-    Returns
-    ---
-    bool
-    """
     return is_zero(val - 1.0)
 
 
 def is_equil(x: float, y: float) -> bool:
-    """Check if two float values equil
-
-    Parameters
-    ---
-    x : float
-
-    y : float
-
-    Returns
-    ---
-    bool
-    """
     return absf(x - y) <= EPSILON
 
 
 def is_infinite(val: float) -> bool:
-    """Check if value if infinite
-
-    Returns
-    ---
-    bool
-    """
     return math.isinf(val)
 
 
 def to_radians(degrees: float) -> float:
-    """Convert degreese to radians
-
-    Parameters
-    ---
-    degrees : float
-
-    Returns
-    ---
-    float
-    """
     return degrees * 0.01745329251994329577
 
 
 def to_degreese(radians: float) -> float:
-    """Convert radians to degrees
-
-    Parameters
-    ---
-    radians : float
-
-    Returns
-    ---
-    float
-    """
     return radians * 57.2957795130823208768
 
 
 def sqr(val: float) -> float:
-    """Return the value squared
-
-    Parameters
-    ---
-    val : float
-
-    Returns
-    ---
-    float
-    """     
     return val * val
 
 
 def sqrt(val: float) -> float:
-    """Return the sqrt
-
-    Parameters
-    ---
-    val : float
-
-    Returns
-    ---
-    float
-    """
     return math.sqrt(val)
 
 
 def inv_sqrt(val: float) -> float:
-    """Return the inverse sqrt
-
-    Parameters
-    ---
-    val : float
-
-    Returns
-    ---
-    float
-    """
     return 1.0 / sqrt(val)
 
 
 def maxf(x: float, y: float) -> float:
-    """Return max float between x and y
-
-    Parameters
-    ---
-    x : float
-        
-    y : float
-
-    Returns
-    ---
-    float
-    """
     return x if x > y else y
 
 
 def maxi(x: int, y: int) -> int:
-    """Return max int between x and y
-
-    Parameters
-    ---
-    x : int
-        
-    y : int
-        
-    Returns
-    ---
-    int
-    """
     return x if x > y else y
 
 
 def minf(x: float, y: float) -> float:
-    """Return min float between x and y
-
-    Parameters
-    ---
-    x : float
-        
-    y : float
-        
-    Returns
-    ---
-    float
-    """
     return x if x < y else y
 
 
 def mini(x: int, y: int) -> int:
-    """Return min int between x and y
-
-    Parameters
-    ---
-    x : int
-        
-    y : int
-        
-
-    Returns
-    ---
-    int
-    """
     return x if x < y else y
 
 
 def clampf(val: float, low: float, high: float) -> float:
-    """Clamp float value between low and high
-
-    Returns
-    ---
-    float
-    """
     if val <= low:
         return low
 
@@ -257,12 +116,6 @@ def clampf(val: float, low: float, high: float) -> float:
 
 
 def clampi(val: int, low: int, high: int) -> int:
-    """Clamp int value between low and high
-
-    Returns
-    ---
-    int
-    """
     if val <= low:
         return low
 
@@ -273,40 +126,10 @@ def clampi(val: int, low: int, high: int) -> int:
 
 
 def lerp(start: float, to: float, weight: float) -> float:
-    """Return amount of *linear interpolation* between start and yo based on weight
-
-    Parameters
-    ---
-    start : float
-
-    to : float
-        
-    weight : float
-
-    Returns
-    ---
-    float
-    """
     return start + weight * (to - start)
 
 
 def cubic_lerp(start: float, start_tan: float, to: float, to_tan: float, weight) -> float:
-    """Return cubic lerp
-
-    Parameters
-    ---
-    start : float
-
-    start_tan : float
-
-    to : float
-
-    to_tan : float
-
-    Returns
-    ---
-    float
-    """
     a: float= start
     b: float= start_tan
     c: float= to
@@ -321,119 +144,7 @@ def cubic_lerp(start: float, start_tan: float, to: float, to_tan: float, weight)
 
 
 def normalize(val: float, low: float, high: float) -> float:
-    """Normalize value between low and high
-
-    Parameters
-    ---
-    val : float
-
-    low : float
-
-    high : float
-
-    Returns
-    ---
-    float
-    """
     return (val - low) / (high - low)
-
-
-def tan(val: float) -> float:
-    """Return *trigonometry tan* value
-
-    Parameters
-    ---
-    val : float
-
-    Returns
-    ---
-    float
-    """
-    return math.tan(val)
-
-
-def sin(val: float) -> float:
-    """Return *trigonometry sin* value
-
-    Parameters
-    ---
-    val : float
-
-    Returns
-    ---
-    float
-    """
-    return math.sin(val)
-
-
-def cos(val: float) -> float:
-    """Return *trigonometry cos* value
-
-    Parameters
-    ---
-    val : float
-
-    Returns
-    ---
-    float
-    """
-    return math.cos(val)
-
-
-def arccos(val: float) -> float:
-    """Return the arc cosine value
-
-    value has to be between -1 and 1 else will raise an error
-    
-    the value in radians between 0 and PI\n
-    -1 = PI\n
-    1 = 0
-
-    Parameters
-    ---
-    val : float
-
-    Returns
-    ---
-    float
-    """
-    return math.acos(val)
-
-
-def arcsin(val: float) -> float:
-    """Return the arc aign value
-
-    value has to be between -1 and 1 else will raise an error
-
-    the value in radians between 0 and PI\n
-    -1 = -PI/2\n
-    1 = PI/2
-
-    Parameters
-    ---
-    val : float
-
-    Returns
-    ---
-    float
-    """
-    return math.asin(val)
-
-
-def arctan2(y: float, x: float) -> float:
-    """Return the arc tangent of value y / x
-
-    Parameters
-    ---
-    y : float
-        
-    x : float
-
-    Returns
-    ---
-    float
-    """
-    return math.atan2(y, x)
 
 
 def stepify(val: float, steps: float) -> float:
@@ -557,6 +268,13 @@ def hetmit(value_a: float, tangent_a: float, value_b: float, tangent_b: float, a
         tangent_a * amount + value_a
     )
 
+
+def tri_area_signed(
+    ax: float, ay: float,
+    bx: float, by: float,
+    cx: float, cy: float
+) -> float:
+    return (ax - cx) * (by - cy) - (ay - cy) * (bx - cx)
 
 
 # --- POINTS
@@ -1201,6 +919,17 @@ class Vec3:
             (self.x * other.y) - (self.y * other.x)
         )
 
+    def triple_cross(self, a: 'Vec3', b: 'Vec3') -> 'Vec3':
+        """Return triple crosss
+        
+        Returns
+        ---
+        Vec3
+        """
+        cross0: Vec3= self.cross(a)
+        cross1: Vec3= cross0.cross(b)
+        return cross1
+
     def project(self, other: 'Vec3') -> 'Vec3':
         """Return the projection between self and other vec3
 
@@ -1218,6 +947,11 @@ class Vec3:
         Vec3
         """
         return self - self.project(other)
+
+    def barycentric(self, b: 'Vec3', c: 'Vec3', u: float, v: float) -> 'Vec3':
+        a: Vec3= self.copy()
+        result: Vec3= a + (b - a) * u + (c - a) * v
+        return result
 
     def rotate_by(self, angle_deg: float, axis: 'Vec3') -> 'Vec3':
         """Rotate by angle along unit axis
@@ -1592,6 +1326,12 @@ class Vec4:
 
         return self * inv_sqrt(lsq)
 
+    def barycentric(self, b: 'Vec4', c: 'Vec4', u: float, v: float) -> 'Vec4':
+        a: Vec4= self.copy()
+        result: Vec4= a + (b - a) * u + (c - a) * v
+
+        return result
+
     def sum_total(self) -> float:
         """Return sum total of all values
 
@@ -1799,7 +1539,7 @@ class Mat3:
         )
 
     @staticmethod
-    def create_axis(angle_deg: float, unit_axis: Vec3) -> 'Mat3':
+    def create_from_axis(angle_deg: float, unit_axis: Vec3) -> 'Mat3':
         """Create a rotated matrix
 
         Parameters
@@ -2542,7 +2282,7 @@ class Mat4:
         )
   
     @staticmethod
-    def create_axis(angle_deg: float, unit_axis: Vec3) -> 'Mat4':
+    def create_from_axis(angle_deg: float, unit_axis: Vec3) -> 'Mat4':
         """Create a rotated matrix
 
         Parameters
@@ -3239,7 +2979,7 @@ class QuatError(Exception):
 
 
 
-@dataclass(eq=False, repr=False, slots=True)
+@dataclass(eq= False, repr= True, slots= True)
 class Quaternion:
     x: float= 0.0
     y: float= 0.0
@@ -3313,7 +3053,7 @@ class Quaternion:
         return Quaternion(v4.x, v4.y, v4.z, v4.w)
     
     @staticmethod
-    def from_euler(x: float, y: float, z: float) -> 'Quaternion':
+    def create_from_euler(v3: Vec3) -> 'Quaternion':
         """Create from euler angles
 
         Parameters
@@ -3328,12 +3068,14 @@ class Quaternion:
         ---
         Quaternion
         """
-        sx: float= sin(to_radians(x) * 0.5)
-        cx: float= cos(to_radians(x) * 0.5)
-        sy: float= sin(to_radians(y) * 0.5)
-        cy: float= cos(to_radians(y) * 0.5)
-        sz: float= sin(to_radians(z) * 0.5)
-        cz: float= cos(to_radians(z) * 0.5)
+        v0: Vec3= v3 * 0.5
+
+        sx: float= sin(to_radians(v0.x))
+        cx: float= cos(to_radians(v0.x))
+        sy: float= sin(to_radians(v0.y))
+        cy: float= cos(to_radians(v0.y))
+        sz: float= sin(to_radians(v0.z))
+        cz: float= cos(to_radians(v0.z))
 
         return Quaternion(
             (sx * cy * cz) + (cx * sy * sz),
@@ -3343,7 +3085,7 @@ class Quaternion:
         )
 
     @staticmethod
-    def create_axis(angle_deg: float, unit_axis: Vec3) -> 'Quaternion':
+    def create_from_axis(angle_deg: float, unit_axis: Vec3) -> 'Quaternion':
         """Create a quaternion from an angle and axis of rotation
 
         Parameters
@@ -3372,7 +3114,7 @@ class Quaternion:
         )
 
     @staticmethod
-    def rotate_to(start: Vec3, to: Vec3) -> 'Quaternion':
+    def create_rotate_to(start: Vec3, to: Vec3) -> 'Quaternion':
         """Return rotation between two vec3's
         """
         dot: float= start.dot(to)
@@ -3384,7 +3126,7 @@ class Quaternion:
                 v3= Vec3.unit_y().cross(start)
         
             v3.to_unit()
-            return Quaternion.create_axis(to_degreese(PI), v3)
+            return Quaternion.create_from_axis(to_degreese(PI), v3)
 
         if dot > absf(-1.0 + EPSILON):
             return Quaternion(w=1.0)
@@ -3475,6 +3217,8 @@ class Quaternion:
         return Quaternion(self.x, self.y, self.z, self.z)
 
     def copy_from(self, other: 'Quaternion') -> None:
+        """Set values based on other quaternions values
+        """
         self.w = other.w
         self.x = other.x
         self.y = other.y

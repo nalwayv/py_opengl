@@ -65,7 +65,6 @@ class Camera:
         Raises
         ---
         CameraError
-            not a valid move direction
         """
         match dir:
             case CameraDirection.UP:
@@ -86,7 +85,7 @@ class Camera:
             case CameraDirection.IN:
                 self.position += self.front * (sensativity * dt)
 
-            case _: raise CameraError('unknown camera direction')
+        self._update()
     
     def rotate_by(self, dir: CameraRotation, value: float, sensativity: float) -> None:
         """Rotate camera by value
@@ -94,7 +93,7 @@ class Camera:
         Parameters
         ---
         dir : CameraRot
-            rotate direction
+
         value : float
 
         sensativity : float
@@ -102,7 +101,6 @@ class Camera:
         Raises
         ---
         CameraError
-            not a valid rotate direction
         """
         match dir:
             case CameraRotation.YAW:
@@ -114,7 +112,7 @@ class Camera:
             case CameraRotation.ROLL:
                 return
 
-            case _: raise CameraError('unknown camera rotation')
+        self._update()
 
     def zoom_by(self, dir: CameraZoom, value: float, sensativity: float) -> None:
         """Zoom camera by value
@@ -130,7 +128,6 @@ class Camera:
         Raises
         ---
         CameraError
-            not a valid zoom direction
         """
         match dir:
             case CameraZoom.OUT: 
@@ -145,9 +142,10 @@ class Camera:
                     0.1, 
                     maths.PI
                 )
-            case _: raise CameraError('unknown camera zoom')
 
-    def update(self) -> None:
+        self._update()
+
+    def _update(self) -> None:
         """Update camera's up, right and front fields
         """
         self.front.x= maths.cos(self.pitch) * maths.cos(self.yaw)
@@ -170,10 +168,8 @@ class Camera:
         Returns
         ---
         maths.Mat4
-            camera perspective matrix
         """
         return maths.Mat4.create_perspective(self.fovy, self.aspect, self.znear, self.zfar)
-
 
     def view_matrix(self) -> maths.Mat4:
         """Return view matrix
@@ -181,6 +177,5 @@ class Camera:
         Returns
         ---
         maths.Mat4
-            cameras view matrix
         """
         return maths.Mat4.create_look_at(self.position, self.position + self.front, self.up)

@@ -1,5 +1,6 @@
 """Main
 """
+from cmath import acos
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from typing import Optional
@@ -23,9 +24,7 @@ from py_opengl import color
 from py_opengl import geometry
 
 
-
 # --- SHAPE
-
 
 
 class IObject(ABC):
@@ -42,8 +41,8 @@ class IObject(ABC):
 class Triangle(IObject):
     vbo_: Optional[vbo.Vbo]= None
     shader_: Optional[shader.Shader]= None
-    text: Optional[texture.Texture]= None
-    trans: Optional[transform.Transform]= None
+    texture_: Optional[texture.Texture]= None
+    transform_: Optional[transform.Transform]= None
 
     def __post_init__(self):
         verts_pts: list[maths.Pt3]=  [
@@ -72,21 +71,21 @@ class Triangle(IObject):
 
         self.vbo_= vbo.Vbo(length=len(indices_pts) * 3)
         self.shader_= shader.Shader()
-        self.text= texture.Texture()
-        self.trans= transform.Transform()
+        self.texture_= texture.Texture()
+        self.transform_= transform.Transform()
 
-        self.text.compile('grid512.bmp')
+        self.texture_.compile('grid512.bmp')
         self.shader_.compile('shader.vert', 'shader.frag')
         self.vbo_.setup(verts_pts, color_pts, tex_coords_pts, indices_pts)
 
     def draw(self) -> None:
-        self.text.use()
+        self.texture_.use()
         self.shader_.use()
         self.vbo_.use(vbo.VboDrawMode.TRIANGLES)
 
     def clean(self) -> None:
         self.shader_.clean()
-        self.text.clean()
+        self.texture_.clean()
         self.vbo_.clean()
 
 
@@ -94,9 +93,9 @@ class Triangle(IObject):
 class Cube(IObject):
     vbo_: Optional[vbo.Vbo]= None
     shader_: Optional[shader.Shader]= None
-    text: Optional[texture.Texture]= None
-    trans: Optional[transform.Transform]= None
-    size: maths.Vec3= maths.Vec3(1.0, 1.0, 1.0)
+    texture_: Optional[texture.Texture]= None
+    transform_: Optional[transform.Transform]= None
+    scale_: maths.Vec3= maths.Vec3(1.0, 1.0, 1.0)
 
     verts: list[maths.Pt3]= field(default_factory=list)
     colors: list[maths.Pt3]= field(default_factory=list)
@@ -106,9 +105,9 @@ class Cube(IObject):
 
     def __post_init__(self):
 
-        hw: float= self.size.x * 0.5
-        hh: float= self.size.y * 0.5
-        hd: float= self.size.z * 0.5
+        hw: float= self.scale_.x * 0.5
+        hh: float= self.scale_.y * 0.5
+        hd: float= self.scale_.z * 0.5
 
         self.verts: list[maths.Pt3]=  [
             maths.Pt3( hw, hh, hd), 
@@ -223,10 +222,10 @@ class Cube(IObject):
 
         self.vbo_= vbo.Vbo(length=len(self.indices) * 3)
         self.shader_= shader.Shader() 
-        self.text= texture.Texture()
-        self.trans= transform.Transform()
+        self.texture_= texture.Texture()
+        self.transform_= transform.Transform()
 
-        self.text.compile('grid512.bmp')
+        self.texture_.compile('grid512.bmp')
         self.shader_.compile('shader.vert', 'shader.frag')
         self.vbo_.setup(
             self.verts,
@@ -236,40 +235,15 @@ class Cube(IObject):
         )
 
     def draw(self) -> None:
-        self.text.use()
+        self.texture_.use()
         self.shader_.use()
         self.vbo_.use(vbo.VboDrawMode.TRIANGLES)
 
     def clean(self) -> None:
-        self.text.clean()
+        self.texture_.clean()
         self.shader_.clean()
         self.vbo_.clean()
 
-    # # TODO
-    # def compute_aabb(self) -> geometry.AABB:
-    #     p0= self.transform_.get_transformed()
-    #     minpt= p0.copy()
-    #     maxpt= p0.copy()
-
-    #     for v in self.verts:
-    #         p1=self.transform_.get_v3_transformed_from_current_transform(maths.Vec3(v.x, v.y, v.z))
-
-    #         if p1.x < minpt.x:
-    #             minpt.x= p1.x
-    #         elif p1.x > maxpt.x:
-    #             maxpt.x= p1.x
-
-    #         if p1.y < minpt.y:
-    #             minpt.y= p1.y
-    #         elif p1.y > maxpt.y:
-    #             maxpt.y= p1.y
-
-    #         if p1.z < minpt.z:
-    #             minpt.z= p1.z
-    #         elif p1.z > maxpt.z:
-    #             maxpt.z= p1.z
-
-    #     return geometry.AABB.from_min_max(minpt, maxpt)
 
 # --- CALLBACKS
 
@@ -342,10 +316,11 @@ def main() -> None:
 
             # shape
             shape.draw()
-            shape.trans.rotated(10.0 * time.delta, maths.Vec3(x= 0.5, y= 1.0))
+
+            shape.transform_.rotated_xyz(maths.Vec3(x= 25.0, y= 15.0) * time.delta)
             # shape.trans.translated(maths.Vec3(x= 1.4) * time.delta)
 
-            m: maths.Mat4= shape.trans.model_matrix()
+            m: maths.Mat4= shape.transform_.model_matrix()
             v: maths.Mat4= cam.view_matrix()
             p: maths.Mat4= cam.projection_matrix()
 
@@ -384,8 +359,6 @@ def main() -> None:
                     
                     cam.rotate_by(camera.CameraRotation.YAW, new_mp.x, 0.2)
                     cam.rotate_by(camera.CameraRotation.PITCH, new_mp.y, 0.2)
-
-            cam.update()
 
             # ---
             glfw.poll_events()
