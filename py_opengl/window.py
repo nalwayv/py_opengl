@@ -1,7 +1,7 @@
 """Window
 """
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 import glfw
 
@@ -22,7 +22,7 @@ class GlWindowError(Exception):
 
 @dataclass(eq= False, repr= False, slots= True)
 class GlWindow:
-    window: Any|None= None
+    window: Optional[Any]= None
     width: int= 0
     height: int= 0
     title: str= "glfw_window"

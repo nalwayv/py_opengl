@@ -70,7 +70,6 @@ class Vbo:
         self,
         verts_pts: list[maths.Pt3],
         color_pts: list[maths.Pt3],
-        normals_pts: list[maths.Pt3],
         tex_coords_pts: list[maths.Pt2],
         indices_pts: list[maths.Pt3Int]
     ) -> None:
@@ -79,13 +78,11 @@ class Vbo:
         # flattern arrays
         verts: list[float]= [y for s in verts_pts for y in s.to_list()]
         color: list[float]= [y for s in color_pts for y in s.to_list()]
-        normals: list[float]= [y for s in normals_pts for y in s.to_list()]
         tex_coords: list[float]= [y for s in tex_coords_pts for y in s.to_list()]
         indices: list[int]= [y for s in indices_pts for y in s.to_list()]
 
         vsize: int= len(verts) * utils.FLOAT_SIZE
         csize: int= len(color) * utils.FLOAT_SIZE
-        nsize: int= len(normals) * utils.FLOAT_SIZE
         tsize: int= len(tex_coords) * utils.FLOAT_SIZE
         isize: int= len(indices) * utils.UINT_SIZE
         components: int= 3
@@ -117,17 +114,11 @@ class Vbo:
         GL.glVertexAttribPointer(1, components, GL.GL_FLOAT, normal, 0, utils.C_VOID_POINTER)
         GL.glEnableVertexAttribArray(1)
 
-        # normals
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo_ids[2])
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, nsize, utils.c_arrayF(normals), GL.GL_STATIC_DRAW)
-        GL.glVertexAttribPointer(2, components, GL.GL_FLOAT, normal, 0, utils.C_VOID_POINTER)
-        GL.glEnableVertexAttribArray(2)
-
         # texture coords
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo_ids[3])
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo_ids[2])
         GL.glBufferData(GL.GL_ARRAY_BUFFER, tsize, utils.c_arrayF(tex_coords), GL.GL_STATIC_DRAW)
-        GL.glVertexAttribPointer(3, components_texture, GL.GL_FLOAT, normal, 0, utils.C_VOID_POINTER)
-        GL.glEnableVertexAttribArray(3)
+        GL.glVertexAttribPointer(2, components_texture, GL.GL_FLOAT, normal, 0, utils.C_VOID_POINTER)
+        GL.glEnableVertexAttribArray(2)
 
         # ibo
         self.ibo_id = GL.glGenBuffers(1)

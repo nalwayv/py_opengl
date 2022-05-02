@@ -169,7 +169,7 @@ class Camera:
 
         Returns
         ---
-        glm.Mat4
+        maths.Mat4
             camera perspective matrix
         """
         return maths.Mat4.create_perspective(self.fovy, self.aspect, self.znear, self.zfar)
@@ -180,7 +180,7 @@ class Camera:
 
         Returns
         ---
-        glm.Mat4
+        maths.Mat4
             cameras view matrix
         """
         return maths.Mat4.create_look_at(self.position, self.position + self.front, self.up)

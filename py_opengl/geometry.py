@@ -1,20 +1,39 @@
 """Geometry
 """
 from dataclasses import dataclass
-from pydoc import plain
-from py_opengl import maths
+# from typing import Final, Optional
 from enum import Enum, auto
+# from abc import ABC, abstractmethod
+
+from py_opengl import maths
+
+
+# --- ENUM
+
+
+class GeometryID(Enum):
+    LINE= auto()
+    AABB3= auto()
+    SPHERE= auto()
+    PLAIN= auto()
+    RAY= auto()
 
 
 # ---
 
 
-class GeometryID(Enum):
-    LINE= auto()
-    AABB= auto()
-    SPHERE= auto()
-    PLAIN= auto()
-    RAY= auto()
+# class ITranslate(ABC):
+#     @abstractmethod
+#     def translate(v3: maths.Vec3):
+#         pass
+
+# class IRotate(ABC):
+#     @abstractmethod
+#     def rotate(angle_deg: float, unit_axis: maths.Vec3):
+#         pass
+
+# class ITransformable(ITranslate, IRotate):
+#     pass
 
 
 # --- LINE
@@ -32,43 +51,62 @@ class Line:
 
 # --- AABB
 
+
 @dataclass(eq= False, repr= True, slots= True)
-class AABB:
-    """AABB using center and size extent
+class AABB3:
+    """AABB using center and extents
     
 
-    Aabb(center= Vec3(0, 0, 0), size= Vec3(2.5, 2.5, 2.5))
+    Aabb(center= Vec3(0, 0, 0), extents= Vec3(1, 1, 1))
 
-    get_min == Vec3(-2.5, -2.5, -2.5)\n
-    get_max == Vec3(2.5, 2.5, 2.5)
+    get_min == Vec3(-1, -1, -1)\n
+    get_max == Vec3(1, 1, 1)
     
     """
     center: maths.Vec3= maths.Vec3()
-    size: maths.Vec3= maths.Vec3()
+    extents: maths.Vec3= maths.Vec3()
 
-    id: GeometryID= GeometryID.AABB
+    id: GeometryID= GeometryID.AABB3
 
     @staticmethod
-    def from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'AABB':
-        return AABB(
+    def from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'AABB3':
+        return AABB3(
             center= (min_pt + max_pt) * 0.5,
-            size= ((min_pt - max_pt) * 0.5).abs()
+            extents= ((min_pt - max_pt) * 0.5).abs()
         )
 
-    def union(self, other: 'AABB') -> 'AABB':
-        return AABB.from_min_max(
+    def union(self, other: 'AABB3') -> 'AABB3':
+        return AABB3.from_min_max(
             maths.Vec3.from_min(self.get_min(), other.get_min()),
             maths.Vec3.from_max(self.get_max(), other.get_max())
         )
 
-    def expand(self, by: float) -> 'AABB':
+    def union_one(self, a: 'AABB3') -> None:
+        """Set self to the union of self and a"""
+        aabb= AABB3.from_min_max(
+            maths.Vec3.from_min(self.get_min(), a.get_min()),
+            maths.Vec3.from_max(self.get_max(), a.get_max())
+        )
+        self.center= aabb.center
+        self.extents= aabb.extents
+
+    def union_two(self, a:'AABB3', b:'AABB3') -> None:
+        """Set self to the union of a and b"""
+        aabb= AABB3.from_min_max(
+            maths.Vec3.from_min(a.get_min(), b.get_min()),
+            maths.Vec3.from_max(a.get_max(), b.get_max())
+        )
+        self.center= aabb.center
+        self.extents= aabb.extents
+
+    def expand(self, by: float) -> 'AABB3':
         if by < 0.0:
             by = maths.absf(by)
 
         p0: maths.Vec3= self.get_min() - maths.Vec3(by,by,by)
         p1: maths.Vec3= self.get_max() + maths.Vec3(by,by,by)
 
-        return AABB.from_min_max(p0, p1)
+        return AABB3.from_min_max(p0, p1)
 
     def get_size_x(self) -> float:
         p0= self.get_min()
@@ -85,55 +123,52 @@ class AABB:
         p1= self.get_max()
         return p1.z - p0.z
 
-    def copy(self) -> 'AABB':
+    def copy(self) -> 'AABB3':
         """Return a copy of self
 
         Returns
         ---
         Abbb
         """
-        return AABB(
+        return AABB3(
             center= self.center.copy(),
-            size= self.size.copy()
+            extents= self.extents.copy()
         )
 
     def perimeter(self) -> float:
         p0: maths.Vec3= self.get_min()
         p1: maths.Vec3= self.get_max()
-        
-        x: float= p1.x - p0.x
-        y: float= p1.y - p0.y
-        z: float= p1.z - p0.z
 
-        # cuboid 4(l * b * h)
-        return 4.0 * (x + y + z)
+        p2: maths.Vec3= p1 - p0
+
+        return 4.0 * p2.sum()
 
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         p0: maths.Vec3= self.get_min()
         p1: maths.Vec3= self.get_max()
-        pts: list[float]= [0.0, 0.0, 0.0]
+        p2: list[float]= [0.0, 0.0, 0.0]
 
         for i in range(3):
             val: float= pt[i]
             val= maths.minf(val, p0[i])
             val= maths.maxf(val, p1[i])
-            pts[i]= val
+            p2[i]= val
 
-        return maths.Vec3(pts[0], pts[1], pts[2])        
+        return maths.Vec3(p2[0], p2[1], p2[2])
 
     def get_min(self) -> maths.Vec3:
-        p0: maths.Vec3= self.center + self.size
-        p1: maths.Vec3= self.center - self.size
+        p0: maths.Vec3= self.center + self.extents
+        p1: maths.Vec3= self.center - self.extents
 
         return maths.Vec3.from_min(p0, p1)
 
     def get_max(self) -> maths.Vec3:
-        p0: maths.Vec3= self.center + self.size
-        p1: maths.Vec3= self.center - self.size
+        p0: maths.Vec3= self.center + self.extents
+        p1: maths.Vec3= self.center - self.extents
 
         return maths.Vec3.from_max(p0, p1)
 
-    def intersect_aabb(self, other: 'AABB') -> bool:
+    def intersect_aabb(self, other: 'AABB3') -> bool:
         amin: maths.Vec3= self.get_min()
         amax: maths.Vec3= self.get_max()
 
@@ -158,18 +193,18 @@ class AABB:
 
         return True
 
-    def intersect_sphere(self, sph: 'Sphere') -> bool:
-        close_pt: maths.Vec3= self.closest_pt(sph.position)
-        dis: float= (sph.position - close_pt).length_sqr()
+    def intersect_sphere(self, sph: 'Sphere3') -> bool:
+        close_pt: maths.Vec3= self.closest_pt(sph.center)
+        dis: float= (sph.center - close_pt).length_sqr()
         r2= maths.sqr(sph.radius)
 
         return dis < r2
 
     def intersect_plain(self, plain: 'Plain') -> bool:
         len_sq: float = (
-            self.size.x * maths.absf(plain.normal.x) +
-            self.size.y * maths.absf(plain.normal.y) +
-            self.size.z * maths.absf(plain.normal.z)
+            self.extents.x * maths.absf(plain.normal.x) +
+            self.extents.y * maths.absf(plain.normal.y) +
+            self.extents.z * maths.absf(plain.normal.z)
         )
 
         dot: float= plain.normal.dot(self.center)
@@ -184,10 +219,24 @@ class AABB:
 
 
 @dataclass(eq= False, repr= False, slots= True)
-class Sphere:
-    position: maths.Vec3= maths.Vec3()
+class Sphere3:
+    center: maths.Vec3= maths.Vec3()
     radius: float= 1.0
     id: GeometryID= GeometryID.SPHERE
+
+    def __hash__(self):
+        return hash((self.radius, self.center.x, self.center.y, self.center.z))
+    
+    def __eq__(self, other: 'Sphere3') -> bool:
+        check_r= maths.is_equil(self.radius, other.radius)
+        check_p= self.center.is_equil(other.center)
+        check_id= self.id == other.id
+        return check_r and check_p and check_id
+
+    def compute_aabb(self) -> AABB3:
+        p0: maths.Vec3= self.center + maths.Vec3(self.radius, self.radius, self.radius)
+        p1: maths.Vec3= self.center - maths.Vec3(self.radius, self.radius, self.radius)
+        return AABB3.from_min_max(p0, p1)
 
     def area(self) -> float:
         """Return area
@@ -198,43 +247,48 @@ class Sphere:
         """
         return maths.PI * maths.sqr(self.radius)
 
-    def copy(self) -> 'Sphere':
+    def copy(self) -> 'Sphere3':
         """Return a copy of self
 
         Returns
         ---
         Sphere
         """
-        return Sphere(self.position.copy(), self.radius)
+        return Sphere3(self.center.copy(), self.radius)
 
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
-        point: maths.Vec3= pt - self.position
+        point: maths.Vec3= pt - self.center
         point.to_unit()
     
-        return self.position + (point * self.radius)
+        return self.center + (point * self.radius)
 
-    def intersect_sphere(self, other: 'Sphere') -> bool:
-        dis: float= (self.position - other.position).length_sqr()
+    def furthest_pt(self, pt: maths.Vec3) -> maths.Vec3:
+        if not pt.is_unit():
+            pt.to_unit()
+        return self.center + (pt * self.radius)
+
+    def intersect_sphere(self, other: 'Sphere3') -> bool:
+        dis: float= (self.center - other.center).length_sqr()
         r2: float= maths.sqr(self.radius + other.radius)
 
         return dis < r2
 
     def intersect_pt(self, pt: maths.Vec3) -> bool:
-        dis: float= (self.position - pt).length_sqr()
+        dis: float= (self.center - pt).length_sqr()
         r2: float= maths.sqr(self.radius)
 
         return dis < r2
 
-    def intersect_aabb(self, aabb: 'AABB') -> bool:
-        close_pt: maths.Vec3 = aabb.closest_pt(self.position)
-        dis: float= (self.position - close_pt).length_sqr()
+    def intersect_aabb(self, aabb: 'AABB3') -> bool:
+        close_pt: maths.Vec3= aabb.closest_pt(self.center)
+        dis: float= (self.center - close_pt).length_sqr()
         r2: float= maths.sqr(self.radius)
 
         return dis < r2
 
     def intersect_plain(self, plain: 'Plain'):
-        close_pt: maths.Vec3 = plain.closest_pt(self.position)
-        dis: float= (self.position - close_pt).length_sqr()
+        close_pt: maths.Vec3= plain.closest_pt(self.center)
+        dis: float= (self.center - close_pt).length_sqr()
         r2: float= maths.sqr(self.radius)
 
         return dis < r2
@@ -257,6 +311,15 @@ class Plain:
     normal: maths.Vec3= maths.Vec3(x=1.0)
     direction: float= 0.0
     id: GeometryID= GeometryID.PLAIN
+
+    def __hash__(self):
+        return hash((self.direction, self.normal.x, self.normal.y, self.normal.z))
+    
+    def __eq__(self, other: 'Plain') -> bool:
+        check_d= maths.is_equil(self.direction, other.direction)
+        check_n= self.normal.is_equil(other.normal)
+        check_id= self.id == other.id
+        return check_d and check_n and check_id
 
     def __post_init__(self):
         if not self.normal.is_unit():
@@ -361,17 +424,17 @@ class Plain:
         dot: float= pt.dot(self.normal)
         return maths.is_zero(dot - self.direction)
 
-    def intersect_sphere(self, sph: 'Sphere') -> bool:
-        close_pt: maths.Vec3= self.closest_point(sph.position)
-        len_sq: float= (sph.position - close_pt).length_sqr()
+    def intersect_sphere(self, sph: 'Sphere3') -> bool:
+        close_pt: maths.Vec3= self.closest_point(sph.center)
+        len_sq: float= (sph.center - close_pt).length_sqr()
 
         return len_sq < maths.sqr(sph.radius)
 
-    def intersect_aabb(self, aabb: 'AABB') -> bool:
+    def intersect_aabb(self, aabb: 'AABB3') -> bool:
         len_sq: float = (
-            aabb.size.x * maths.absf(self.normal.x) +
-            aabb.size.y * maths.absf(self.normal.y) +
-            aabb.size.z * maths.absf(self.normal.z)
+            aabb.extents.x * maths.absf(self.normal.x) +
+            aabb.extents.y * maths.absf(self.normal.y) +
+            aabb.extents.z * maths.absf(self.normal.z)
         )
 
         dot: float= self.normal.dot(aabb.center)
@@ -386,7 +449,7 @@ class Plain:
 
 
 @dataclass(eq=False, repr=False, slots=True)
-class Ray:
+class Ray3:
     origin: maths.Vec3= maths.Vec3()
     direction: maths.Vec3= maths.Vec3(z=1.0)
     id: GeometryID= GeometryID.RAY
@@ -396,14 +459,14 @@ class Ray:
             self.direction.to_unit()
 
     @staticmethod
-    def from_points(origin: maths.Vec3, target:maths.Vec3) -> 'Ray':
+    def from_points(origin: maths.Vec3, target:maths.Vec3) -> 'Ray3':
         o: maths.Vec3= origin.copy()
         d: maths.Vec3= target - origin
 
         if not d.is_unit():
             d.to_unit()
 
-        return Ray(
+        return Ray3(
             origin= o,
             direction= d
         )
@@ -418,8 +481,8 @@ class Ray:
         self.direction.x = unit_dir.x
         self.direction.y = unit_dir.y
 
-    def copy(self) -> 'Ray':
-        return Ray(
+    def copy(self) -> 'Ray3':
+        return Ray3(
             origin= self.origin.copy(),
             direction= self.direction.copy()
         )
@@ -437,7 +500,7 @@ class Ray:
         """
         return self.origin + (self.direction * t)
     
-    def cast_aabb(self, aabb: AABB) -> tuple[bool, maths.Vec3]:
+    def cast_aabb(self, aabb: AABB3) -> tuple[bool, maths.Vec3]:
         amin: maths.Vec3= aabb.get_min()
         amax: maths.Vec3= aabb.get_max()
         tmin: float= maths.MIN_FLOAT
@@ -467,8 +530,8 @@ class Ray:
     
         return True, self.get_hit(tmin)
 
-    def cast_sphere(self, sph: Sphere) -> tuple[bool, maths.Vec3]:
-        a: maths.Vec3= sph.position - self.origin
+    def cast_sphere(self, sph: Sphere3) -> tuple[bool, maths.Vec3]:
+        a: maths.Vec3= sph.center - self.origin
         b: float= a.dot(self.direction)
         c: float= a.length_sqr() - maths.sqr(sph.radius)
 
@@ -498,3 +561,217 @@ class Ray:
             return False, maths.Vec3.zero()
 
         return True, self.get_hit(t)
+
+
+# # ---
+# MARGIN: Final[float] = 2.0
+
+# @dataclass(eq= False, repr= False, slots= True)
+# class AABBNode:
+#     left: Optional['AABBNode']= None
+#     right: Optional['AABBNode']= None
+#     parent: Optional['AABBNode']= None
+#     height: int= 0
+#     aabb: AABB3= AABB3()
+
+#     todo_item: int= 0
+
+#     def is_leaf(self) -> bool:
+#         return self.left is None
+
+# @dataclass(eq= False, repr= False, slots= True)
+# class AABBTree:
+#     root: Optional[AABBNode]= None
+#     leaves: dict[Sphere, AABBNode]= field(default_factory=dict)
+#     aabb: AABB3= AABB3()
+
+#     def add(self, obj: Sphere):
+#         # TODO
+#         self.aabb= obj.compute_aabb()
+#         self.aabb.expand(MARGIN)
+
+#         node= AABBNode()
+#         node.aabb.union_one(self.aabb)
+
+#         self.leaves[obj] = node
+#         self._insert(node)
+
+#     def _balance(self, item: AABBNode) -> AABBNode:
+#         a= item
+
+#         if a.is_leaf() or a.height < 2:
+#             return a
+
+#         b= a.left
+#         c= a.right
+
+#         balance= c.height - b.height
+
+#         # rotate c up
+#         if balance > 1:
+#             f= c.left
+#             g= c.right
+
+#             # swap
+#             c.left= a
+#             c.parent= a.parent
+#             a.parent= c
+
+#             if c.parent is not None:
+#                 if c.parent.left is a:
+#                     c.parent.left = c
+#                 else:
+#                     c.parent.right = c
+#             else:
+#                 self.root = c
+
+#             if f.height > g.height:
+#                 c.right= f
+#                 a.right= g
+#                 g.parent= a
+
+#                 a.aabb.union_two(b.aabb, g.aabb)
+#                 c.aabb.union_two(a.aabb, f.aabb)
+
+#                 a.height = 1 + maths.maxi(b.height, g.height)
+#                 c.height = 1 + maths.maxi(a.height, f.height)
+#             else:
+#                 c.right= g
+#                 a.right= f
+#                 f.parent= a
+
+#                 a.aabb.union_two(b.aabb, f.aabb)
+#                 c.aabb.union_two(a.aabb, g.aabb)
+
+#                 a.height = 1 + maths.maxi(b.height, f.height)
+#                 c.height = 1 + maths.maxi(a.height, g.height)
+
+#             return c
+
+#         # rotate b up
+#         if balance < -1:
+#             d= b.left
+#             e= b.right
+
+#             # swap
+#             b.left= a
+#             b.parent= a.parent
+#             a.parent= b
+
+#             if b.parent is not None:
+#                 if b.parent.left is a:
+#                     b.parent.left = b
+#                 else:
+#                     b.parent.right = b
+#             else:
+#                 self.root = b
+
+#             if d.height > e.height:
+#                 b.right= d
+#                 a.left= e
+#                 e.parent= a
+
+#                 a.aabb.union_two(c.aabb, e.aabb)
+#                 b.aabb.union_two(a.aabb, d.aabb)
+
+#                 a.height = 1 + maths.maxi(c.height, e.height)
+#                 b.height = 1 + maths.maxi(a.height, d.height)
+#             else:
+#                 b.right= e
+#                 a.left= d
+#                 d.parent= a
+
+#                 a.aabb.union_two(c.aabb, d.aabb)
+#                 b.aabb.union_two(a.aabb, e.aabb)
+
+#                 a.height = 1 + maths.maxi(c.height, d.height)
+#                 b.height = 1 + maths.maxi(a.height, e.height)
+
+#             return b
+
+#         return a
+
+#     def _insert(self, item: AABBNode) -> None:
+#         if self.root is None:
+#             self.root = item
+#             return
+
+#         tmp= AABB3()
+#         item_aabb= item.aabb
+
+#         node= self.root
+#         while not node.is_leaf():
+#             aabb= node.aabb
+#             per= aabb.perimeter()
+            
+#             tmp= aabb
+#             union_per= tmp.union(item_aabb).perimeter()
+
+#             cost= 2.0 * union_per
+#             d_cost = 2.0 * (union_per - per)
+
+#             left= node.left
+#             right= node.right
+
+#             cost_left= 0.0
+#             if left.is_leaf():
+#                 tmp.union_two(left.aabb, item_aabb)
+#                 cost_left= tmp.perimeter() + d_cost
+#             else:
+#                 old_cost= left.aabb.perimeter()
+#                 tmp.union_two(left.aabb, item_aabb)
+#                 new_cost= tmp.perimeter()
+#                 cost_left = new_cost - old_cost + d_cost
+
+#             cost_right= 0.0
+#             if right.is_leaf():
+#                 tmp.union_two(right.aabb, item_aabb)
+#                 cost_right= tmp.perimeter() + d_cost
+#             else:
+#                 old_cost= right.aabb.perimeter()
+#                 tmp.union_two(right.aabb, item_aabb)
+#                 new_cost= tmp.perimeter()
+#                 cost_right = new_cost - old_cost + d_cost
+
+#             if cost < cost_left and cost < cost_right:
+#                 break
+#             if cost_left < cost_right:
+#                 node= left
+#             else:
+#                 node= right
+        
+#         parent= node.parent
+#         new_parent= AABBNode(
+#             parent= node.parent,
+#             aabb= node.aabb.union(item_aabb),
+#             height= node.height + 1
+#         )
+
+#         if parent is not None:
+#             if parent.left is node:
+#                 parent.left= new_parent
+#             else:
+#                 parent.right= new_parent
+
+#             new_parent.left= node
+#             new_parent.right= item
+#             node.parent= new_parent
+#             item.parent= new_parent
+#         else:
+#             new_parent.left= node
+#             new_parent.right= item
+#             node.parent= new_parent
+#             item.parent= new_parent
+#             self.root= new_parent
+        
+
+#         node= item.parent
+#         while node is not None:
+#             node= self._balance(node)
+
+#             left= node.left
+#             right= node.right
+
+#             node.height = 1 + maths.maxi(left.height, right.height)
+#             node.aabb.union_two(left.aabb, right.aabb)
+#             node= node.parent

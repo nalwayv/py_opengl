@@ -4,12 +4,8 @@ import math
 from dataclasses import dataclass
 from typing import Final
 
-from py_opengl import utils
-
-
 
 # --- CONSTANTS
-
 
 
 PI: Final[float]= 3.14159265358979323846
@@ -23,9 +19,7 @@ INFINITY: Final[float]= math.inf
 NEGATIVE_INFINITY: Final[float]= -math.inf
 
 
-
 # --- FUNCTIONS
-
 
 
 def absf(x: float) -> float:
@@ -101,7 +95,7 @@ def is_equil(x: float, y: float) -> bool:
     return absf(x - y) <= EPSILON
 
 
-def is_infinite(val) -> bool:
+def is_infinite(val: float) -> bool:
     """Check if value if infinite
 
     Returns
@@ -484,22 +478,6 @@ def wrap(val: int, low: int, high: int) -> int:
     return ((val - low) % (high - low) + low)
 
 
-def repeat(val: int, length: int) -> int:
-    """repeat value from 0 to high
-    
-    Parameters    
-    ---
-    value : int
-
-    length : int
-    
-    Return
-    ---
-    int
-    """
-    return val - (val // length) * val
-
-
 def ping_pong(val: int, length:int) -> int:
     """repeat value from 0 to high and back
     
@@ -513,7 +491,7 @@ def ping_pong(val: int, length:int) -> int:
     ---
     int
     """
-    val= repeat(val, length * 2)
+    val= wrap(val, 0, length * 2)
     val= length - absi(val - length)
     return val
 
@@ -737,6 +715,15 @@ class Vec2:
         str
         """
         return f"X: {self.x}, Y: {self.y}"
+
+    def sum(self) -> float:
+        """Return sum of components
+
+        Returns
+        ---
+        float
+        """
+        return self.x + self.y
 
     def lerp(self, to: 'Vec2', weight: float) -> 'Vec2':
         """Return lerp between begin end end vec3
@@ -1086,6 +1073,15 @@ class Vec3:
 
         return Vec3(x, y, z)
 
+    def sum(self) -> float:
+        """Return sum of components
+
+        Returns
+        ---
+        float
+        """
+        return self.x + self.y + self.z
+
     def abs(self) -> 'Vec3':
         """Return a copy of self with positive values
         
@@ -1175,6 +1171,11 @@ class Vec3:
             raise Vec3Error('length of this vec3 was zero')
 
         return self * inv_sqrt(lsq)
+
+    def copy_from(self, other: 'Vec3') -> None:
+        self.x = other.x
+        self.y = other.y
+        self.z = other.z
 
     def copy(self) -> 'Vec3':
         """Return a copy of the vec3
@@ -1466,13 +1467,22 @@ class Vec4:
         )
 
     @staticmethod
-    def from_v3(xyz: Vec3, w: float) -> 'Vec4':
+    def from_v3(xyz: Vec3, w: float= 0.0) -> 'Vec4':
         return Vec4(
             x= xyz.x,
             y= xyz.y,
             z= xyz.z,
             w= w
         )
+
+    def sum(self) -> float:
+        """Return sum of components
+
+        Returns
+        ---
+        float
+        """
+        return self.x + self.y + self.z + self.w
 
     def to_list(self) -> list[float]:
         """Return list[float] of *xyzw* components
@@ -1531,6 +1541,12 @@ class Vec4:
         w: float= lerp(self.w, to.w, weight)
 
         return Vec4(x, y, z, w)
+
+    def copy_from(self, other: 'Vec4') -> None:
+        self.x = other.x
+        self.y = other.y
+        self.z = other.z
+        self.w = other.w
 
     def copy(self) -> 'Vec4':
         """Return a copy of the vec4
@@ -1642,12 +1658,11 @@ class Vec4:
         ---
         float
         """
-        return (
-            (self.x * other.x) +
-            (self.y * other.y) +
-            (self.z * other.z) +
-            (self.w * other.w)
-        )
+        x: float= self.x * other.x
+        y: float= self.y * other.y
+        z: float= self.z * other.z
+        w: float= self.w * other.w
+        return x + y + z + w
 
     def is_unit(self) -> bool:
         """Check if the current length of self is normalized
@@ -1693,7 +1708,7 @@ class Vec4:
 
 # --- MATRIX_3
 
-
+  
 class Mat3Error(Exception):
     '''Custom error for matrix 3x3'''
 
@@ -1703,835 +1718,99 @@ class Mat3Error(Exception):
 
 @dataclass(eq= False, repr= False, slots= True)
 class Mat3:
-    ax: float= 0.0
-    ay: float= 0.0
-    az: float= 0.0
-    bx: float= 0.0
-    by: float= 0.0
-    bz: float= 0.0
-    cx: float= 0.0
-    cy: float= 0.0
-    cz: float= 0.0
+    row0: Vec3= Vec3()
+    row1: Vec3= Vec3()
+    row2: Vec3= Vec3()
 
     def __getitem__(self, idx):
         match clampi(idx, 0, 8):
             case 0: 
-                return self.ax
+                return self.row0.x
             case 1: 
-                return self.ay
+                return self.row0.y
             case 2: 
-                return self.az
+                return self.row0.z
             case 3: 
-                return self.bx
+                return self.row1.x
             case 4: 
-                return self.by
+                return self.row1.y
             case 5: 
-                return self.bz
+                return self.row1.z
             case 6: 
-                return self.cx
+                return self.row2.x
             case 7: 
-                return self.cy
+                return self.row2.y
             case 8: 
-                return self.cz
+                return self.row2.z
 
         raise Mat3Error('out of range')
 
     def __add__(self, other):
         if not isinstance(other, Mat3):
             raise Mat3Error('not of type mat3')
+        r0= self.row0 + other.row0
+        r1= self.row1 + other.row1
+        r2= self.row2 + other.row2
 
-        ax: float= self.ax + other.ax
-        ay: float= self.ay + other.ay
-        az: float= self.az + other.az
-        bx: float= self.bx + other.bx
-        by: float= self.by + other.by
-        bz: float= self.bz + other.bz
-        cx: float= self.cx + other.cx
-        cy: float= self.cy + other.cy
-        cz: float= self.cz + other.cz
-
-        return Mat3(
-            ax, ay, az,
-            bx, by, bz,
-            cx, cy, cz
-        )
+        return Mat3(r0,r1,r2)
 
     def __sub__(self, other):
         if not isinstance(other, Mat3):
             raise Mat3Error('not of type mat3')
+        r0= self.row0 - other.row0
+        r1= self.row1 - other.row1
+        r2= self.row2 - other.row2
 
-        ax: float= self.ax - other.ax
-        ay: float= self.ay - other.ay
-        az: float= self.az - other.az
-        bx: float= self.bx - other.bx
-        by: float= self.by - other.by
-        bz: float= self.bz - other.bz
-        cx: float= self.cx - other.cx
-        cy: float= self.cy - other.cy
-        cz: float= self.cz - other.cz
-
-        return Mat3(
-            ax, ay, az,
-            bx, by, bz,
-            cx, cy, cz
-        )
+        return Mat3(r0,r1,r2)
 
     def __mul__(self, other):
         if not isinstance(other, Mat3):
             raise Mat3Error('not of type Mat3')
 
-        ax: float= self.ax * other.ax + self.ay * other.bx + self.az * other.cx
-        ay: float= self.ax * other.ay + self.ay * other.by + self.az * other.cy
-        az: float= self.ax * other.az + self.ay * other.bz + self.az * other.cz
-        bx: float= self.bx * other.ax + self.by * other.bx + self.bz * other.cx
-        by: float= self.bx * other.ay + self.by * other.by + self.bz * other.cy
-        bz: float= self.bx * other.az + self.by * other.bz + self.bz * other.cz
-        cx: float= self.cx * other.ax + self.cy * other.bx + self.cz * other.cx
-        cy: float= self.cx * other.ay + self.cy * other.by + self.cz * other.cy
-        cz: float= self.cx * other.az + self.cy * other.bz + self.cz * other.cz
+        r0: Vec3= Vec3(   
+            self.row0.dot(other.col0()),
+            self.row0.dot(other.col1()),
+            self.row0.dot(other.col2())
+        )
+
+        r1: Vec3= Vec3(
+            self.row1.dot(other.col0()),
+            self.row1.dot(other.col1()),
+            self.row1.dot(other.col2())
+        )
         
+        r2: Vec3= Vec3(
+            self.row2.dot(other.col0()),
+            self.row2.dot(other.col1()),
+            self.row2.dot(other.col2()),
+        )
+
+        return Mat3(r0, r1, r2)
+
+    @staticmethod
+    def create_from_values(
+        ax: float, ay: float, az: float,
+        bx: float, by: float, bz: float,
+        cx: float, cy: float, cz: float) -> 'Mat3':
         return Mat3(
-            ax, ay, az,
-            bx, by, bz,
-            cx, cy, cz
+            Vec3(ax, ay, az),
+            Vec3(bx, by, bz),
+            Vec3(cx, cy, cz),
         )
 
     @staticmethod
-    def identity() -> 'Mat3':
-        """Create an identity mat3 matrix
-
-        Returns
-        ---
-        Mat3
-        """
-        return Mat3(ax= 1.0, by= 1.0, cz= 1.0)
-
-    @staticmethod
-    def create_scaler(v3: Vec3) -> 'Mat3':
-        """Create a scaler mat3 matrix
-
-        Returns
-        ---
-        Mat3
-        """
-        return Mat3(ax= v3.x, by= v3.y, cz= v3.z)
-    
-    @staticmethod
-    def create_x_rotation(angle_deg: float) -> 'Mat3':
-        """Create a rotation *X* mat3 matrix
-
-        Returns
-        ---
-        Mat3
-        """
-        angle_rad: float= to_radians(angle_deg)
-
-        c: float= cos(angle_rad)
-        s: float= sin(angle_rad)
-
-        return Mat3(ax= 1.0, by= c, bz= -s, cy= s, cz= c)
-
-    @staticmethod
-    def create_y_rotation(angle_deg: float) -> 'Mat3':
-        """Create a rotation *y* mat3 matrix
-
-        Returns
-        ---
-        Mat3
-        """
-        angle_rad: float= to_radians(angle_deg)
-
-        c: float= cos(angle_rad)
-        s: float= sin(angle_rad)
-
-        return Mat3(ax= c, az= s, by= 1.0, cx= -s, cz= c)
-
-    @staticmethod
-    def create_z_rotation(angle_deg: float) -> 'Mat3':
-        """Create a rotation *z* mat3 matrix
-
-        Returns
-        ---
-        Mat3
-        """
-        angle_rad: float= to_radians(angle_deg)
-
-        c: float= cos(angle_rad)
-        s: float= sin(angle_rad)
-
-        return Mat3(ax= c, ay= -s, bx= s, by= c, cz= 1.0)
-
-    def copy(self) -> 'Mat3':
-        """Return a copy
-
-        Returns
-        ---
-        Mat3
-        """
-        return Mat3(
-            self.ax, self.ay, self.az,
-            self.bx, self.by, self.bz,
-            self.cx, self.cy, self.cz
-        )
-
-    def scale(self, by: float) -> 'Mat3':
-        """Return a scaled copy of self
-
-        Returns
-        ---
-        Mat3
-        """
-        ax: float= self.ax * by
-        ay: float= self.ay * by
-        az: float= self.az * by
-        bx: float= self.bx * by
-        by: float= self.by * by
-        bz: float= self.bz * by
-        cx: float= self.cx * by
-        cy: float= self.cy * by
-        cz: float= self.cz * by
-
-        return Mat3(
-            ax, ay, az,
-            bx, by, bz,
-            cx, cy, cz
-        )
-
-    def transpose(self) -> 'Mat3':
-        """Return a transposed copy of self
-
-        Returns
-        ---
-        Mat3
-        """
-        ax: float= self.ax
-        ay: float= self.bx
-        az: float= self.cx
-        bx: float= self.ay
-        by: float= self.by
-        bz: float= self.cy
-        cx: float= self.az
-        cy: float= self.bz
-        cz: float= self.cz
-
-        return Mat3(
-            ax, ay, az,
-            bx, by, bz,
-            cx, cy, cz
-        )
-
-    def cofactor(self) -> 'Mat3':
-        """Return a cofactor copy of self
-
-        Returns
-        ---
-        Mat3
-        """
-        ax: float= self.ax
-        ay: float= -self.ay
-        az: float= self.az
-        bx: float= -self.bx
-        by: float= self.by
-        bz: float= -self.bz
-        cx: float= self.cx
-        cy: float= -self.cy
-        cz: float= self.cz
-
-        return Mat3(
-            ax, ay, az,
-            bx, by, bz,
-            cx, cy, cz
-        )
-
-    def to_unit(self) -> None:
-        """Normalize the length of self
-
-        Raises
-        ---
-        Mat3Error
-            if the determinant of self is zero
-        """
-        det: float= self.determinant()
-
-        if is_zero(det):
-            raise Mat3Error('length of this Mat4 was zero')
-
-        inv = 1.0 / det
-        self.ax *= inv  
-        self.ay *= inv 
-        self.az *= inv  
-        self.aw *= inv  
-        self.bx *= inv  
-        self.by *= inv  
-        self.bz *= inv  
-        self.bw *= inv  
-        self.cx *= inv  
-        self.cy *= inv  
-        self.cz *= inv  
-        self.cw *= inv  
-        self.dx *= inv  
-        self.dy *= inv  
-        self.dz *= inv  
-        self.dw *= inv  
-
-    def unit(self) -> 'Mat3':
-        """Return a copy of self with normalized length
-
-        Returns
-        ---
-        Mat3
-            
-        Raises
-        ---
-        Mat3Error
-            if the determinant of self is zero
-        """
-        det: float= self.determinant()
-
-        if is_zero(det):
-            raise Mat3Error('length of this Mat4 was zero')
-
-        return self.scale(1.0 / det)
-
-
-    def inverse(self) -> 'Mat3':
-        """Return the inverse of self
-
-        Returns
-        ---
-        Mat3
-        """
-        a: float= self.ax
-        b: float= self.ay
-        c: float= self.az
-        d: float= self.bx
-        e: float= self.by
-        f: float= self.bz
-        g: float= self.cx
-        h: float= self.cy
-        i: float= self.cz
-
-        det: float= self.determinant()
-        inv: float= 1.0 / det
-
-        ax: float= (e * i - h * f) * inv
-        ay: float= (g * f - d * i) * inv
-        az: float= (d * h - g * e) * inv
-        bx: float= (h * c - b * i) * inv
-        by: float= (a * i - g * c) * inv
-        bz: float= (g * b - a * h) * inv
-        cx: float= (b * f - e * c) * inv
-        cy: float= (d * c - a * f) * inv
-        cz: float= (a * e - d * b) * inv
-
-        return Mat3(
-            ax, ay, az,
-            bx, by, bz,
-            cx, cy, cz
-        )
-
-    def row0(self) -> Vec3:
-        """Return the first row of float values
-
-        Returns
-        ---
-        Vec3
-        """
-        return Vec3(self.ax, self.ay, self.az)
-
-    def row1(self) -> Vec3:
-        """Return the second row of float values
-        
-        Returns
-        ---
-        Vec3
-        """
-        return Vec3(self.bx, self.by, self.bz)
-
-    def row2(self) -> Vec3:
-        """Return the third row of float values
-
-        Returns
-        ---
-        Vec3
-        """
-        return Vec3(self.cx, self.cy, self.cz)
-
-    def col0(self) -> Vec3:
-        """Return the first column of float values
-
-        Returns
-        ---
-        Vec3
-        """
-        return Vec3(self.ax, self.bx, self.cx)
-
-    def col1(self) -> Vec3:
-        """Return the second column of float values
-
-        Returns
-        ---
-        Vec3
-        """
-        return Vec3(self.ay, self.by, self.cy)
-
-    def col2(self) -> Vec3:
-        """Return the third column of float values
-
-        Returns
-        ---
-        Vec3
-        """
-        return Vec3(self.az, self.bz, self.cz)
-
-    def at(self, row: int, col: int) -> float:
-        return self[col * 3 + row]
-
-    def determinant(self) -> float:
-        """Return the determinant of self
-
-        Returns
-        ---
-        float
-        """
-        a0: float= self.ax * self.by * self.cz
-        a1: float= self.ay * self.bz * self.cx
-        a2: float= self.az * self.bx * self.cy
-        b1: float= self.az * self.by * self.cx
-        b2: float= self.ax * self.bz * self.cy
-        b3: float= self.ay * self.bx * self.cz
-
-        return a0 + a1 + a2 - b1 - b2 - b3
-
-    def trace(self) -> float:
-        """Return the sum of the trace values
-
-        Returns
-        ---
-        float
-        """
-        return self.ax + self.by + self.cz
-
-    def array(self) -> list[float]:
-        """
-
-        Returns
-        ---
-        list[float]
-        """
-        return [
-            self.ax, self.ay, self.az,
-            self.bx, self.by, self.bz,
-            self.cx, self.cy, self.cz
-        ]
-
-    def multi_array(self) -> list[list[float]]:
-        """
-
-        Returns
-        ---
-        list[list[float]]
-        """
-        return [
-            [self.ax, self.ay, self.az],
-            [self.bx, self.by, self.bz],
-            [self.cx, self.cy, self.cz]
-        ]
-  
-
-
-# --- MATRIX_4
-
-
-
-class Mat4Error(Exception):
-    '''Custom error for matrix 4x4'''
-
-    def __init__(self, msg: str):
-        super().__init__(msg)
-
-
-@dataclass(eq= False, repr= True, slots= True)
-class Mat4:
-    ax: float= 0.0
-    ay: float= 0.0
-    az: float= 0.0
-    aw: float= 0.0
-    bx: float= 0.0
-    by: float= 0.0
-    bz: float= 0.0
-    bw: float= 0.0
-    cx: float= 0.0
-    cy: float= 0.0
-    cz: float= 0.0
-    cw: float= 0.0
-    dx: float= 0.0
-    dy: float= 0.0
-    dz: float= 0.0
-    dw: float= 0.0
-
-    def __getitem__(self, idx):
-        match clampi(idx, 0, 15):
-            case 0: 
-                return self.ax
-            case 1: 
-                return self.ay
-            case 2: 
-                return self.az
-            case 3: 
-                return self.aw
-            case 4: 
-                return self.bx
-            case 5: 
-                return self.by
-            case 6: 
-                return self.bz
-            case 7: 
-                return self.bw
-            case 8: 
-                return self.cx
-            case 9: 
-                return self.cy
-            case 10: 
-                return self.cz
-            case 11: 
-                return self.cw
-            case 12: 
-                return self.dx
-            case 13: 
-                return self.dy
-            case 14: 
-                return self.dz
-            case 15: 
-                return self.dw
-        raise Mat4Error('out of range')
-
-    def __add__(self, other):
-        if not isinstance(other, Mat4):
-            raise Mat4Error('not of type mat4')
-
-        ax: float= self.ax + other.ax
-        ay: float= self.ay + other.ay
-        az: float= self.az + other.az
-        aw: float= self.aw + other.aw
-        bx: float= self.bx + other.bx
-        by: float= self.by + other.by
-        bz: float= self.bz + other.bz
-        bw: float= self.bw + other.bw
-        cx: float= self.cx + other.cx
-        cy: float= self.cy + other.cy
-        cz: float= self.cz + other.cz
-        cw: float= self.cw + other.cw
-        dx: float= self.dx + other.dx
-        dy: float= self.dy + other.dy
-        dz: float= self.dz + other.dz
-        dw: float= self.dw + other.dw
-
-        return Mat4(
-            ax, ay, az, aw,
-            bx, by, bz, bw,
-            cx, cy, cz, cw,
-            dx, dy, dz, dw
-        )
-
-    def __sub__(self, other):
-        if not isinstance(other, Mat4):
-            raise Mat4Error('not of type mat4')
-
-        ax: float= self.ax - other.ax
-        ay: float= self.ay - other.ay
-        az: float= self.az - other.az
-        aw: float= self.aw - other.aw
-        bx: float= self.bx - other.bx
-        by: float= self.by - other.by
-        bz: float= self.bz - other.bz
-        bw: float= self.bw - other.bw
-        cx: float= self.cx - other.cx
-        cy: float= self.cy - other.cy
-        cz: float= self.cz - other.cz
-        cw: float= self.cw - other.cw
-        dx: float= self.dx - other.dx
-        dy: float= self.dy - other.dy
-        dz: float= self.dz - other.dz
-        dw: float= self.dw - other.dw
-
-        return Mat4(
-            ax, ay, az, aw,
-            bx, by, bz, bw,
-            cx, cy, cz, cw,
-            dx, dy, dz, dw
-        )
-
-    def __mul__(self, other):
-        if not isinstance(other, Mat4):
-            raise Mat4Error('not of type Mat4')
-        ax: float= (
-            (self.ax * other.ax) +
-            (self.ay * other.bx) +
-            (self.az * other.cx) +
-            (self.aw * other.dx)
-        )
-
-        ay: float= (
-            (self.ax * other.ay) +
-            (self.ay * other.by) +
-            (self.az * other.cy) +
-            (self.aw * other.dy)
-        )
-
-        az: float= (
-            (self.ax * other.az) +
-            (self.ay * other.bz) +
-            (self.az * other.cz) +
-            (self.aw * other.dz)
-        )
-
-        aw: float= (
-            (self.ax * other.aw) +
-            (self.ay * other.bw) +
-            (self.az * other.cw) +
-            (self.aw * other.dw)
-        )
-
-        bx: float= (
-            (self.bx * other.ax) +
-            (self.by * other.bx) +
-            (self.bz * other.cx) +
-            (self.bw * other.dx)
-        )
-
-        by: float= (
-            (self.bx * other.ay) +
-            (self.by * other.by) +
-            (self.bz * other.cy) +
-            (self.bw * other.dy)
-        )
-
-        bz: float= (
-            (self.bx * other.az) +
-            (self.by * other.bz) +
-            (self.bz * other.cz) +
-            (self.bw * other.dz)
-        )
-
-        bw: float= (
-            (self.bx * other.aw) +
-            (self.by * other.bw) +
-            (self.bz * other.cw) +
-            (self.bw * other.dw)
-        )
-
-        cx: float= (
-            (self.cx * other.ax) +
-            (self.cy * other.bx) +
-            (self.cz * other.cx) +
-            (self.cw * other.dx)
-        )
-
-        cy: float= (
-            (self.cx * other.ay) +
-            (self.cy * other.by) +
-            (self.cz * other.cy) +
-            (self.cw * other.dy)
-        )
-
-        cz: float= (
-            (self.cx * other.az) +
-            (self.cy * other.bz) +
-            (self.cz * other.cz) +
-            (self.cw * other.dz)
-        )
-
-        cw: float= (
-            (self.cx * other.aw) +
-            (self.cy * other.bw) +
-            (self.cz * other.cw) +
-            (self.cw * other.dw)
-        )
-
-        dx: float= (
-            (self.dx * other.ax) +
-            (self.dy * other.bx) +
-            (self.dz * other.cx) +
-            (self.dw * other.dx)
-        )
-
-        dy: float= (
-            (self.dx * other.ay) +
-            (self.dy * other.by) +
-            (self.dz * other.cy) +
-            (self.dw * other.dy)
-        )
-
-        dz: float= (
-            (self.dx * other.az) +
-            (self.dy * other.bz) +
-            (self.dz * other.cz) +
-            (self.dw * other.dz)
-        )
-
-        dw: float= (
-            (self.dx * other.aw) +
-            (self.dy * other.bw) +
-            (self.dz * other.cw) +
-            (self.dw * other.dw)
-        )
-
-        return Mat4(
-            ax, ay, az, aw,
-            bx, by, bz, bw,
-            cx, cy, cz, cw,
-            dx, dy, dz, dw
-        )
-
-    @staticmethod
-    def identity() -> 'Mat4':
-        """Create an identity mat4 matrix
-
-        Returns
-        ---
-        Mat4
-        """
-        return Mat4(ax= 1.0, by= 1.0, cz= 1.0, dw= 1.0)
-
-    @staticmethod
-    def create_scaler(v3: Vec3) -> 'Mat4':
-        """Create a scaler mat4 matrix
-
-        Returns
-        ---
-        Mat4
-        """
-        return Mat4(ax= v3.x, by= v3.y, cz= v3.z, dw= 1.0)
-
-    @staticmethod
-    def create_translation(v3: Vec3) -> 'Mat4':
-        """Create a translation mat4 matrix
-
-        Returns
-        ---
-        Mat4
-        """
-        return Mat4(
-            ax= 1.0,
-            by= 1.0,
-            cz= 1.0,
-            dx= v3.x,
-            dy= v3.y,
-            dz= v3.z,
-            dw= 1.0
-        )
-
-    @staticmethod
-    def create_x_shear(shear_y: float, shear_z: float) -> 'Mat4':
-        """Create a shear mat4 matrix on x axis
-
-        Returns
-        ---
-        Mat4
-        """
-        return Mat4(
-            ax= 1.0,
-            ay= shear_y,
-            az= shear_z,
-            by= 1.0,
-            cz= 1.0,
-            dw= 1.0
-        )
-
-    @staticmethod
-    def create_y_shear(shear_x: float, shear_z: float) -> 'Mat4':
-        """Create a shear mat4 matrix on y axis
-
-        Returns
-        ---
-        Mat4
-        """
-        return Mat4(
-            ax= 1.0,
-            bx= shear_x, 
-            by= 1.0, 
-            bz= shear_z,
-            cz= 1.0,
-            dw= 1.0
-        )
-
-    @staticmethod
-    def create_z_shear(shear_x: float, shear_y: float) -> 'Mat4':
-        """Create a shear mat4 matrix on z axis
-
-        Returns
-        ---
-        Mat4
-        """
-        return Mat4(
-            ax= 1.0,
-            by= 1.0,
-            cx= shear_x,
-            cy= shear_y, 
-            cz= 1.0,
-            dw= 1.0
-        )
-
-    @staticmethod
-    def create_x_rotation(angle_deg: float) -> 'Mat4':
-        """Create a rotation *X* mat4 matrix
-
-        Returns
-        ---
-        Mat4
-        """
-        angle_rad: float= to_radians(angle_deg)
-
-        c: float= cos(angle_rad)
-        s: float= sin(angle_rad)
-
-        return Mat4(ax= 1.0, by= c, bz= -s, cy= s, cz= c, dw= 1.0)
-
-    @staticmethod
-    def create_y_rotation(angle_deg: float) -> 'Mat4':
-        """Create a rotation *y* mat4 matrix
-
-        Returns
-        ---
-        Mat4
-        """
-        angle_rad: float= to_radians(angle_deg)
-
-        c: float= cos(angle_rad)
-        s: float= sin(angle_rad)
-
-        return Mat4(ax= c, az= s, by= 1.0, cx= -s, cz= c, dw= 1.0)
-      
-    @staticmethod
-    def create_z_rotation(angle_deg: float) -> 'Mat4':
-        """Create a rotation *z* mat4 matrix
-
-        Returns
-        ---
-        Mat4
-        """
-        angle_rad: float= to_radians(angle_deg)
-
-        c: float= cos(angle_rad)
-        s: float= sin(angle_rad)
-
-        return Mat4(ax= c, ay= -s, bx= s, by= c, cz= 1.0, dw= 1.0)   
-  
-    @staticmethod
-    def from_axis(angle_deg: float, unit_axis: Vec3) -> 'Mat4':
+    def create_axis(angle_deg: float, unit_axis: Vec3) -> 'Mat3':
         """Create a rotated matrix
 
         Parameters
         ---
         angle_deg : float
 
-        axis : Vec3
+        unit_axis : Vec3
 
         Returns
         ---
-        Mat4
-            rotated mat4
+        Mat3
         """
         if not unit_axis.is_unit():
             unit_axis.to_unit()
@@ -2558,97 +1837,827 @@ class Mat4:
         ax: float= xx + c
         ay: float= xy - sin_z
         az: float= xz + sin_y
-        aw: float= 0.0
         bx: float= xy + sin_z
         by: float= yy + c
         bz: float= yz - sin_x
-        bw: float= 0.0
         cx: float= xz - sin_y
         cy: float= yz + sin_x
         cz: float= zz + c
-        cw: float= 0.0
-        dx: float= 0.0
-        dy: float= 0.0
-        dz: float= 0.0
-        dw: float= 1.0
 
-        return Mat4 (
-            ax, ay, az, aw,
-            bx, by, bz, bw,
-            cx, cy, cz, cw,
-            dx, dy, dz, dw
+        return Mat3(
+            Vec3(ax, ay, az),
+            Vec3(bx, by, bz),
+            Vec3(cx, cy, cz)
         )
 
-
     @staticmethod
-    def from_quat(qx: float, qy: float, qz: float, qw: float) -> 'Mat4':
-        x2: float= sqr(qx)
-        y2: float= sqr(qy)
-        z2: float= sqr(qz)
-        w2: float= sqr(qw)
+    def create_from_quaternion(q: 'Quaternion') -> 'Mat3':
+        x2: float= sqr(q.x)
+        y2: float= sqr(q.y)
+        z2: float= sqr(q.z)
+        w2: float= sqr(q.w)
 
-        xy: float= qx * qy
-        xz: float= qx * qz
-        xw: float= qx * qw
+        xy: float= q.x * q.y
+        xz: float= q.x * q.z
+        xw: float= q.x * q.w
 
-        yz: float= qy * qz
-        yw: float= qy * qw
+        yz: float= q.y * q.z
+        yw: float= q.y * q.w
 
-        zw: float= qz * qw
+        zw: float= q.z * q.w
 
         s2: float= 2.0 / (x2 + y2 + z2 + w2)
 
         ax: float= 1.0 - (s2 * (y2 + z2))
         ay: float= s2 * (xy + zw)
         az: float= s2 * (xz - yw)
-        aw: float= 0.0
         bx: float= s2 * (xy - zw)
         by: float= 1.0 - (s2 * (x2 + z2))
         bz: float= s2 * (yz + xw)
-        bw: float= 0.0
         cx: float= s2 * (xz + yw)
         cy: float= s2 * (yz - xw)
         cz: float= 1.0 - (s2 * (x2 + y2))
-        cw: float= 0.0
-        dx: float= 0.0
-        dy: float= 0.0
-        dz: float= 0.0
-        dw: float= 1.0
-
-        return Mat4(
-            ax, ay, az, aw,
-            bx, by, bz, bw,
-            cx, cy, cz, cw,
-            dx, dy, dz, dw
+    
+        return Mat3(
+            Vec3(ax, ay, az),
+            Vec3(bx, by, bz),
+            Vec3(cx, cy, cz),
         )
 
     @staticmethod
-    def create_look_at(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
-        """Create a mat4 matrix *look at* field of view
+    def identity() -> 'Mat3':
+        """Create an identity mat3 matrix
+
+        Returns
+        ---
+        Mat3
+        """
+        return Mat3(
+            Vec3(x= 1.0),
+            Vec3(y= 1.0),
+            Vec3(z= 1.0)
+        )
+
+    @staticmethod
+    def create_scaler(v3: Vec3) -> 'Mat3':
+        """Create a scaler mat3 matrix
+
+        Returns
+        ---
+        Mat3
+        """
+        return Mat3(
+            Vec3(x= v3.x),
+            Vec3(y= v3.y),
+            Vec3(z= v3.z)
+        )
+    
+    @staticmethod
+    def create_rotation_x(angle_deg: float) -> 'Mat3':
+        """Create a rotation *X* mat3 matrix
+
+        Returns
+        ---
+        Mat3
+        """
+        angle_rad: float= to_radians(angle_deg)
+
+        c: float= cos(angle_rad)
+        s: float= sin(angle_rad)
+
+        return Mat3(
+            Vec3(x= 1.0),
+            Vec3(y= c, z= -s),
+            Vec3(y= s, z= c)
+        )
+
+    @staticmethod
+    def create_rotation_y(angle_deg: float) -> 'Mat3':
+        """Create a rotation *y* mat3 matrix
+
+        Returns
+        ---
+        Mat3
+        """
+        angle_rad: float= to_radians(angle_deg)
+
+        c: float= cos(angle_rad)
+        s: float= sin(angle_rad)
+
+        return Mat3(
+            Vec3(x= c, z= s),
+            Vec3(y= 1.0),
+            Vec3(x= -s, z= c)
+        )
+
+    @staticmethod
+    def create_rotation_z(angle_deg: float) -> 'Mat3':
+        """Create a rotation *z* mat3 matrix
+
+        Returns
+        ---
+        Mat3
+        """
+        angle_rad: float= to_radians(angle_deg)
+
+        c: float= cos(angle_rad)
+        s: float= sin(angle_rad)
+        
+        return Mat3(
+            Vec3(x= c, y= -s),
+            Vec3(x= s, y= c),
+            Vec3(z= 1.0)
+        )
+
+    def copy(self) -> 'Mat3':
+        """Return a copy
+
+        Returns
+        ---
+        Mat3
+        """
+        return Mat3(self.row0.copy(), self.row1.copy(), self.row2.copy)
+
+    def scale(self, by: float) -> 'Mat3':
+        """Return a scaled copy of self
+
+        Returns
+        ---
+        Mat3
+        """
+        r0: Vec3= self.row0 * by
+        r1: Vec3= self.row1 * by
+        r2: Vec3= self.row2 * by
+        return Mat3(r0, r1, r2)
+
+    def transpose(self) -> 'Mat3':
+        """Return a transposed copy of self
+
+        Returns
+        ---
+        Mat3
+        """
+        r0: Vec3= self.col0()
+        r1: Vec3= self.col1()
+        r2: Vec3= self.col2()
+        return Mat3(r0, r1, r2)
+
+    def cofactor(self) -> 'Mat3':
+        """Return a cofactor copy of self
+
+        Returns
+        ---
+        Mat3
+        """
+        ax: float= self.row0.x
+        ay: float= -self.row0.y
+        az: float= self.row0.z
+        bx: float= -self.row1.bx
+        by: float= self.row1.by
+        bz: float= -self.row1.bz
+        cx: float= self.row2.cx
+        cy: float= -self.row2.cy
+        cz: float= self.row2.cz
+
+        return Mat3(
+            Vec3(ax, ay, az),
+            Vec3(bx, by, bz),
+            Vec3(cx, cy, cz)
+        )
+
+    def to_unit(self) -> None:
+        """Normalize the length of self
+
+        Raises
+        ---
+        Mat3Error
+            if the determinant of self is zero
+        """
+        det: float= self.determinant()
+
+        if is_zero(det):
+            raise Mat3Error('length of this Mat4 was zero')
+
+        inv: float= 1.0 / det
+        self.row0.copy_from(self.row0 * inv)
+        self.row1.copy_from(self.row1 * inv)
+        self.row2.copy_from(self.row2 * inv)
+
+    def unit(self) -> 'Mat3':
+        """Return a copy of self with normalized length
+
+        Returns
+        ---
+        Mat3
+            
+        Raises
+        ---
+        Mat3Error
+            if the determinant of self is zero
+        """
+        det: float= self.determinant()
+
+        if is_zero(det):
+            raise Mat3Error('length of this Mat3 was zero')
+
+        inv: float= 1.0 / det
+
+        r0: Vec3= self.row0 * inv
+        r1: Vec3= self.row1 * inv
+        r2: Vec3= self.row2 * inv
+
+        return Mat3(r0, r1, r2)
+
+    def inverse(self) -> 'Mat3':
+        """Return the inverse of self
+
+        Returns
+        ---
+        Mat3
+        """
+        a: float= self.row0.x
+        b: float= self.row0.y
+        c: float= self.row0.z
+        d: float= self.row1.x
+        e: float= self.row1.y
+        f: float= self.row1.z
+        g: float= self.row2.x
+        h: float= self.row2.y
+        i: float= self.row2.z
+
+        det: float= self.determinant()
+        inv: float= 1.0 / det
+
+        ax: float= (e * i - h * f) * inv
+        ay: float= (g * f - d * i) * inv
+        az: float= (d * h - g * e) * inv
+        bx: float= (h * c - b * i) * inv
+        by: float= (a * i - g * c) * inv
+        bz: float= (g * b - a * h) * inv
+        cx: float= (b * f - e * c) * inv
+        cy: float= (d * c - a * f) * inv
+        cz: float= (a * e - d * b) * inv
+
+        return Mat3(
+            Vec3(ax, ay, az),
+            Vec3(bx, by, bz),
+            Vec3(cx, cy, cz)
+        )
+
+    def col0(self) -> Vec3:
+        """Return column of float values
+
+        Returns
+        ---
+        Vec3
+        """
+        return Vec3(self.row0.x, self.row1.x, self.row2.x)
+
+    def col1(self) -> Vec3:
+        """Return column of float values
+
+        Returns
+        ---
+        Vec3
+        """
+        return Vec3(self.row0.y, self.row1.y, self.row2.y)
+
+    def col2(self) -> Vec3:
+        """Return column of float values
+
+        Returns
+        ---
+        Vec3
+        """
+        return Vec3(self.row0.z, self.row1.z, self.row2.z)
+
+    def multiply_v3(self, v3: Vec3) -> Vec3:
+        """Return mat3 multiplyed by vec3
+        
+        Returns
+        ---
+        Vec3
+        """
+        x: float= v3.dot(self.col0()),
+        y: float= v3.dot(self.col1()),
+        z: float= v3.dot(self.col2()),
+        return Vec3(x, y, z)
+
+    def get_rotation(self) -> 'Quaternion':
+        """Get rotation from matrix
+        
+        Returns
+        ---
+        Quaternion
+        """
+        result: Vec4= Vec4()
+
+        ax: float= self.row0.x
+        ay: float= self.row0.y
+        az: float= self.row0.z
+        bx: float= self.row1.x
+        by: float= self.row1.y
+        bz: float= self.row1.z
+        cx: float= self.row2.x
+        cy: float= self.row2.y
+        cz: float= self.row2.z
+
+        if ax + by + cz > 0:
+            sq: float= sqrt(ax + by + cz + 1.0) * 2.0
+            result.w= 0.25 * sq
+            result.x= (bz - cy) / sq
+            result.y= (cx - az) / sq
+            result.z= (ay - bx) / sq
+        elif ax > by and ax > cz:
+            sq: float= sqrt(1.0 + ax - by - cz) * 2.0
+            result.w= (bz - cy) / sq
+            result.x= 0.25 * sq
+            result.y= (ay + bx) / sq
+            result.z= (cx + az) / sq
+        elif by > cz: 
+            sq: float= sqrt(1.0 + by - ax - cz) * 2.0
+            result.w= (cx - az) / sq
+            result.x= (ay + bx) / sq
+            result.y= 0.25 * sq
+            result.z= (bz + cy) / sq
+        else:
+            sq: float= sqrt(1.0 + cz - ax - by) * 2.0
+            result.w= (ay - bx) / sq
+            result.x= (cx + az) / sq
+            result.y= (bz + cy) / sq
+            result.z= 0.25 * sq
+
+        if not result.is_unit():
+            result.to_unit()
+
+        return Quaternion.create_from_vec4(result)
+    
+    def get_at(self, row: int, col: int) -> float:
+        if row == 0:
+            return self.row0[col]
+        if row == 1:
+            return self.row1[col]
+        if row == 2:
+            return self.row2[col]
+        raise Mat3Error('out of range')
+
+    def set_at(self, row: int, col: int, value: float) -> None:
+        if row == 0:
+            self.row0[col]= value
+            return
+
+        if row == 1:
+            self.row1[col]= value
+            return
+
+        if row == 2:
+            self.row2[col]= value
+            return
+
+        raise Mat3Error('out of range')
+
+    def determinant(self) -> float:
+        """Return the determinant of self
+
+        Returns
+        ---
+        float
+        """
+        a0: float= self.row0.x * self.row1.y * self.row2.z
+        a1: float= self.row0.y * self.row1.z * self.row2.x
+        a2: float= self.row0.z * self.row1.x * self.row2.y
+        b1: float= self.row0.z * self.row1.y * self.row2.x
+        b2: float= self.row0.x * self.row1.z * self.row2.y
+        b3: float= self.row0.y * self.row1.x * self.row2.z
+
+        return a0 + a1 + a2 - b1 - b2 - b3
+
+    def trace(self) -> float:
+        """Return the sum of the trace values
+
+        Returns
+        ---
+        float
+        """
+        return self.row0.x + self.row1.y + self.row2.z
+
+    def array(self) -> list[float]:
+        """
+
+        Returns
+        ---
+        list[float]
+        """
+        return [
+            self.row0.x, self.row0.y, self.row0.z,
+            self.row1.x, self.row1.y, self.row1.z,
+            self.row2.x, self.row2.y, self.row2.z
+        ]
+
+    def multi_array(self) -> list[list[float]]:
+        """
+
+        Returns
+        ---
+        list[list[float]]
+        """
+        return [
+            [self.row0.x, self.row0.y, self.row0.z],
+            [self.row1.x, self.row1.y, self.row1.z],
+            [self.row2.x, self.row2.y, self.row2.z]
+        ]
+  
+
+
+# --- MATRIX_4
+
+
+
+class Mat4Error(Exception):
+    '''Custom error for matrix 4x4'''
+
+    def __init__(self, msg: str):
+        super().__init__(msg)
+
+
+@dataclass(eq= False, repr= True, slots= True)
+class Mat4:
+    row0: Vec4= Vec4()
+    row1: Vec4= Vec4()
+    row2: Vec4= Vec4()
+    row3: Vec4= Vec4()
+
+    def __getitem__(self, idx):
+        match clampi(idx, 0, 15):
+            case 0: 
+                return self.row0.x
+            case 1: 
+                return self.row0.y
+            case 2: 
+                return self.row0.z
+            case 3: 
+                return self.row0.w
+            case 4: 
+                return self.row1.x
+            case 5: 
+                return self.row1.y
+            case 6: 
+                return self.row1.z
+            case 7: 
+                return self.row1.w
+            case 8: 
+                return self.row2.x
+            case 9: 
+                return self.row2.y
+            case 10: 
+                return self.row2.z
+            case 11: 
+                return self.row2.w
+            case 12: 
+                return self.row3.x
+            case 13: 
+                return self.row3.y
+            case 14: 
+                return self.row3.z
+            case 15: 
+                return self.row3.w
+        raise Mat4Error('out of range')
+
+    def __add__(self, other):
+        if not isinstance(other, Mat4):
+            raise Mat4Error('not of type mat4')
+        r0: Vec4= self.row0 + other.row0
+        r1: Vec4= self.row1 + other.row1
+        r2: Vec4= self.row2 + other.row2
+        r3: Vec4= self.row3 + other.row3
+        
+        return Mat4(r0, r1, r2, r3)
+
+    def __sub__(self, other):
+        if not isinstance(other, Mat4):
+            raise Mat4Error('not of type mat4')
+
+        r0: Vec4= self.row0 - other.row0
+        r1: Vec4= self.row1 - other.row1
+        r2: Vec4= self.row2 - other.row2
+        r3: Vec4= self.row3 - other.row3
+
+        return Mat4(r0, r1, r2, r3)
+
+    def __mul__(self, other):
+        if not isinstance(other, Mat4):
+            raise Mat4Error('not of type Mat4')
+        r0: Vec4 = Vec4(
+            self.row0.dot(other.col0()),
+            self.row0.dot(other.col1()),
+            self.row0.dot(other.col2()),
+            self.row0.dot(other.col3())
+        )
+
+        r1: Vec4 = Vec4(
+            self.row1.dot(other.col0()),
+            self.row1.dot(other.col1()),
+            self.row1.dot(other.col2()),
+            self.row1.dot(other.col3())
+        )
+
+        r2: Vec4 = Vec4(
+            self.row2.dot(other.col0()),
+            self.row2.dot(other.col1()),
+            self.row2.dot(other.col2()),
+            self.row2.dot(other.col3())
+        )
+
+        r3: Vec4 = Vec4(
+            self.row3.dot(other.col0()),
+            self.row3.dot(other.col1()),
+            self.row3.dot(other.col2()),
+            self.row3.dot(other.col3())
+        )
+
+        return Mat4(r0, r1, r2, r3)
+
+    @staticmethod
+    def create_from_values(
+        ax: float, ay: float, az: float, aw: float,
+        bx: float, by: float, bz: float, bw: float,
+        cx: float, cy: float, cz: float, cw: float,
+        dx: float, dy: float, dz: float, dw: float
+    ) -> 'Mat4':
+        return Mat4(
+            Vec4(ax, ay, az, aw),
+            Vec4(bx, by, bz, bw),
+            Vec4(cx, cy, cz, cw),
+            Vec4(dx, dy, dz, dw),
+        )
+
+    @staticmethod
+    def identity() -> 'Mat4':
+        """Create an identity mat4 matrix
 
         Returns
         ---
         Mat4
         """
-        z: Vec3 = (eye - target)
-        if not z.is_unit():
-            z.to_unit()
+        return  Mat4(
+            Vec4(x= 1.0),
+            Vec4(y= 1.0),
+            Vec4(z= 1.0),
+            Vec4(w= 1.0)
+        )
 
-        if z.is_zero():
-            return Mat4.identity()
+    @staticmethod
+    def create_scaler(v3: Vec3) -> 'Mat4':
+        """Create a scaler mat4 matrix
 
-        x: Vec3= up.cross(z).unit()
-        y: Vec3= z.cross(x).unit()
+        Returns
+        ---
+        Mat4
+        """
+        return  Mat4(
+            Vec4(x= v3.x),
+            Vec4(y= v3.y),
+            Vec4(z= v3.z),
+            Vec4(w= 1.0)
+        )
 
-        dx: float= -x.dot(eye)
-        dy: float= -y.dot(eye)
-        dz: float= -z.dot(eye)
+    @staticmethod
+    def create_translation(v3: Vec3) -> 'Mat4':
+        """Create a translation mat4 matrix
+
+        Returns
+        ---
+        Mat4
+        """
+        return  Mat4(
+            Vec4(x= 1.0),
+            Vec4(y= 1.0),
+            Vec4(z= 1.0),
+            Vec4.from_v3(v3, 1.0)
+        )
+
+    @staticmethod
+    def create_shear_x(shear_y: float, shear_z: float) -> 'Mat4':
+        """Create a shear mat4 matrix on x axis
+
+        Returns
+        ---
+        Mat4
+        """
+        return  Mat4(
+            Vec4(x= 1.0, y= shear_y, z= shear_z),
+            Vec4(y= 1.0),
+            Vec4(z= 1.0),
+            Vec4(w= 1.0)
+        )
+
+    @staticmethod
+    def create_shear_y(shear_x: float, shear_z: float) -> 'Mat4':
+        """Create a shear mat4 matrix on y axis
+
+        Returns
+        ---
+        Mat4
+        """
+        return  Mat4(
+            Vec4(x= 1.0),
+            Vec4(x= shear_x, y= 1.0, z= shear_z),
+            Vec4(z= 1.0),
+            Vec4(w= 1.0)
+        )
+
+    @staticmethod
+    def create_shear_z(shear_x: float, shear_y: float) -> 'Mat4':
+        """Create a shear mat4 matrix on z axis
+
+        Returns
+        ---
+        Mat4
+        """
+        return  Mat4(
+            Vec4(x= 1.0),
+            Vec4(y= 1.0),
+            Vec4(x= shear_x, y= shear_y, z= 1.0),
+            Vec4(w= 1.0)
+        )
+
+    @staticmethod
+    def create_rotation_x(angle_deg: float) -> 'Mat4':
+        """Create a rotation *X* mat4 matrix
+
+        Returns
+        ---
+        Mat4
+        """
+        angle_rad: float= to_radians(angle_deg)
+
+        c: float= cos(angle_rad)
+        s: float= sin(angle_rad)
+
+        return  Mat4(
+            Vec4(x= 1.0),
+            Vec4(y= c, z= -s),
+            Vec4(y= s, z= c),
+            Vec4(w= 1.0)
+        )
+
+    @staticmethod
+    def create_rotation_y(angle_deg: float) -> 'Mat4':
+        """Create a rotation *y* mat4 matrix
+
+        Returns
+        ---
+        Mat4
+        """
+        angle_rad: float= to_radians(angle_deg)
+
+        c: float= cos(angle_rad)
+        s: float= sin(angle_rad)
+
+        return  Mat4(
+            Vec4(x= c, z= s),
+            Vec4(y= 1.0),
+            Vec4(x= -s, z= c),
+            Vec4(w= 1.0)
+        )
+
+    @staticmethod
+    def create_rotation_z(angle_deg: float) -> 'Mat4':
+        """Create a rotation *z* mat4 matrix
+
+        Returns
+        ---
+        Mat4
+        """
+        angle_rad: float= to_radians(angle_deg)
+
+        c: float= cos(angle_rad)
+        s: float= sin(angle_rad)
+
+        return  Mat4(
+            Vec4(x= c, y= -s),
+            Vec4(x= s, y= c),
+            Vec4(z= 1.0),
+            Vec4(w= 1.0)
+        )
+  
+    @staticmethod
+    def create_axis(angle_deg: float, unit_axis: Vec3) -> 'Mat4':
+        """Create a rotated matrix
+
+        Parameters
+        ---
+        angle_deg : float
+
+        axis : Vec3
+
+        Returns
+        ---
+        Mat4
+        """
+        if not unit_axis.is_unit():
+            unit_axis.to_unit()
+
+        rad: float= to_radians(angle_deg)
+        x: float= unit_axis.x
+        y: float= unit_axis.y
+        z: float= unit_axis.z
+        c: float= cos(rad)
+        s: float= sin(rad)
+        t: float = 1.0 - c
+
+        xx: float= t * sqr(x)
+        xy: float= t * x * y
+        xz: float= t * x * z
+        yy: float= t * sqr(y)
+        yz: float= t * y * z
+        zz: float= t * sqr(z)
+
+        sin_x: float= s * x
+        sin_y: float= s * y
+        sin_z: float= s * z
+        
+        ax: float= xx + c
+        ay: float= xy - sin_z
+        az: float= xz + sin_y
+        bx: float= xy + sin_z
+        by: float= yy + c
+        bz: float= yz - sin_x
+        cx: float= xz - sin_y
+        cy: float= yz + sin_x
+        cz: float= zz + c
+
+        return Mat4 (
+            Vec4(x= ax, y= ay, z= az),
+            Vec4(x= bx, y= by, z= bz),
+            Vec4(x= cx, y= cy, z= cz),
+            Vec4(w= 1.0)
+        )
+
+    @staticmethod
+    def create_from_quaternion(q: 'Quaternion') -> 'Mat4':
+        x2: float= sqr(q.x)
+        y2: float= sqr(q.y)
+        z2: float= sqr(q.z)
+        w2: float= sqr(q.w)
+
+        xy: float= q.x * q.y
+        xz: float= q.x * q.z
+        xw: float= q.x * q.w
+
+        yz: float= q.y * q.z
+        yw: float= q.y * q.w
+
+        zw: float= q.z * q.w
+
+        s2: float= 2.0 / (x2 + y2 + z2 + w2)
+
+        ax: float= 1.0 - (s2 * (y2 + z2))
+        ay: float= s2 * (xy + zw)
+        az: float= s2 * (xz - yw)
+        bx: float= s2 * (xy - zw)
+        by: float= 1.0 - (s2 * (x2 + z2))
+        bz: float= s2 * (yz + xw)
+        cx: float= s2 * (xz + yw)
+        cy: float= s2 * (yz - xw)
+        cz: float= 1.0 - (s2 * (x2 + y2))
 
         return Mat4(
-            x.x, y.x, z.x, 0.0,
-            x.y, y.y, z.y, 0.0,
-            x.z, y.z, z.z, 0.0,
-            dx, dy, dz, 1.0
+            Vec4(x= ax, y= ay, z= az),
+            Vec4(x= bx, y= by, z= bz),
+            Vec4(x= cx, y= cy, z= cz),
+            Vec4(w= 1.0)
+        )
+
+    @staticmethod
+    def create_orthographic(
+        left: float,
+        right: float,
+        top: float,
+        bottom: float,
+        near: float,
+        far: float
+    ) -> 'Mat4':
+        """Create a orthographic projection matrix
+
+        Returns
+        ---
+        Mat4
+        """
+        inv_rl: float= 1.0 / (right - left)
+        inv_tb: float= 1.0 / (top - bottom)
+        inv_fn: float= 1.0 / (far - near)
+
+        rl: float= right + left
+        tb: float= top + bottom
+        fn: float= far + near
+
+        return Mat4(
+            Vec4(x= 2.0 * inv_rl),
+            Vec4(y= 2.0 * inv_tb),
+            Vec4(z= -2.0 * inv_fn),
+            Vec4(x= -rl * inv_rl, y= -tb * inv_tb, z= -fn * inv_fn, w= 1.0),
+
         )
 
     @staticmethod
@@ -2675,39 +2684,101 @@ class Mat4:
         c: float= cos(inv_r) / s
 
         return Mat4(
-            ax= c/aspect,
-            by= c,
-            cz= -(far+near) / dz,
-            cw= -1.0,
-            dz= -2.0 * near * far / dz,
-            dw= 0.0
+            Vec4(x= c / aspect),
+            Vec4(y= c),
+            Vec4(z= -(far + near) / dz, w= -1.0),
+            Vec4(z= -2.0 * near * far / dz)
         )
 
     @staticmethod
-    def create_ortho(left: float, right: float, top: float, bottom: float, near: float, far: float) -> 'Mat4':
-        """Create a mat4 matrix *ortho* field of view
+    def create_look_at(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
+        """Create a mat4 matrix *look at* field of view
 
         Returns
         ---
         Mat4
         """
-        inv_rl: float= 1.0 / (right - left)
-        inv_tb: float= 1.0 / (top - bottom)
-        inv_fn: float= 1.0 / (far - near)
+        z: Vec3 = (eye - target)
+        if not z.is_unit():
+            z.to_unit()
 
-        rl: float= right + left
-        tb: float= top + bottom
-        fn: float= far + near
+        if z.is_zero():
+            return Mat4.identity()
+
+        x: Vec3= up.cross(z)
+        if not x.is_unit():
+            x.to_unit()
+
+        y: Vec3= z.cross(x)
+        if not y.is_unit():
+            y.to_unit()
+
+        d: Vec3= Vec3(
+            -x.dot(eye),
+            -y.dot(eye),
+            -z.dot(eye)
+        )
 
         return Mat4(
-            ax= 2.0 * inv_rl,
-            by= 2.0 * inv_tb,
-            cz= -2.0 * inv_fn,
-            dx= -rl * inv_rl,
-            dy= -tb * inv_tb,
-            dz= -fn * inv_fn,
-            dw= 1.0
+            Vec4(x= x.x, y= y.x, z= z.x),
+            Vec4(x= x.y, y= y.y, z= z.y),
+            Vec4(x= x.z, y= y.z, z= z.z),
+            Vec4.from_v3(d, 1.0)
         )
+
+    def added(self, other: 'Mat4') -> None:
+        r0: Vec4= self.row0 + other.row0
+        r1: Vec4= self.row1 + other.row1
+        r2: Vec4= self.row2 + other.row2
+        r3: Vec4= self.row3 + other.row3
+
+        self.row0.x = r0.x
+        self.row0.y = r0.y
+        self.row0.z = r0.z
+        self.row0.w = r0.w
+
+        self.row1.x = r1.x
+        self.row1.y = r1.y
+        self.row1.z = r1.z
+        self.row1.w = r1.w
+
+        self.row2.x = r2.x
+        self.row2.y = r2.y
+        self.row2.z = r2.z
+        self.row2.w = r2.w
+
+        self.row3.x = r3.x
+        self.row3.y = r3.y
+        self.row3.z = r3.z
+        self.row3.w = r3.w
+
+    def multiplyed(self, other: 'Mat4') -> None:
+        """Multiply self with other
+
+        Parameters
+        ---
+        other : Mat4
+        """
+        self.row0.x= self.row0.dot(other.col0())
+        self.row0.y= self.row0.dot(other.col1())
+        self.row0.z= self.row0.dot(other.col2())
+        self.row0.w= self.row0.dot(other.col3())
+
+        self.row1.x= self.row1.dot(other.col0())
+        self.row1.y= self.row1.dot(other.col1())
+        self.row1.z= self.row1.dot(other.col2())
+        self.row1.w= self.row1.dot(other.col3())
+
+        self.row2.x= self.row2.dot(other.col0())
+        self.row2.y= self.row2.dot(other.col1())
+        self.row2.z= self.row2.dot(other.col2())
+        self.row2.w= self.row2.dot(other.col3())
+
+        self.row3.x= self.row3.dot(other.col0())
+        self.row3.y= self.row3.dot(other.col1())
+        self.row3.z= self.row3.dot(other.col2())
+        self.row3.w= self.row3.dot(other.col3())
+
 
     def copy(self) -> 'Mat4':
         """Return a copy
@@ -2717,10 +2788,10 @@ class Mat4:
         Mat4
         """
         return Mat4(
-            self.ax, self.ay, self.az, self.aw,
-            self.bx, self.by, self.bz, self.bw,
-            self.cx, self.cy, self.cz, self.cw,
-            self.dx, self.dy, self.dz, self.dw
+            self.row0.copy(),
+            self.row1.copy(),
+            self.row2.copy(),
+            self.row3.copy(),
         )
 
     def scale(self, by: float) -> 'Mat4':
@@ -2730,29 +2801,12 @@ class Mat4:
         ---
         Mat4
         """
-        ax: float= self.ax * by
-        ay: float= self.ay * by
-        az: float= self.az * by
-        aw: float= self.aw * by
-        bx: float= self.bx * by
-        by: float= self.by * by
-        bz: float= self.bz * by
-        bw: float= self.bw * by
-        cx: float= self.cx * by
-        cy: float= self.cy * by
-        cz: float= self.cz * by
-        cw: float= self.cw * by
-        dx: float= self.dx * by
-        dy: float= self.dy * by
-        dz: float= self.dz * by
-        dw: float= self.dw * by
+        r0: Vec4= self.row0 * by
+        r1: Vec4= self.row1 * by
+        r2: Vec4= self.row2 * by
+        r3: Vec4= self.row3 * by
 
-        return Mat4(
-            ax, ay, az, aw,
-            bx, by, bz, bw,
-            cx, cy, cz, cw,
-            dx, dy, dz, dw
-        )
+        return Mat4(r0, r1, r2, r3)
 
     def transpose(self) -> 'Mat4':
         """Return a transposed copy of self
@@ -2761,29 +2815,12 @@ class Mat4:
         ---
         Mat4
         """
-        ax: float= self.ax
-        ay: float= self.bx
-        az: float= self.cx
-        aw: float= self.dx
-        bx: float= self.ay
-        by: float= self.by
-        bz: float= self.cy
-        bw: float= self.dy
-        cx: float= self.az
-        cy: float= self.bz
-        cz: float= self.cz
-        cw: float= self.dz
-        dx: float= self.aw
-        dy: float= self.bw
-        dz: float= self.cw
-        dw: float= self.dw
+        r0: Vec4= self.col0()
+        r1: Vec4= self.col1()
+        r2: Vec4= self.col2()
+        r3: Vec4= self.col3()
 
-        return Mat4(
-            ax, ay, az, aw,
-            bx, by, bz, bw,
-            cx, cy, cz, cw,
-            dx, dy, dz, dw
-        )
+        return Mat4(r0, r1, r2, r3)
 
     def cofactor(self) -> 'Mat4':
         """Return a cofactor copy of self
@@ -2792,28 +2829,28 @@ class Mat4:
         ---
         Mat4
         """
-        ax: float= self.ax
-        ay: float= -self.ay
-        az: float= self.az
-        aw: float= -self.aw
-        bx: float= -self.bx
-        by: float= self.by
-        bz: float= -self.bz
-        bw: float= self.bw
-        cx: float= self.cx
-        cy: float= -self.cy
-        cz: float= self.cz
-        cw: float= -self.cw
-        dx: float= -self.dx
-        dy: float= self.dy
-        dz: float= -self.dz
-        dw: float= self.dw
+        ax: float= self.row0.x
+        ay: float= -self.row0.y
+        az: float= self.row0.z
+        aw: float= -self.row0.w
+        bx: float= -self.row1.x
+        by: float= self.row1.y
+        bz: float= -self.row1.z
+        bw: float= self.row1.w
+        cx: float= self.row2.x
+        cy: float= -self.row2.y
+        cz: float= self.row2.z
+        cw: float= -self.row2.w
+        dx: float= -self.row3.x
+        dy: float= self.row3.y
+        dz: float= -self.row3.z
+        dw: float= self.row3.w
 
         return Mat4(
-            ax, ay, az, aw,
-            bx, by, bz, bw,
-            cx, cy, cz, cw,
-            dx, dy, dz, dw
+            Vec4(ax, ay, az, aw),
+            Vec4(bx, by, bz, bw),
+            Vec4(cx, cy, cz, cw),
+            Vec4(dx, dy, dz, dw)
         )
 
     def inverse(self) -> 'Mat4':
@@ -2823,22 +2860,22 @@ class Mat4:
         ---
         Mat4
         """
-        a00: float= self.ax
-        a01: float= self.ay
-        a02: float= self.az
-        a03: float= self.aw
-        a10: float= self.bx
-        a11: float= self.by
-        a12: float= self.bz
-        a13: float= self.bw
-        a20: float= self.cx
-        a21: float= self.cy
-        a22: float= self.cz
-        a23: float= self.cw
-        a30: float= self.dx
-        a31: float= self.dy
-        a32: float= self.dz
-        a33: float= self.dw
+        a00: float= self.row0.x
+        a01: float= self.row0.y
+        a02: float= self.row0.z
+        a03: float= self.row0.w
+        a10: float= self.row1.x
+        a11: float= self.row1.y
+        a12: float= self.row1.z
+        a13: float= self.row1.w
+        a20: float= self.row2.x
+        a21: float= self.row2.y
+        a22: float= self.row2.z
+        a23: float= self.row2.w
+        a30: float= self.row3.x
+        a31: float= self.row3.y
+        a32: float= self.row3.z
+        a33: float= self.row3.w
 
         b00: float= a00 * a11 - a01 * a10
         b01: float= a00 * a12 - a02 * a10
@@ -2853,14 +2890,14 @@ class Mat4:
         b10: float= a21 * a33 - a23 * a31
         b11: float= a22 * a33 - a23 * a32
 
-        det: float = (
+        det: float= (
             b00 * b11 - b01 *
             b10 + b02 * b09 +
             b03 * b08 - b04 *
             b07 + b05 * b06
         )
 
-        inv: float = 1.0 / det
+        inv: float= 1.0 / det
 
         ax: float= (a11 * b11 - a12 * b10 + a13 * b09) * inv
         ay: float= (-a01 * b11 + a02 * b10 - a03 * b09) * inv
@@ -2880,10 +2917,10 @@ class Mat4:
         dw: float= (a20 * b03 - a21 * b01 + a22 * b00) * inv
 
         return Mat4(
-            ax, ay, az, aw,
-            bx, by, bz, bw,
-            cx, cy, cz, cw,
-            dx, dy, dz, dw
+            Vec4(ax, ay, az, aw),
+            Vec4(bx, by, bz, bw),
+            Vec4(cx, cy, cz, cw),
+            Vec4(dx, dy, dz, dw)
         )
 
     def to_unit(self) -> None:
@@ -2900,22 +2937,10 @@ class Mat4:
             raise Mat4Error('length of this Mat4 was zero')
 
         inv: float= 1.0 / det
-        self.ax *= inv  
-        self.ay *= inv 
-        self.az *= inv  
-        self.aw *= inv  
-        self.bx *= inv  
-        self.by *= inv  
-        self.bz *= inv  
-        self.bw *= inv  
-        self.cx *= inv  
-        self.cy *= inv  
-        self.cz *= inv  
-        self.cw *= inv  
-        self.dx *= inv  
-        self.dy *= inv  
-        self.dz *= inv  
-        self.dw *= inv  
+        self.row0.copy_from(self.row0 * inv)
+        self.row1.copy_from(self.row1 * inv)
+        self.row2.copy_from(self.row2 * inv)
+        self.row3.copy_from(self.row3 * inv)
 
     def unit(self) -> 'Mat4':
         """Return a copy of self with normalized length
@@ -2934,65 +2959,79 @@ class Mat4:
         if is_zero(det):
             raise Mat4Error('length of this Mat4 was zero')
 
-        return self.scale(1.0 / det)
+        inv: float= 1.0 / det
 
-    def get_translation(self) -> Vec3:
-        """Return translation
+        return Mat4(
+            self.row0 * inv,
+            self.row1 * inv,
+            self.row2 * inv,
+            self.row3 * inv,
+        )
+
+    def get_transform(self) -> Vec3:
+        """Return matrix transform values
 
         Retruns
         ---
         Vec3
         """
-        return Vec3(self.dx, self.dy, self.dz)
+        return self.row3.xyz()
 
-    def get_rotation(self) -> Vec4:
+    def get_rotation(self) -> 'Quaternion':
         """Get rotation from matrix
         
         Returns
         ---
-        Vec4
+        Quaternion
         """
-        x: float= 0.0
-        y: float= 0.0
-        z: float= 0.0
-        w: float= 0.0
 
-        if self.ax + self.by + self.cz > 0:
-            s: float= sqrt(self.ax + self.by + self.cz + 1.0) * 2.0
-            w= 0.25 * s
-            x= (self.bz - self.cy) / s
-            y= (self.cx - self.az) / s
-            z= (self.ay - self.bx) / s
-        elif self.ax > self.by and self.ax > self.cz:
-            s: float= sqrt(1.0 + self.ax - self.by - self.cz) * 2.0
-            w= (self.bz - self.cy) / s
-            x= 0.25 * s
-            y= (self.ay + self.bx) / s
-            z= (self.cx + self.az) / s
-        elif self.by > self.cz: 
-            s: float= sqrt(1.0 + self.by - self.ax - self.cz) * 2.0
-            w= (self.cx - self.az) / s
-            x= (self.ay + self.bx) / s
-            y= 0.25 * s
-            z= (self.bz + self.cy) / s
+        ax: float = self.row0.x
+        ay: float = self.row0.y
+        az: float = self.row0.z
+
+        bx: float = self.row1.x
+        by: float = self.row1.y
+        bz: float = self.row1.z
+
+        cx: float = self.row2.x
+        cy: float = self.row2.y
+        cz: float = self.row2.z
+
+        result: Vec4= Vec4()
+
+        if ax + by + cz > 0:
+            sq: float= sqrt(ax + by + cz + 1.0) * 2.0
+            result.w= 0.25 * sq
+            result.x= (bz - cy) / sq
+            result.y= (cx - az) / sq
+            result.z= (ay - bx) / sq
+        elif ax > by and ax > cz:
+            sq: float= sqrt(1.0 + ax - by - cz) * 2.0
+            result.w= (bz - cy) / sq
+            result.x= 0.25 * sq
+            result.y= (ay + bx) / sq
+            result.z= (cx + az) / sq
+        elif by > cz: 
+            sq: float= sqrt(1.0 + by - ax - cz) * 2.0
+            result.w= (cx - az) / sq
+            result.x= (ay + bx) / sq
+            result.y= 0.25 * sq
+            result.z= (bz + cy) / sq
         else:
-            s: float= sqrt(1.0 + self.cz - self.ax - self.by) * 2.0
-            w= (self.ay - self.bx) / s
-            x= (self.cx + self.az) / s
-            y= (self.bz + self.cy) / s
-            z= 0.25 * s
-
-        return Vec4(x, y, z, w)
+            sq: float= sqrt(1.0 + cz - ax - by) * 2.0
+            result.w= (ay - bx) / sq
+            result.x= (cx + az) / sq
+            result.y= (bz + cy) / sq
+            result.z= 0.25 * sq
+        
+        return Quaternion.create_from_vec4(result)
 
     def get_scale(self) -> Vec3:
         """Return scaler from matrix
         """
-        x: float= sqrt(sqr(self.ax) + sqr(self.ay) + sqr(self.az))
-        y: float= sqrt(sqr(self.bx) + sqr(self.by) + sqr(self.bz))
-        z: float= sqrt(sqr(self.cx) + sqr(self.cy) + sqr(self.cz))
-
-        if self.determinant() < 0:
-            x = x * -1.0
+        x: float= self.row0.xyz().length_sqrt()
+        y: float= self.row1.xyz().length_sqrt()
+        z: float= self.row2.xyz().length_sqrt()
 
         return Vec3(x, y, z)
 
@@ -3003,71 +3042,11 @@ class Mat4:
         ---
         Vec4
         """
-        x: float= (
-            v4.x * self.ax +
-            v4.y * self.bx +
-            v4.z * self.cx +
-            v4.w * self.dx
-        )
-
-        y: float= (
-            v4.x * self.ay +
-            v4.y * self.by +
-            v4.z * self.cy +
-            v4.w * self.dy
-        )
-
-        z: float= (
-            v4.x * self.az +
-            v4.y * self.bz +
-            v4.z * self.cz +
-            v4.w * self.dz
-        )
-
-        w: float= (
-            v4.x * self.aw +
-            v4.y * self.bw +
-            v4.z * self.cw +
-            v4.w * self.dw
-        )
-        
-        return Vec4(x, y, z, w)
-
-    def row0(self) -> Vec4:
-        """Return the first row of float values
-
-        Returns
-        ---
-        Vec4
-        """
-        return Vec4(self.ax, self.ay, self.az, self.aw)
-
-    def row1(self) -> Vec4:
-        """Return the second row of float values
-        
-        Returns
-        ---
-        Vec4
-        """
-        return Vec4(self.bx, self.by, self.bz, self.bw)
-
-    def row2(self) -> Vec4:
-        """Return the third row of float values
-
-        Returns
-        ---
-        Vec4
-        """
-        return Vec4(self.cx, self.cy, self.cz, self.cw)
-
-    def row3(self) -> Vec4:
-        """Return the fourth row of float values
-
-        Returns
-        ---
-        Vec4
-        """
-        return Vec4(self.dx, self.dy, self.dz, self.dw)
+        x: float= v4.dot(self.col0()),
+        y: float= v4.dot(self.col1()),
+        z: float= v4.dot(self.col2()),
+        w: float= v4.dot(self.col3())
+        return Vec4(x,y,z,w)
 
     def col0(self) -> Vec4:
         """Return the first column of float values
@@ -3076,7 +3055,11 @@ class Mat4:
         ---
         Vec4
         """
-        return Vec4(self.ax, self.bx, self.cx, self.dx)
+        x: float = self.row0.x
+        y: float = self.row1.x
+        z: float = self.row2.x
+        w: float = self.row3.x
+        return Vec4(x,y,z,w)
 
     def col1(self) -> Vec4:
         """Return the second column of float values
@@ -3085,7 +3068,11 @@ class Mat4:
         ---
         Vec4
         """
-        return Vec4(self.ay, self.by, self.cy, self.dy)
+        x: float = self.row0.y
+        y: float = self.row1.y
+        z: float = self.row2.y
+        w: float = self.row3.y
+        return Vec4(x,y,z,w)
 
     def col2(self) -> Vec4:
         """Return the third column of float values
@@ -3094,7 +3081,11 @@ class Mat4:
         ---
         Vec4
         """
-        return Vec4(self.az, self.bz, self.cz, self.dz)
+        x: float = self.row0.z
+        y: float = self.row1.z
+        z: float = self.row2.z
+        w: float = self.row3.z
+        return Vec4(x,y,z,w)
 
     def col3(self) -> Vec4:
         """Return the fourth column of float values
@@ -3103,10 +3094,41 @@ class Mat4:
         ---
         Vec4
         """
-        return Vec4(self.aw, self.bw, self.cw, self.dw)
+        x: float = self.row0.w
+        y: float = self.row1.w
+        z: float = self.row2.w
+        w: float = self.row3.w
+        return Vec4(x,y,z,w)
 
-    def at(self, row: int, col: int) -> float:
-        return self[col * 4 + row]
+    def get_at(self, row: int, col: int) -> float:
+        if row == 0:
+            return self.row0[col]
+        if row == 1:
+            return self.row1[col]
+        if row == 2:
+            return self.row2[col]
+        if row == 3:
+            return self.row3[col]
+        raise Mat4Error('out of range')
+
+    def set_at(self, row: int, col: int, value: float) -> float:
+        if row == 0:
+            self.row0[col]= value
+            return
+
+        if row == 1:
+            self.row1[col]= value
+            return
+
+        if row == 2:
+            self.row2[col]= value
+            return
+
+        if row == 3:
+            self.row3[col]= value
+            return
+
+        raise Mat4Error('out of range')
 
     def determinant(self) -> float:
         """Return the determinant of self
@@ -3115,22 +3137,22 @@ class Mat4:
         ---
         float
         """
-        a00: float= self.ax
-        a01: float= self.ay
-        a02: float= self.az
-        a03: float= self.aw
-        a10: float= self.bx
-        a11: float= self.by
-        a12: float= self.bz
-        a13: float= self.bw
-        a20: float= self.cx
-        a21: float= self.cy
-        a22: float= self.cz
-        a23: float= self.cw
-        a30: float= self.dx
-        a31: float= self.dy
-        a32: float= self.dz
-        a33: float= self.dw
+        a00: float= self.row0.x
+        a01: float= self.row0.y
+        a02: float= self.row0.z
+        a03: float= self.row0.w
+        a10: float= self.row1.x
+        a11: float= self.row1.y
+        a12: float= self.row1.z
+        a13: float= self.row1.w
+        a20: float= self.row2.x
+        a21: float= self.row2.y
+        a22: float= self.row2.z
+        a23: float= self.row2.w
+        a30: float= self.row3.x
+        a31: float= self.row3.y
+        a32: float= self.row3.z
+        a33: float= self.row3.w
 
         b00: float= a30 * a21 * a12 * a03
         b01: float= a20 * a31 * a12 * a03
@@ -3173,7 +3195,7 @@ class Mat4:
         ---
         float
         """
-        return self.ax + self.by + self.cz + self.dw
+        return self.row0.x + self.row1.y + self.row2.z + self.row3.w
 
     def array(self) -> list[float]:
         """
@@ -3183,10 +3205,10 @@ class Mat4:
         list[float]
         """
         return [
-            self.ax, self.ay, self.az, self.aw,
-            self.bx, self.by, self.bz, self.bw,
-            self.cx, self.cy, self.cz, self.cw,
-            self.dx, self.dy, self.dz, self.dw
+            self.row0.x, self.row0.y, self.row0.z, self.row0.w,
+            self.row1.x, self.row1.y, self.row1.z, self.row1.w,
+            self.row2.x, self.row2.y, self.row2.z, self.row2.w,
+            self.row3.x, self.row3.y, self.row3.z, self.row3.w
         ]
 
     def multi_array(self) -> list[list[float]]:
@@ -3197,10 +3219,10 @@ class Mat4:
         list[list[float]]
         """
         return [
-            [self.ax, self.ay, self.az, self.aw],
-            [self.bx, self.by, self.bz, self.bw],
-            [self.cx, self.cy, self.cz, self.cw],
-            [self.dx, self.dy, self.dz, self.dw]
+            [self.row0.x, self.row0.y, self.row0.z, self.row0.w],
+            [self.row1.x, self.row1.y, self.row1.z, self.row1.w],
+            [self.row2.x, self.row2.y, self.row2.z, self.row2.w],
+            [self.row3.x, self.row3.y, self.row3.z, self.row3.w]
         ]
 
 
@@ -3285,43 +3307,43 @@ class Quaternion:
             z= z1 * w2 + z2 * w1 + cz,
             w= w1 * w2 - dt
         )
-
+    
     @staticmethod
-    def from_euler(x_rotation: float, y_rotation: float, z_rotation: float) -> 'Quaternion':
+    def create_from_vec4(v4: Vec4) -> 'Quaternion':
+        return Quaternion(v4.x, v4.y, v4.z, v4.w)
+    
+    @staticmethod
+    def from_euler(x: float, y: float, z: float) -> 'Quaternion':
         """Create from euler angles
 
         Parameters
         ---
-        x_rotation : float
+        x : float
         
-        y_rotation : float
+        y : float
         
-        z_rotation : float
+        z : float
  
         Returns
         ---
         Quaternion
         """
-        rx: float= to_radians(x_rotation) * 0.5
-        ry: float= to_radians(y_rotation) * 0.5
-        rz: float= to_radians(z_rotation) * 0.5
-
-        sx: float= sin(rx)
-        cx: float= cos(rx)
-        sy: float= sin(ry)
-        cy: float= cos(ry)
-        sz: float= sin(rz)
-        cz: float= cos(rz)
+        sx: float= sin(to_radians(x) * 0.5)
+        cx: float= cos(to_radians(x) * 0.5)
+        sy: float= sin(to_radians(y) * 0.5)
+        cy: float= cos(to_radians(y) * 0.5)
+        sz: float= sin(to_radians(z) * 0.5)
+        cz: float= cos(to_radians(z) * 0.5)
 
         return Quaternion(
-            x= (sx * cy * cz) + (cx * sy * sz),
-            y= (cx * sy * cz) + (sx * cy * sz),
-            z= (cx * cy * sz) - (sx * sy * cz),
-            w= (cx * cy * cz) - (sx * sy * sz)
+            (sx * cy * cz) + (cx * sy * sz),
+            (cx * sy * cz) + (sx * cy * sz),
+            (cx * cy * sz) - (sx * sy * cz),
+            (cx * cy * cz) - (sx * sy * sz)
         )
 
     @staticmethod
-    def from_axis(angle_deg: float, unit_axis: Vec3) -> 'Quaternion':
+    def create_axis(angle_deg: float, unit_axis: Vec3) -> 'Quaternion':
         """Create a quaternion from an angle and axis of rotation
 
         Parameters
@@ -3362,7 +3384,7 @@ class Quaternion:
                 v3= Vec3.unit_y().cross(start)
         
             v3.to_unit()
-            return Quaternion.from_axis(to_degreese(PI), v3)
+            return Quaternion.create_axis(to_degreese(PI), v3)
 
         if dot > absf(-1.0 + EPSILON):
             return Quaternion(w=1.0)
@@ -3375,9 +3397,7 @@ class Quaternion:
 
         Parameters
         ---
-        begin : Quaternion
-        
-        end : Quaternion
+        to : Quaternion
 
         weight : float
 
@@ -3395,16 +3415,19 @@ class Quaternion:
     def nlerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
         """Return normalized lerp
         """
-        return self.lerp(to, weight).unit()
+        result= self.lerp(to, weight)
+
+        if not result.is_unit():
+            result.to_unit()
+    
+        return result
 
     def slerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
         """Return the spherical linear interpolation between two quaternions
 
         Parameters
         ---
-        begin : Quaternion
-
-        end : Quaternion
+        to : Quaternion
 
         weight : float
 
@@ -3412,31 +3435,36 @@ class Quaternion:
         ---
         Quaternion
         """
-        scale0: float= 0.0
-        scale1: float= 0.0
-        v4: Vec4= Vec4(to.x, to.y, to.z, to.w)
+        weight0: float= 0.0
+        weight1: float= 0.0
         cosine: float= self.dot(to)
 
         if cosine < 0.0:
             cosine *= -1.0
-            v4 = v4 * -1.0
+            to.scale(-1.0)
         
-        if (1.0 - cosine) > EPSILON:
+        if cosine < 0.99:
             omega: float= arccos(cosine)
             sinom: float= sin(omega)
-            scale0= sin((1.0 - weight) * omega) / sinom
-            scale1= sin(weight * omega) / sinom
+            inv_sinom: float= 1.0 / sinom
+            weight0= sin(omega * (1.0 - weight)) * inv_sinom
+            weight1= sin(omega * weight) * inv_sinom
         else:
-            scale0= 1.0 - weight
-            scale1= weight
+            weight0= 1.0 - weight
+            weight1= weight
 
-        return Quaternion(
-            x= scale0 * self.x + scale1 * v4.x,
-            y= scale0 * self.y + scale1 * v4.y,
-            z= scale0 * self.z + scale1 * v4.z,
-            w= scale0 * self.w + scale1 * v4.w
+        result= Quaternion(
+            x= weight0 * self.x + weight1 * to.x,
+            y= weight0 * self.y + weight1 * to.y,
+            z= weight0 * self.z + weight1 * to.z,
+            w= weight0 * self.w + weight1 * to.w
         )
- 
+
+        if not result.is_unit():
+            result.to_unit()
+
+        return result
+
     def copy(self) -> 'Quaternion':
         """Return a copy of self
 
@@ -3445,6 +3473,12 @@ class Quaternion:
         Quaternion
         """
         return Quaternion(self.x, self.y, self.z, self.z)
+
+    def copy_from(self, other: 'Quaternion') -> None:
+        self.w = other.w
+        self.x = other.x
+        self.y = other.y
+        self.z = other.z
 
     def conjugate(self) -> 'Quaternion':
         """Return the conjugate of self
@@ -3580,6 +3614,9 @@ class Quaternion:
             z= self.z * inv
         )
 
+    def xyz(self) -> Vec3:
+        return Vec3(self.x, self.y, self.z)
+
     def to_mat4(self) -> Mat4:
         """Create a mat4 matrix based on quaternion's current values
 
@@ -3620,7 +3657,7 @@ class Quaternion:
         dz: float= 0.0
         dw: float= 1.0
 
-        return Mat4(
+        return Mat4.create_from_values(
             ax, ay, az, aw,
             bx, by, bz, bw,
             cx, cy, cz, cw,
@@ -3656,14 +3693,14 @@ class Quaternion:
         ---
         float
         """
-        return (
-            (self.x * other.x) +
-            (self.y * other.y) +
-            (self.z * other.z) +
-            (self.w * other.w)
-        )
+        x2: float= self.x * other.x
+        y2: float= self.y * other.y
+        z2: float= self.z * other.z
+        w2: float= self.w * other.w
 
-    def get_rotation_axis_angle(self) -> float:
+        return x2 + y2 + z2 + w2
+
+    def get_axis_angle_rotation(self) -> float:
         """Return the current angle of self in radians
 
         Returns
@@ -3716,62 +3753,3 @@ class Quaternion:
         bool
         """
         return is_one(self.length_sqr())
-
-
-
-# --- TRANSFORM
-
-
-
-@dataclass(eq= False, repr= False, slots= True)
-class Transform:
-    position: Vec3= Vec3()
-    scale: Vec3= Vec3(1.0, 1.0, 1.0)
-    angle_deg: float= 0.0
-    unit_axis: Vec3= Vec3(1.0, 1.0, 1.0)
-
-    def set_translation(self, v3: Vec3) -> None:
-        self.position.x= v3.x
-        self.position.y= v3.y
-        self.position.z= v3.z
-
-    def set_rotation(self, angle_deg: float, unit_axis: Vec3) -> None:
-        self.angle_deg= angle_deg
-
-        if not unit_axis.is_unit():
-            unit_axis.to_unit()
-
-        self.unit_axis.x= unit_axis.x
-        self.unit_axis.y= unit_axis.y
-        self.unit_axis.z= unit_axis.z
-
-    def set_scale(self, scale: Vec3) -> None:
-        self.scale.x= scale.x
-        self.scale.y= scale.y
-        self.scale.z= scale.z
-
-    def get_matrix(self) -> Mat4:
-        """Return transform matrix
-
-        Returns
-        ---
-        glm.Mat4
-        """
-        
-        # Quaternion.from_axis(self.angle, self.axis).to_mat4()
-
-        return (
-            Mat4.create_translation(self.position) *
-            Mat4.from_axis(self.angle_deg, self.unit_axis) *
-            Mat4.create_scaler(self.scale)
-        )
-    
-    def get_matrix_inverse(self) -> Mat4:
-        """Return transform matrix inverse
-
-        Returns
-        ---
-        glm.Mat4
-        """
-        matrix: Mat4= self.get_matrix()
-        return matrix.inverse()

@@ -1,7 +1,8 @@
 """Main
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
+from typing import Optional
 
 import glfw
 from loguru import logger
@@ -9,6 +10,7 @@ from OpenGL import GL
 
 from py_opengl import utils
 from py_opengl import maths
+from py_opengl import transform
 from py_opengl import clock
 from py_opengl import shader
 from py_opengl import vbo
@@ -18,6 +20,7 @@ from py_opengl import camera
 from py_opengl import window
 from py_opengl import texture
 from py_opengl import color
+from py_opengl import geometry
 
 
 
@@ -37,10 +40,10 @@ class IObject(ABC):
 
 @dataclass(eq= False, repr= False, slots= True)
 class Triangle(IObject):
-    vbo_: vbo.Vbo|None= None
-    shader_: shader.Shader|None= None
-    texture_: texture.Texture|None= None
-    transform_: maths.Transform|None= None
+    vbo_: Optional[vbo.Vbo]= None
+    shader_: Optional[shader.Shader]= None
+    text: Optional[texture.Texture]= None
+    trans: Optional[transform.Transform]= None
 
     def __post_init__(self):
         verts_pts: list[maths.Pt3]=  [
@@ -53,12 +56,6 @@ class Triangle(IObject):
             maths.Pt3(1.0, 0.0, 0.0),
             maths.Pt3(0.0, 1.0, 0.0),
             maths.Pt3(0.0, 0.0, 1.0)
-        ]
-
-        normals_pts: list[maths.Pt3]=  [
-            maths.Pt3(1.0, 1.0, 1.0),
-            maths.Pt3(1.0, 1.0, 1.0),
-            maths.Pt3(1.0, 1.0, 1.0)
         ]
 
         tex_coords_pts: list[maths.Pt2]=  [
@@ -75,31 +72,37 @@ class Triangle(IObject):
 
         self.vbo_= vbo.Vbo(length=len(indices_pts) * 3)
         self.shader_= shader.Shader()
-        self.texture_= texture.Texture()
-        self.transform_= maths.Transform()
+        self.text= texture.Texture()
+        self.trans= transform.Transform()
 
-        self.texture_.compile('grid512.bmp')
+        self.text.compile('grid512.bmp')
         self.shader_.compile('shader.vert', 'shader.frag')
-        self.vbo_.setup(verts_pts, color_pts, normals_pts, tex_coords_pts, indices_pts)
+        self.vbo_.setup(verts_pts, color_pts, tex_coords_pts, indices_pts)
 
     def draw(self) -> None:
-        self.texture_.use()
+        self.text.use()
         self.shader_.use()
         self.vbo_.use(vbo.VboDrawMode.TRIANGLES)
 
     def clean(self) -> None:
         self.shader_.clean()
-        self.texture_.clean()
+        self.text.clean()
         self.vbo_.clean()
 
 
 @dataclass(eq= False, repr= False, slots= True)
 class Cube(IObject):
-    vbo_: vbo.Vbo|None= None
-    shader_: shader.Shader|None= None
-    texture_: texture.Texture|None= None
-    transform_: maths.Transform|None= None
-    size: maths.Vec3 = maths.Vec3(1.0, 1.0, 1.0)
+    vbo_: Optional[vbo.Vbo]= None
+    shader_: Optional[shader.Shader]= None
+    text: Optional[texture.Texture]= None
+    trans: Optional[transform.Transform]= None
+    size: maths.Vec3= maths.Vec3(1.0, 1.0, 1.0)
+
+    verts: list[maths.Pt3]= field(default_factory=list)
+    colors: list[maths.Pt3]= field(default_factory=list)
+    normals: list[maths.Pt3]= field(default_factory=list)
+    tex_coords: list[maths.Pt2]= field(default_factory=list)
+    indices: list[maths.Pt3Int]= field(default_factory=list)
 
     def __post_init__(self):
 
@@ -107,7 +110,7 @@ class Cube(IObject):
         hh: float= self.size.y * 0.5
         hd: float= self.size.z * 0.5
 
-        verts_pts: list[maths.Pt3]=  [
+        self.verts: list[maths.Pt3]=  [
             maths.Pt3( hw, hh, hd), 
             maths.Pt3(-hw, hh, hd),
             maths.Pt3(-hw,-hh, hd), 
@@ -139,7 +142,7 @@ class Cube(IObject):
             maths.Pt3( hw, hh,-hd)
         ]
 
-        color_pts: list[maths.Pt3]=  [
+        self.colors: list[maths.Pt3]=  [
             maths.Pt3(1.0, 1.0, 1.0), 
             maths.Pt3(1.0, 1.0, 0.0), 
             maths.Pt3(1.0, 0.0, 0.0), 
@@ -171,39 +174,7 @@ class Cube(IObject):
             maths.Pt3(0.0, 1.0, 1.0)
         ]
 
-        normals_pts: list[maths.Pt3]=  [
-            maths.Pt3(0.0, 0.0, 1.0),
-            maths.Pt3(0.0, 0.0, 1.0),
-            maths.Pt3(0.0, 0.0, 1.0),
-            maths.Pt3(0.0, 0.0, 1.0),
-
-            maths.Pt3(0.0, 1.0, 0.0),
-            maths.Pt3(0.0, 1.0, 0.0),
-            maths.Pt3(0.0, 1.0, 0.0),
-            maths.Pt3(0.0, 1.0, 0.0),
-
-            maths.Pt3(1.0, 0.0, 0.0),
-            maths.Pt3(1.0, 0.0, 0.0),
-            maths.Pt3(1.0, 0.0, 0.0),
-            maths.Pt3(1.0, 0.0, 0.0),
-
-            maths.Pt3(0.0, 0.0, 1.0),   
-            maths.Pt3(0.0, 0.0, 1.0),   
-            maths.Pt3(0.0, 0.0, 1.0),   
-            maths.Pt3(0.0, 0.0, 1.0),
-
-            maths.Pt3(0.0, 1.0, 0.0),   
-            maths.Pt3(0.0, 1.0, 0.0),   
-            maths.Pt3(0.0, 1.0, 0.0),   
-            maths.Pt3(0.0, 1.0, 0.0),
-
-            maths.Pt3(1.0, 0.0, 0.0),   
-            maths.Pt3(1.0, 0.0, 0.0),   
-            maths.Pt3(1.0, 0.0, 0.0),   
-            maths.Pt3(1.0, 0.0, 0.0)
-        ]
-
-        tex_coords_pts: list[maths.Pt2]=  [
+        self.tex_coords: list[maths.Pt2]=  [
             maths.Pt2(1.0, 0.0),
             maths.Pt2(0.0, 0.0),
             maths.Pt2(0.0, 1.0),
@@ -235,7 +206,7 @@ class Cube(IObject):
             maths.Pt2(0.0, 0.0)
         ]
    
-        indices_pts: list[maths.Pt3Int]= [
+        self.indices: list[maths.Pt3Int]= [
             maths.Pt3Int( 0,  1,  2),
             maths.Pt3Int( 2,  3,  0),
             maths.Pt3Int( 4,  5,  6),
@@ -250,25 +221,55 @@ class Cube(IObject):
             maths.Pt3Int(22, 23, 20)
         ]
 
-        self.vbo_= vbo.Vbo(length=len(indices_pts) * 3)
+        self.vbo_= vbo.Vbo(length=len(self.indices) * 3)
         self.shader_= shader.Shader() 
-        self.texture_= texture.Texture()
-        self.transform_= maths.Transform()
+        self.text= texture.Texture()
+        self.trans= transform.Transform()
 
-        self.texture_.compile('grid512.bmp')
+        self.text.compile('grid512.bmp')
         self.shader_.compile('shader.vert', 'shader.frag')
-        self.vbo_.setup(verts_pts, color_pts, normals_pts, tex_coords_pts, indices_pts)
+        self.vbo_.setup(
+            self.verts,
+            self.colors,
+            self.tex_coords,
+            self.indices
+        )
 
     def draw(self) -> None:
-        self.texture_.use()
+        self.text.use()
         self.shader_.use()
         self.vbo_.use(vbo.VboDrawMode.TRIANGLES)
 
     def clean(self) -> None:
-        self.texture_.clean()
+        self.text.clean()
         self.shader_.clean()
         self.vbo_.clean()
 
+    # # TODO
+    # def compute_aabb(self) -> geometry.AABB:
+    #     p0= self.transform_.get_transformed()
+    #     minpt= p0.copy()
+    #     maxpt= p0.copy()
+
+    #     for v in self.verts:
+    #         p1=self.transform_.get_v3_transformed_from_current_transform(maths.Vec3(v.x, v.y, v.z))
+
+    #         if p1.x < minpt.x:
+    #             minpt.x= p1.x
+    #         elif p1.x > maxpt.x:
+    #             maxpt.x= p1.x
+
+    #         if p1.y < minpt.y:
+    #             minpt.y= p1.y
+    #         elif p1.y > maxpt.y:
+    #             maxpt.y= p1.y
+
+    #         if p1.z < minpt.z:
+    #             minpt.z= p1.z
+    #         elif p1.z > maxpt.z:
+    #             maxpt.z= p1.z
+
+    #     return geometry.AABB.from_min_max(minpt, maxpt)
 
 # --- CALLBACKS
 
@@ -328,9 +329,6 @@ def main() -> None:
         last_mp:maths.Vec3= maths.Vec3.zero()
 
         shape: Cube= Cube()
-        offset: float= 1.0
-        speed: float= 0.15
-        ang: float= 0.0
 
         while not glwin.should_close():
             time.update()
@@ -344,17 +342,10 @@ def main() -> None:
 
             # shape
             shape.draw()
+            shape.trans.rotated(10.0 * time.delta, maths.Vec3(x= 0.5, y= 1.0))
+            # shape.trans.translated(maths.Vec3(x= 1.4) * time.delta)
 
-            shape.transform_.set_rotation(float(time.ticks), maths.Vec3(x= 0.5, y= 1.0))
-            shape.transform_.set_translation(
-                maths.Vec3(
-                    x= maths.sin(ang) * offset,
-                    y= maths.cos(ang) * offset
-                )
-            )
-            ang += (speed * time.delta)
-   
-            m: maths.Mat4= shape.transform_.get_matrix()
+            m: maths.Mat4= shape.trans.model_matrix()
             v: maths.Mat4= cam.view_matrix()
             p: maths.Mat4= cam.projection_matrix()
 

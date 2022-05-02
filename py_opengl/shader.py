@@ -73,7 +73,7 @@ class Shader:
         ---
         variable_name : str
 
-        value : glm.Vec2
+        value : maths.Vec2
 
         """
         GL.glUniform2f(
@@ -89,7 +89,7 @@ class Shader:
         ---
         variable_name : str
 
-        value : glm.Vec3
+        value : maths.Vec3
 
         """
         GL.glUniform3f(
@@ -106,7 +106,7 @@ class Shader:
         ---
         variable_name : str
 
-        value : glm.Vec4
+        value : maths.Vec4
 
         """
         GL.glUniform4f(
@@ -124,7 +124,7 @@ class Shader:
         ---
         variable_name : str
 
-        value : glm.Mat4
+        value : maths.Mat4
 
         """
         GL.glUniformMatrix4fv(
