@@ -1,15 +1,12 @@
 """Geometry
 """
 from dataclasses import dataclass
-# from typing import Final, Optional
 from enum import Enum, auto
-from pydoc import plain
-# from abc import ABC, abstractmethod
 
 from py_opengl import maths
 
 
-# --- ENUM
+# --- IDs
 
 
 class GeometryID(Enum):
@@ -18,36 +15,6 @@ class GeometryID(Enum):
     SPHERE= auto()
     PLAIN= auto()
     RAY= auto()
-
-
-# ---
-
-
-# class ITranslate(ABC):
-#     @abstractmethod
-#     def translate(v3: maths.Vec3):
-#         pass
-
-# class IRotate(ABC):
-#     @abstractmethod
-#     def rotate(angle_deg: float, unit_axis: maths.Vec3):
-#         pass
-
-# class ITransformable(ITranslate, IRotate):
-#     pass
-
-
-# --- LINE
-
-
-@dataclass(eq= False, repr= False, slots= True)
-class Line:
-    start: maths.Vec3= maths.Vec3()
-    end: maths.Vec3= maths.Vec3()
-    id: GeometryID= GeometryID.LINE
-
-    def length(self) -> float:
-        return self.start.distance_sqrt(self.end)
 
 
 # --- AABB
@@ -76,26 +43,26 @@ class AABB3:
             extents= ((min_pt - max_pt) * 0.5).abs()
         )
 
-    def union(self, other: 'AABB3') -> 'AABB3':
+    def create_combined_with(self, other: 'AABB3') -> 'AABB3':
         return AABB3.from_min_max(
-            maths.Vec3.from_min(self.get_min(), other.get_min()),
-            maths.Vec3.from_max(self.get_max(), other.get_max())
+            maths.Vec3.create_from_min(self.get_min(), other.get_min()),
+            maths.Vec3.create_from_max(self.get_max(), other.get_max())
         )
 
-    def union_one(self, a: 'AABB3') -> None:
+    def combined_with(self, a: 'AABB3') -> None:
         """Set self to the union of self and a"""
         aabb= AABB3.from_min_max(
-            maths.Vec3.from_min(self.get_min(), a.get_min()),
-            maths.Vec3.from_max(self.get_max(), a.get_max())
+            maths.Vec3.create_from_min(self.get_min(), a.get_min()),
+            maths.Vec3.create_from_max(self.get_max(), a.get_max())
         )
         self.center= aabb.center
         self.extents= aabb.extents
 
-    def union_two(self, a:'AABB3', b:'AABB3') -> None:
+    def combined_from(self, a:'AABB3', b:'AABB3') -> None:
         """Set self to the union of a and b"""
         aabb= AABB3.from_min_max(
-            maths.Vec3.from_min(a.get_min(), b.get_min()),
-            maths.Vec3.from_max(a.get_max(), b.get_max())
+            maths.Vec3.create_from_min(a.get_min(), b.get_min()),
+            maths.Vec3.create_from_max(a.get_max(), b.get_max())
         )
         self.center= aabb.center
         self.extents= aabb.extents
@@ -104,10 +71,15 @@ class AABB3:
         if by < 0.0:
             by = maths.absf(by)
 
-        p0: maths.Vec3= self.get_min() - maths.Vec3(by,by,by)
-        p1: maths.Vec3= self.get_max() + maths.Vec3(by,by,by)
+        p0: maths.Vec3= self.get_min() - maths.Vec3.create_from_value(by)
+        p1: maths.Vec3= self.get_max() + maths.Vec3.create_from_value(by)
 
         return AABB3.from_min_max(p0, p1)
+
+    def expanded(self, by: float) -> None:
+        expand= self.expand(by)
+        self.center.copy_from(expand.center)
+        self.extents.copy_from(expand.extents)
 
     def get_size_x(self) -> float:
         p0= self.get_min()
@@ -136,6 +108,10 @@ class AABB3:
             extents= self.extents.copy()
         )
 
+    def copy_from(self, other: 'AABB3') -> None:
+        self.center.copy_from(other.center)
+        self.extents.copy_from(other.extents)
+
     def perimeter(self) -> float:
         p0: maths.Vec3= self.get_min()
         p1: maths.Vec3= self.get_max()
@@ -143,6 +119,12 @@ class AABB3:
         p2: maths.Vec3= p1 - p0
 
         return 4.0 * p2.sum()
+
+    def get_area(self) -> float:
+        p0= self.get_min()
+        p1= self.get_max()
+        
+        return(p1 - p0).sum()
 
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         p0: maths.Vec3= self.get_min()
@@ -161,18 +143,47 @@ class AABB3:
         p0: maths.Vec3= self.center + self.extents
         p1: maths.Vec3= self.center - self.extents
 
-        return maths.Vec3.from_min(p0, p1)
+        return maths.Vec3.create_from_min(p0, p1)
 
     def get_max(self) -> maths.Vec3:
         p0: maths.Vec3= self.center + self.extents
         p1: maths.Vec3= self.center - self.extents
 
-        return maths.Vec3.from_max(p0, p1)
+        return maths.Vec3.create_from_max(p0, p1)
 
+    def is_degenerate(self) -> bool:
+        """Return true is self aabb is degenerate
+        
+        check if its min points equil its max points
+        
+        Returns
+        ---
+        bool
+        """
+        amin= self.get_min()
+        bmax= self.get_max()
+
+        check_x= maths.is_equil(amin.x, bmax.x)
+        check_y= maths.is_equil(amin.y, bmax.y)
+        check_z= maths.is_equil(amin.z, bmax.z)
+
+        return check_x and check_y and check_z
+
+    def contains_aabb(self, other: 'AABB3') -> bool:
+        amin: maths.Vec3= self.get_min()
+        amax: maths.Vec3= self.get_max()
+        bmin: maths.Vec3= other.get_min()
+        bmax: maths.Vec3= other.get_max()
+
+        check_x: bool= amin.x <= bmin.x and amax.x >= bmax.x
+        check_y: bool= amin.y <= bmin.y and amax.y >= bmax.y
+        check_z: bool= amin.z <= bmin.z and amax.z >= bmax.z
+        
+        return check_x and check_y and check_z
+		
     def intersect_aabb(self, other: 'AABB3') -> bool:
         amin: maths.Vec3= self.get_min()
         amax: maths.Vec3= self.get_max()
-
         bmin: maths.Vec3= other.get_min()
         bmax: maths.Vec3= other.get_max()
 
@@ -214,9 +225,29 @@ class AABB3:
         return maths.absf(dis) <= len_sq
 
 
+# --- LINE
+
+
+@dataclass(eq= False, repr= False, slots= True)
+class Line3:
+    start: maths.Vec3= maths.Vec3()
+    end: maths.Vec3= maths.Vec3()
+    id: GeometryID= GeometryID.LINE
+
+    def __hash__(self):
+        return hash((self.start.x, self.start.y, self.end.x, self.end.y))
+    
+    def __eq__(self, other: 'Line3') -> bool:
+        check_s= self.start.is_equil(other.start)
+        check_e= self.end.is_equil(other.end)
+        check_id= self.id == other.id
+        return check_s and check_e and check_id
+
+    def length(self) -> float:
+        return self.start.distance_sqrt(self.end)
+
 
 # --- SPHERE
-
 
 
 @dataclass(eq= False, repr= False, slots= True)
@@ -235,8 +266,9 @@ class Sphere3:
         return check_r and check_p and check_id
 
     def compute_aabb(self) -> AABB3:
-        p0: maths.Vec3= self.center + maths.Vec3(self.radius, self.radius, self.radius)
-        p1: maths.Vec3= self.center - maths.Vec3(self.radius, self.radius, self.radius)
+        p0: maths.Vec3= self.center + maths.Vec3.create_from_value(self.radius)
+        p1: maths.Vec3= self.center - maths.Vec3.create_from_value(self.radius)
+
         return AABB3.from_min_max(p0, p1)
 
     def area(self) -> float:
@@ -295,13 +327,11 @@ class Sphere3:
         return dis < r2
 
 
-
 # --- PLAIN
 
 
-
 class PlainError(Exception):
-    '''Custom error for plain'''
+    """Custom error for plain"""
 
     def __init__(self, msg: str):
         super().__init__(msg)
@@ -393,7 +423,7 @@ class Plain:
         """
         len_sqr: float= self.normal.length_sqr()
 
-        normal: maths.Vec3= maths.Vec3.unit_x()
+        normal: maths.Vec3= maths.Vec3.create_unit_x()
         direction: float= 0.0
 
         if maths.is_one(len_sqr):
@@ -566,217 +596,3 @@ class Ray3:
             return False, maths.Vec3.zero()
 
         return True, self.get_hit(t)
-
-
-# # ---
-# MARGIN: Final[float] = 2.0
-
-# @dataclass(eq= False, repr= False, slots= True)
-# class AABBNode:
-#     left: Optional['AABBNode']= None
-#     right: Optional['AABBNode']= None
-#     parent: Optional['AABBNode']= None
-#     height: int= 0
-#     aabb: AABB3= AABB3()
-
-#     todo_item: int= 0
-
-#     def is_leaf(self) -> bool:
-#         return self.left is None
-
-# @dataclass(eq= False, repr= False, slots= True)
-# class AABBTree:
-#     root: Optional[AABBNode]= None
-#     leaves: dict[Sphere, AABBNode]= field(default_factory=dict)
-#     aabb: AABB3= AABB3()
-
-#     def add(self, obj: Sphere):
-#         # TODO
-#         self.aabb= obj.compute_aabb()
-#         self.aabb.expand(MARGIN)
-
-#         node= AABBNode()
-#         node.aabb.union_one(self.aabb)
-
-#         self.leaves[obj] = node
-#         self._insert(node)
-
-#     def _balance(self, item: AABBNode) -> AABBNode:
-#         a= item
-
-#         if a.is_leaf() or a.height < 2:
-#             return a
-
-#         b= a.left
-#         c= a.right
-
-#         balance= c.height - b.height
-
-#         # rotate c up
-#         if balance > 1:
-#             f= c.left
-#             g= c.right
-
-#             # swap
-#             c.left= a
-#             c.parent= a.parent
-#             a.parent= c
-
-#             if c.parent is not None:
-#                 if c.parent.left is a:
-#                     c.parent.left = c
-#                 else:
-#                     c.parent.right = c
-#             else:
-#                 self.root = c
-
-#             if f.height > g.height:
-#                 c.right= f
-#                 a.right= g
-#                 g.parent= a
-
-#                 a.aabb.union_two(b.aabb, g.aabb)
-#                 c.aabb.union_two(a.aabb, f.aabb)
-
-#                 a.height = 1 + maths.maxi(b.height, g.height)
-#                 c.height = 1 + maths.maxi(a.height, f.height)
-#             else:
-#                 c.right= g
-#                 a.right= f
-#                 f.parent= a
-
-#                 a.aabb.union_two(b.aabb, f.aabb)
-#                 c.aabb.union_two(a.aabb, g.aabb)
-
-#                 a.height = 1 + maths.maxi(b.height, f.height)
-#                 c.height = 1 + maths.maxi(a.height, g.height)
-
-#             return c
-
-#         # rotate b up
-#         if balance < -1:
-#             d= b.left
-#             e= b.right
-
-#             # swap
-#             b.left= a
-#             b.parent= a.parent
-#             a.parent= b
-
-#             if b.parent is not None:
-#                 if b.parent.left is a:
-#                     b.parent.left = b
-#                 else:
-#                     b.parent.right = b
-#             else:
-#                 self.root = b
-
-#             if d.height > e.height:
-#                 b.right= d
-#                 a.left= e
-#                 e.parent= a
-
-#                 a.aabb.union_two(c.aabb, e.aabb)
-#                 b.aabb.union_two(a.aabb, d.aabb)
-
-#                 a.height = 1 + maths.maxi(c.height, e.height)
-#                 b.height = 1 + maths.maxi(a.height, d.height)
-#             else:
-#                 b.right= e
-#                 a.left= d
-#                 d.parent= a
-
-#                 a.aabb.union_two(c.aabb, d.aabb)
-#                 b.aabb.union_two(a.aabb, e.aabb)
-
-#                 a.height = 1 + maths.maxi(c.height, d.height)
-#                 b.height = 1 + maths.maxi(a.height, e.height)
-
-#             return b
-
-#         return a
-
-#     def _insert(self, item: AABBNode) -> None:
-#         if self.root is None:
-#             self.root = item
-#             return
-
-#         tmp= AABB3()
-#         item_aabb= item.aabb
-
-#         node= self.root
-#         while not node.is_leaf():
-#             aabb= node.aabb
-#             per= aabb.perimeter()
-            
-#             tmp= aabb
-#             union_per= tmp.union(item_aabb).perimeter()
-
-#             cost= 2.0 * union_per
-#             d_cost = 2.0 * (union_per - per)
-
-#             left= node.left
-#             right= node.right
-
-#             cost_left= 0.0
-#             if left.is_leaf():
-#                 tmp.union_two(left.aabb, item_aabb)
-#                 cost_left= tmp.perimeter() + d_cost
-#             else:
-#                 old_cost= left.aabb.perimeter()
-#                 tmp.union_two(left.aabb, item_aabb)
-#                 new_cost= tmp.perimeter()
-#                 cost_left = new_cost - old_cost + d_cost
-
-#             cost_right= 0.0
-#             if right.is_leaf():
-#                 tmp.union_two(right.aabb, item_aabb)
-#                 cost_right= tmp.perimeter() + d_cost
-#             else:
-#                 old_cost= right.aabb.perimeter()
-#                 tmp.union_two(right.aabb, item_aabb)
-#                 new_cost= tmp.perimeter()
-#                 cost_right = new_cost - old_cost + d_cost
-
-#             if cost < cost_left and cost < cost_right:
-#                 break
-#             if cost_left < cost_right:
-#                 node= left
-#             else:
-#                 node= right
-        
-#         parent= node.parent
-#         new_parent= AABBNode(
-#             parent= node.parent,
-#             aabb= node.aabb.union(item_aabb),
-#             height= node.height + 1
-#         )
-
-#         if parent is not None:
-#             if parent.left is node:
-#                 parent.left= new_parent
-#             else:
-#                 parent.right= new_parent
-
-#             new_parent.left= node
-#             new_parent.right= item
-#             node.parent= new_parent
-#             item.parent= new_parent
-#         else:
-#             new_parent.left= node
-#             new_parent.right= item
-#             node.parent= new_parent
-#             item.parent= new_parent
-#             self.root= new_parent
-        
-
-#         node= item.parent
-#         while node is not None:
-#             node= self._balance(node)
-
-#             left= node.left
-#             right= node.right
-
-#             node.height = 1 + maths.maxi(left.height, right.height)
-#             node.aabb.union_two(left.aabb, right.aabb)
-#             node= node.parent

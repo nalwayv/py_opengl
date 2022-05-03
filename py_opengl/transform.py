@@ -61,7 +61,8 @@ class Transform:
         ---
         maths.Vec3
         """
-        t: maths.Mat4= maths.Mat4.create_translation(v3)
+        to= self.origin.to(v3)
+        t: maths.Mat4= maths.Mat4.create_translation(to)
         r: maths.Mat4= maths.Mat4.create_from_quaternion(self.rotation)
         return (r * t).get_transform()
 
@@ -72,6 +73,7 @@ class Transform:
         ---
         maths.Vec3
         """
-        t: maths.Mat4= maths.Mat4.create_translation(v3)
+        to= self.origin.to(v3)
+        t: maths.Mat4= maths.Mat4.create_translation(to)
         r: maths.Mat4= maths.Mat4.create_from_quaternion(self.rotation)
         return (r * t).inverse().get_transform()

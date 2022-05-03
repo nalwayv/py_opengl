@@ -1,6 +1,5 @@
 """Main
 """
-from cmath import acos
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from typing import Optional
@@ -21,7 +20,6 @@ from py_opengl import camera
 from py_opengl import window
 from py_opengl import texture
 from py_opengl import color
-from py_opengl import geometry
 
 
 # --- SHAPE
@@ -35,7 +33,6 @@ class IObject(ABC):
     @abstractmethod
     def clean() -> None:
         """Clean up data used by object"""
-
 
 @dataclass(eq= False, repr= False, slots= True)
 class Triangle(IObject):
@@ -99,7 +96,6 @@ class Cube(IObject):
 
     verts: list[maths.Pt3]= field(default_factory=list)
     colors: list[maths.Pt3]= field(default_factory=list)
-    normals: list[maths.Pt3]= field(default_factory=list)
     tex_coords: list[maths.Pt2]= field(default_factory=list)
     indices: list[maths.Pt3Int]= field(default_factory=list)
 
@@ -245,6 +241,39 @@ class Cube(IObject):
         self.vbo_.clean()
 
 
+
+# --- FUNCS
+
+
+# def aabb_from_verts(t: transform.Transform, verts: list[maths.Vec3]):
+#     if not verts:
+#         return geometry.AABB3()
+
+#     pt= t.get_transformed(maths.Vec3.create_from_pt(verts[0]))
+
+#     min_x: float= pt.x
+#     max_x: float= pt.x
+#     min_y: float= pt.y
+#     max_y: float= pt.y
+#     min_z: float= pt.z
+#     max_z: float= pt.z
+
+#     for vert in verts[1:]:
+#         tvert: maths.Vec3= t.get_transformed(maths.Vec3.create_from_pt(vert))
+
+#         min_x= maths.minf(min_x, tvert.x)
+#         max_x= maths.maxf(max_x, tvert.x)
+#         min_y= maths.minf(min_y, tvert.y)
+#         max_y= maths.maxf(max_y, tvert.y)
+#         min_z= maths.minf(min_z, tvert.z)
+#         max_z= maths.maxf(max_z, tvert.z)
+
+#     return geometry.AABB3.from_min_max(
+#         maths.Vec3(min_x, min_y, min_z),
+#         maths.Vec3(max_x, max_y, max_z)
+#     )
+
+
 # --- CALLBACKS
 
 
@@ -318,14 +347,14 @@ def main() -> None:
             shape.draw()
 
             shape.transform_.rotated_xyz(maths.Vec3(x= 25.0, y= 15.0) * time.delta)
-            # shape.trans.translated(maths.Vec3(x= 1.4) * time.delta)
 
             m: maths.Mat4= shape.transform_.model_matrix()
             v: maths.Mat4= cam.view_matrix()
             p: maths.Mat4= cam.projection_matrix()
-
+            
             shape.shader_.set_m4('mvp', m * v * p)
 
+            # keyboard
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
                 cam.move_by(camera.CameraDirection.IN, 1.4, time.delta)
 

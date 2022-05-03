@@ -280,7 +280,6 @@ def tri_area_signed(
 # --- POINTS
 
 
-
 @dataclass(eq= False, repr= False, slots= True)
 class Pt2:
     """Points 2D
@@ -409,12 +408,16 @@ class Vec2:
         return Vec2(0.0, 0.0)
 
     @staticmethod
-    def unit_x() -> 'Vec2':
+    def create_unit_x() -> 'Vec2':
         return Vec2(x=1.0)
 
     @staticmethod
-    def unit_y() -> 'Vec2':
+    def create_unit_y() -> 'Vec2':
         return Vec2(y=1.0)
+
+    @staticmethod
+    def create_from_value(value: float) -> 'Vec2':
+        return Vec2(value, value)
 
     def to_list(self) -> list[float]:
         """Return list[float] of *xy* components
@@ -433,6 +436,9 @@ class Vec2:
         str
         """
         return f"X: {self.x}, Y: {self.y}"
+
+    def to(self, other: 'Vec2') -> 'Vec2':
+        return (other - self)
 
     def sum(self) -> float:
         """Return sum of components
@@ -650,7 +656,6 @@ class Vec2:
         dir: Vec2= other - self
         return dir.length_sqr()
 
-
     def dot(self, other: 'Vec2') -> float:
         """Return the dot product between self and other vec3
 
@@ -760,36 +765,44 @@ class Vec3:
         return Vec3(0.0, 0.0, 0.0)
 
     @staticmethod
-    def unit_x() -> 'Vec3':
+    def create_unit_x() -> 'Vec3':
         return Vec3(x=1.0)
 
     @staticmethod
-    def unit_y() -> 'Vec3':
+    def create_unit_y() -> 'Vec3':
         return Vec3(y=1.0)
 
     @staticmethod
-    def unit_z() -> 'Vec3':
+    def create_unit_z() -> 'Vec3':
         return Vec3(z=1.0)
 
     @staticmethod
-    def from_v2(v2: Vec2, z: float) -> 'Vec3':
-        return Vec3(x= v2.x, y= v2.y, z= z)
+    def create_from_v2(v2: Vec2, z: float) -> 'Vec3':
+        return Vec3(v2.x, v2.y, z)
 
     @staticmethod
-    def from_max(a: 'Vec3', b: 'Vec3') -> 'Vec3':
-        x: float= maxf(a.x, b.x)
-        y: float= maxf(a.y, b.y)
-        z: float= maxf(a.z, b.z)
-
-        return Vec3(x, y, z)
+    def create_from_pt(pt: Pt3) -> 'Vec3':
+        return Vec3(pt.x, pt.y, pt.z)
 
     @staticmethod
-    def from_min(a: 'Vec3', b: 'Vec3') -> 'Vec3':
-        x: float= minf(a.x, b.x)
-        y: float= minf(a.y, b.y)
-        z: float= minf(a.z, b.z)
+    def create_from_max(a: 'Vec3', b: 'Vec3') -> 'Vec3':
+        return Vec3(
+            maxf(a.x, b.x),
+            maxf(a.y, b.y),
+            maxf(a.z, b.z)
+        )
 
-        return Vec3(x, y, z)
+    @staticmethod
+    def create_from_min(a: 'Vec3', b: 'Vec3') -> 'Vec3':
+        return Vec3(
+            minf(a.x, b.x),
+            minf(a.y, b.y),
+            minf(a.z, b.z)
+        )
+
+    @staticmethod
+    def create_from_value(value: float) -> 'Vec3':
+        return Vec3(value, value, value)
 
     def sum(self) -> float:
         """Return sum of components
@@ -799,6 +812,9 @@ class Vec3:
         float
         """
         return self.x + self.y + self.z
+
+    def to(self, other: 'Vec3') -> 'Vec3':
+        return (other - self)
 
     def abs(self) -> 'Vec3':
         """Return a copy of self with positive values
@@ -838,12 +854,12 @@ class Vec3:
         Vec3
             
         """
-        x: float= lerp(self.x, to.x, weight)
-        y: float= lerp(self.y, to.y, weight)
-        z: float= lerp(self.z, to.z, weight)
+        return Vec3(
+            lerp(self.x, to.x, weight),
+            lerp(self.y, to.y, weight),
+            lerp(self.z, to.z, weight)
+        )
     
-        return Vec3(x, y, z)
-
     def xy(self) -> Vec2:
         """Return *xy* components
 
@@ -995,11 +1011,12 @@ class Vec3:
             z= c + u.z * u.z * (1 - c)
         )
 
-        x: float= self.dot(m1)
-        y: float= self.dot(m2)
-        z: float= self.dot(m3)
+        return Vec3(
+            self.dot(m1),
+            self.dot(m2),
+            self.dot(m3)
+        )
 
-        return Vec3(x, y, z)
 
     def sum_total(self) -> float:
         """Return sum total of all values
@@ -1139,10 +1156,10 @@ class Vec4:
             raise Vec4Error('not of type Vec4')
     
         return Vec4(
-            x= self.x + other.x,
-            y= self.y + other.y,
-            z= self.z + other.z,
-            w= self.w + other.w
+            self.x + other.x,
+            self.y + other.y,
+            self.z + other.z,
+            self.w + other.w
         )
 
     def __sub__(self, other):
@@ -1150,10 +1167,10 @@ class Vec4:
             raise Vec4Error('not of type Vec4')
 
         return Vec4(
-            x= self.x - other.x,
-            y= self.y - other.y,
-            z= self.z - other.z,
-            w= self.w - other.w
+            self.x - other.x,
+            self.y - other.y,
+            self.z - other.z,
+            self.w - other.w
         )
 
     def __mul__(self, other):
@@ -1161,10 +1178,10 @@ class Vec4:
             raise Vec4Error('other was not of type float or int')
 
         return Vec4(
-            x= self.x * other,
-            y= self.y * other,
-            z= self.z * other,
-            w= self.w * other
+            self.x * other,
+            self.y * other,
+            self.z * other,
+            self.w * other
         )
         
     @staticmethod
@@ -1176,38 +1193,32 @@ class Vec4:
         return Vec4(0.0, 0.0, 0.0, 0.0)
 
     @staticmethod
-    def unit_x() -> 'Vec4':
+    def create_unit_x() -> 'Vec4':
         return Vec4(x= 1.0)
 
     @staticmethod
-    def unit_y() -> 'Vec4':
+    def create_unit_y() -> 'Vec4':
         return Vec4(y= 1.0)
 
     @staticmethod
-    def unit_z() -> 'Vec4':
+    def create_unit_z() -> 'Vec4':
         return Vec4(z= 1.0)
 
     @staticmethod
-    def unit_w() -> 'Vec4':
+    def create_unit_w() -> 'Vec4':
         return Vec4(w= 1.0)
 
     @staticmethod
-    def from_v2(xy: Vec2, z: float, w: float) -> 'Vec4':
-        return Vec4(
-            x= xy.x,
-            y= xy.y,
-            z= z,
-            w= w
-        )
+    def create_from_v2(xy: Vec2, z: float, w: float) -> 'Vec4':
+        return Vec4(xy.x, xy.y, z, w)
 
     @staticmethod
-    def from_v3(xyz: Vec3, w: float= 0.0) -> 'Vec4':
-        return Vec4(
-            x= xyz.x,
-            y= xyz.y,
-            z= xyz.z,
-            w= w
-        )
+    def create_from_v3(xyz: Vec3, w: float= 0.0) -> 'Vec4':
+        return Vec4(xyz.x, xyz.y, xyz.z, w)
+
+    @staticmethod
+    def create_from_value(value: float) -> 'Vec4':
+        return Vec4(value, value, value, value)
 
     def sum(self) -> float:
         """Return sum of components
@@ -1269,12 +1280,15 @@ class Vec4:
         ---
         Vec4
         """
-        x: float= lerp(self.x, to.x, weight)
-        y: float= lerp(self.y, to.y, weight)
-        z: float= lerp(self.z, to.z, weight)
-        w: float= lerp(self.w, to.w, weight)
+        return Vec4(
+            lerp(self.x, to.x, weight),
+            lerp(self.y, to.y, weight),
+            lerp(self.z, to.z, weight),
+            lerp(self.w, to.w, weight)
+        )
 
-        return Vec4(x, y, z, w)
+    def to(self, other: 'Vec4') -> 'Vec4':
+        return (other - self)
 
     def copy_from(self, other: 'Vec4') -> None:
         self.x = other.x
@@ -2173,7 +2187,7 @@ class Mat4:
             Vec4(x= 1.0),
             Vec4(y= 1.0),
             Vec4(z= 1.0),
-            Vec4.from_v3(v3, 1.0)
+            Vec4.create_from_v3(v3, 1.0)
         )
 
     @staticmethod
@@ -2463,7 +2477,7 @@ class Mat4:
             Vec4(x= x.x, y= y.x, z= z.x),
             Vec4(x= x.y, y= y.y, z= z.y),
             Vec4(x= x.z, y= y.z, z= z.z),
-            Vec4.from_v3(d, 1.0)
+            Vec4.create_from_v3(d, 1.0)
         )
 
     def added(self, other: 'Mat4') -> None:
@@ -3042,10 +3056,10 @@ class Quaternion:
         dt: float= x1 * x2 + y1 * y2 + z1 * z2
 
         return Quaternion(
-            x= x1 * w2 + x2 * w1 + cx,
-            y= y1 * w2 + y2 * w1 + cy,
-            z= z1 * w2 + z2 * w1 + cz,
-            w= w1 * w2 - dt
+            x1 * w2 + x2 * w1 + cx,
+            y1 * w2 + y2 * w1 + cy,
+            z1 * w2 + z2 * w1 + cz,
+            w1 * w2 - dt
         )
     
     @staticmethod
@@ -3107,10 +3121,10 @@ class Quaternion:
         s: float= sin(angle_rad)
 
         return Quaternion(
-            x= unit_axis.x * s,
-            y= unit_axis.y * s,
-            z= unit_axis.z * s,
-            w= c
+            unit_axis.x * s,
+            unit_axis.y * s,
+            unit_axis.z * s,
+            c
         )
 
     @staticmethod
@@ -3120,10 +3134,10 @@ class Quaternion:
         dot: float= start.dot(to)
 
         if dot < -1.0 + EPSILON:
-            v3: Vec3= Vec3.unit_x().cross(start)
+            v3: Vec3= Vec3.create_unit_x().cross(start)
 
             if v3.length_sqrt() < EPSILON:
-                v3= Vec3.unit_y().cross(start)
+                v3= Vec3.create_unit_y().cross(start)
         
             v3.to_unit()
             return Quaternion.create_from_axis(to_degreese(PI), v3)
@@ -3148,10 +3162,10 @@ class Quaternion:
         Quaternion
         """
         return Quaternion(
-            x= lerp(self.x, to.x, weight),
-            y= lerp(self.y, to.y, weight),
-            z= lerp(self.z, to.z, weight),
-            w= lerp(self.w, to.w, weight)
+            lerp(self.x, to.x, weight),
+            lerp(self.y, to.y, weight),
+            lerp(self.z, to.z, weight),
+            lerp(self.w, to.w, weight)
         )
 
     def nlerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
@@ -3196,10 +3210,10 @@ class Quaternion:
             weight1= weight
 
         result= Quaternion(
-            x= weight0 * self.x + weight1 * to.x,
-            y= weight0 * self.y + weight1 * to.y,
-            z= weight0 * self.z + weight1 * to.z,
-            w= weight0 * self.w + weight1 * to.w
+            weight0 * self.x + weight1 * to.x,
+            weight0 * self.y + weight1 * to.y,
+            weight0 * self.z + weight1 * to.z,
+            weight0 * self.w + weight1 * to.w
         )
 
         if not result.is_unit():
@@ -3241,10 +3255,10 @@ class Quaternion:
         Quaternion
         """
         return Quaternion(
-            x= self.x * by,
-            y= self.y * by,
-            z= self.z * by,
-            w= self.w * by
+            self.x * by,
+            self.y * by,
+            self.z * by,
+            self.w * by
         )
 
     def inverse(self) -> 'Quaternion':
@@ -3256,10 +3270,10 @@ class Quaternion:
         """
         inv: float= 1.0 / self.length_sqr()
         return Quaternion(
-            x= -self.x * inv,
-            y= -self.y * inv,
-            z= -self.z * inv,
-            w= self.q * inv
+            -self.x * inv,
+            -self.y * inv,
+            -self.z * inv,
+            self.q * inv
         )
 
     def unit(self) -> 'Quaternion':
@@ -3353,9 +3367,9 @@ class Quaternion:
 
         inv: float = 1.0 / scl
         return Vec3(
-            x= self.x * inv,
-            y= self.y * inv,
-            z= self.z * inv
+            self.x * inv,
+            self.y * inv,
+            self.z * inv
         )
 
     def xyz(self) -> Vec3:
@@ -3464,12 +3478,12 @@ class Quaternion:
         if not is_zero(s):
             inv: float= 1.0 / s
             return Vec3(
-                x= self.x * inv,
-                y= self.y * inv,
-                z= self.z * inv
+                self.x * inv,
+                self.y * inv,
+                self.z * inv
             )
 
-        return Vec3.unit_x()
+        return Vec3.create_unit_x()
 
     def is_equil(self, other: 'Quaternion') -> bool:
         """Check if the components of self are the same as other's components

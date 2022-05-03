@@ -98,7 +98,6 @@ class Vbo:
         self.vbo_ids = [
             GL.glGenBuffers(1),
             GL.glGenBuffers(1),
-            GL.glGenBuffers(1),
             GL.glGenBuffers(1)
         ]
 
