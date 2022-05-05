@@ -869,6 +869,27 @@ class Vec3:
         """
         return Vec2(self.x, self.y)
 
+    def scaled(self, by: float) -> None:
+        """Scale self by
+        """
+        self.x *= by
+        self.y *= by
+        self.z *= by
+
+    def added(self, other: 'Vec3') -> None:
+        """Add other vec3's xyz values to self xyz values
+        """
+        self.x += other.x
+        self.y += other.y
+        self.z += other.z
+
+    def subbed(self, other: 'Vec3') -> None:
+        """Subtract other vec3's xyz values to self xyz values
+        """
+        self.x -= other.x
+        self.y -= other.y
+        self.z -= other.z
+
     def to_unit(self) -> None:
         """Normalize length
 

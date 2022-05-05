@@ -68,22 +68,39 @@ class Camera:
         """
         match dir:
             case CameraDirection.UP:
-                self.position -= self.up * (sensativity * dt)
+                u: maths.Vec3= self.right.cross(self.position + self.front)
+                if not u.is_unit():
+                    u.to_unit()
+                u.scaled(sensativity * dt)
+                self.position.added(u)
 
             case CameraDirection.DOWN:
-                self.position += self.up * (sensativity * dt)
+                d: maths.Vec3= (self.position + self.front).cross(self.right)
+                if not d.is_unit():
+                    d.to_unit()
+                d.scaled(sensativity * dt)
+                self.position.added(d)
 
             case CameraDirection.RIGHT:
-                self.position -= self.right * (sensativity * dt)
+                r: maths.Vec3= (self.position + self.front).cross(self.up)
+                if not r.is_unit():
+                    r.to_unit()
+                r.scaled(sensativity * dt)
+                self.position.added(r)
 
             case CameraDirection.LEFT:
-                self.position += self.right * (sensativity * dt)
+                l: maths.Vec3= self.up.cross(self.position + self.front)
+                if not l.is_unit():
+                    l.to_unit()
+
+                l.scaled(sensativity * dt)
+                self.position.added(l)
 
             case CameraDirection.OUT:
-                self.position -= self.front * (sensativity * dt)
+                self.position.subbed(self.front * (sensativity * dt))
 
             case CameraDirection.IN:
-                self.position += self.front * (sensativity * dt)
+                self.position.added(self.front * (sensativity * dt))
 
         self._update()
     

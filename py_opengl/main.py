@@ -1,7 +1,7 @@
 """Main
 """
 from dataclasses import dataclass, field
-from abc import ABC, abstractmethod
+# from abc import ABC, abstractmethod
 from typing import Optional
 
 import glfw
@@ -13,7 +13,7 @@ from py_opengl import maths
 from py_opengl import transform
 from py_opengl import clock
 from py_opengl import shader
-from py_opengl import vbo
+from py_opengl import buffer
 from py_opengl import keyboard
 from py_opengl import mouse
 from py_opengl import camera
@@ -24,254 +24,161 @@ from py_opengl import color
 
 # --- SHAPE
 
-
-class IObject(ABC):
-    @abstractmethod
-    def draw() -> None:
-        """Draw to screen"""
-
-    @abstractmethod
-    def clean() -> None:
-        """Clean up data used by object"""
-
 @dataclass(eq= False, repr= False, slots= True)
-class Triangle(IObject):
-    vbo_: Optional[vbo.Vbo]= None
+class Cube:
+    size: maths.Vec3= maths.Vec3(1.0, 1.0, 1.0)
+
     shader_: Optional[shader.Shader]= None
     texture_: Optional[texture.Texture]= None
     transform_: Optional[transform.Transform]= None
 
-    def __post_init__(self):
-        verts_pts: list[maths.Pt3]=  [
-            maths.Pt3( 0.5, -0.5, 0.0),
-            maths.Pt3(-0.5, -0.5, 0.0),
-            maths.Pt3( 0.0,  0.5, 0.0)
-        ]
+    verts: list[float]= field(default_factory=list)
+    colors: list[float]= field(default_factory=list)
+    tex_coords: list[float]= field(default_factory=list)
+    indices: list[int]= field(default_factory=list)
 
-        color_pts: list[maths.Pt3]=  [
-            maths.Pt3(1.0, 0.0, 0.0),
-            maths.Pt3(0.0, 1.0, 0.0),
-            maths.Pt3(0.0, 0.0, 1.0)
-        ]
-
-        tex_coords_pts: list[maths.Pt2]=  [
-            maths.Pt2(0.0, 0.0),
-            maths.Pt2(1.0, 0.0),
-            maths.Pt2(0.5, 1.0),
-        ]
-
-        indices_pts: list[maths.Pt3Int]= [
-            maths.Pt3Int(0, 1, 2),
-            maths.Pt3Int(3, 4, 5),
-            maths.Pt3Int(6, 7, 8)
-        ]
-
-        self.vbo_= vbo.Vbo(length=len(indices_pts) * 3)
-        self.shader_= shader.Shader()
-        self.texture_= texture.Texture()
-        self.transform_= transform.Transform()
-
-        self.texture_.compile('grid512.bmp')
-        self.shader_.compile('shader.vert', 'shader.frag')
-        self.vbo_.setup(verts_pts, color_pts, tex_coords_pts, indices_pts)
-
-    def draw(self) -> None:
-        self.texture_.use()
-        self.shader_.use()
-        self.vbo_.use(vbo.VboDrawMode.TRIANGLES)
-
-    def clean(self) -> None:
-        self.shader_.clean()
-        self.texture_.clean()
-        self.vbo_.clean()
-
-
-@dataclass(eq= False, repr= False, slots= True)
-class Cube(IObject):
-    vbo_: Optional[vbo.Vbo]= None
-    shader_: Optional[shader.Shader]= None
-    texture_: Optional[texture.Texture]= None
-    transform_: Optional[transform.Transform]= None
-    scale_: maths.Vec3= maths.Vec3(1.0, 1.0, 1.0)
-
-    verts: list[maths.Pt3]= field(default_factory=list)
-    colors: list[maths.Pt3]= field(default_factory=list)
-    tex_coords: list[maths.Pt2]= field(default_factory=list)
-    indices: list[maths.Pt3Int]= field(default_factory=list)
+    cube_id: Optional[buffer.Vao]= None
+    vert_vbo: Optional[buffer.Vbo]= None
+    color_vbo: Optional[buffer.Vbo]= None
+    texture_vbo: Optional[buffer.Vbo]= None
+    indices_ibo: Optional[buffer.Ibo]= None
 
     def __post_init__(self):
 
-        hw: float= self.scale_.x * 0.5
-        hh: float= self.scale_.y * 0.5
-        hd: float= self.scale_.z * 0.5
+        hw: float= self.size.x * 0.5
+        hh: float= self.size.y * 0.5
+        hd: float= self.size.z * 0.5
 
-        self.verts: list[maths.Pt3]=  [
-            maths.Pt3( hw, hh, hd), 
-            maths.Pt3(-hw, hh, hd),
-            maths.Pt3(-hw,-hh, hd), 
-            maths.Pt3( hw,-hh, hd),
-
-            maths.Pt3( hw, hh, hd), 
-            maths.Pt3( hw,-hh, hd), 
-            maths.Pt3( hw,-hh,-hd), 
-            maths.Pt3( hw, hh,-hd),
-
-            maths.Pt3( hw, hh, hd),
-            maths.Pt3( hw, hh,-hd),
-            maths.Pt3(-hw, hh,-hd),
-            maths.Pt3(-hw, hh, hd),
-
-            maths.Pt3(-hw, hh, hd),
-            maths.Pt3(-hw, hh,-hd),
-            maths.Pt3(-hw,-hh,-hd),
-            maths.Pt3(-hw,-hh, hd),
-
-            maths.Pt3(-hw,-hh,-hd),
-            maths.Pt3( hw,-hh,-hd),
-            maths.Pt3( hw,-hh, hd),
-            maths.Pt3(-hw,-hh, hd),
-
-            maths.Pt3( hw,-hh,-hd),
-            maths.Pt3(-hw,-hh,-hd),
-            maths.Pt3(-hw, hh,-hd),
-            maths.Pt3( hw, hh,-hd)
+        self.verts= [
+             hw, hh, hd, 
+            -hw, hh, hd,
+            -hw,-hh, hd, 
+             hw,-hh, hd,
+             hw, hh, hd, 
+             hw,-hh, hd, 
+             hw,-hh,-hd, 
+             hw, hh,-hd,
+             hw, hh, hd,
+             hw, hh,-hd,
+            -hw, hh,-hd,
+            -hw, hh, hd,
+            -hw, hh, hd,
+            -hw, hh,-hd,
+            -hw,-hh,-hd,
+            -hw,-hh, hd,
+            -hw,-hh,-hd,
+             hw,-hh,-hd,
+             hw,-hh, hd,
+            -hw,-hh, hd,
+             hw,-hh,-hd,
+            -hw,-hh,-hd,
+            -hw, hh,-hd,
+             hw, hh,-hd
         ]
 
-        self.colors: list[maths.Pt3]=  [
-            maths.Pt3(1.0, 1.0, 1.0), 
-            maths.Pt3(1.0, 1.0, 0.0), 
-            maths.Pt3(1.0, 0.0, 0.0), 
-            maths.Pt3(1.0, 0.0, 1.0),
-
-            maths.Pt3(1.0, 1.0, 1.0), 
-            maths.Pt3(1.0, 0.0, 1.0), 
-            maths.Pt3(0.0, 0.0, 1.0),
-            maths.Pt3(0.0, 1.0, 1.0),
-
-            maths.Pt3(1.0, 1.0, 1.0),
-            maths.Pt3(0.0, 1.0, 1.0),
-            maths.Pt3(0.0, 1.0, 0.0),
-            maths.Pt3(1.0, 1.0, 0.0),
-
-            maths.Pt3(1.0, 1.0, 0.0), 
-            maths.Pt3(0.0, 1.0, 0.0), 
-            maths.Pt3(0.0, 0.0, 0.0), 
-            maths.Pt3(1.0, 0.0, 0.0),
-
-            maths.Pt3(0.0, 0.0, 0.0), 
-            maths.Pt3(0.0, 0.0, 1.0), 
-            maths.Pt3(1.0, 0.0, 1.0), 
-            maths.Pt3(1.0, 0.0, 0.0),
-
-            maths.Pt3(0.0, 0.0, 1.0), 
-            maths.Pt3(0.0, 0.0, 0.0), 
-            maths.Pt3(0.0, 1.0, 0.0), 
-            maths.Pt3(0.0, 1.0, 1.0)
+        self.colors = [
+            1.0, 1.0, 1.0, 
+            1.0, 1.0, 0.0, 
+            1.0, 0.0, 0.0, 
+            1.0, 0.0, 1.0,
+            1.0, 1.0, 1.0, 
+            1.0, 0.0, 1.0, 
+            0.0, 0.0, 1.0,
+            0.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,
+            0.0, 1.0, 1.0,
+            0.0, 1.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, 1.0, 0.0, 
+            0.0, 1.0, 0.0, 
+            0.0, 0.0, 0.0, 
+            1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 
+            0.0, 0.0, 1.0, 
+            1.0, 0.0, 1.0, 
+            1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 
+            0.0, 0.0, 0.0, 
+            0.0, 1.0, 0.0, 
+            0.0, 1.0, 1.0
         ]
 
-        self.tex_coords: list[maths.Pt2]=  [
-            maths.Pt2(1.0, 0.0),
-            maths.Pt2(0.0, 0.0),
-            maths.Pt2(0.0, 1.0),
-            maths.Pt2(1.0, 1.0),
-
-            maths.Pt2(0.0, 0.0),
-            maths.Pt2(0.0, 1.0),
-            maths.Pt2(1.0, 1.0),
-            maths.Pt2(1.0, 0.0),
-
-            maths.Pt2(1.0, 1.0),
-            maths.Pt2(1.0, 0.0),
-            maths.Pt2(0.0, 0.0),
-            maths.Pt2(0.0, 1.0),
-
-            maths.Pt2(1.0, 0.0),
-            maths.Pt2(0.0, 0.0),
-            maths.Pt2(0.0, 1.0),
-            maths.Pt2(1.0, 1.0),
-
-            maths.Pt2(0.0, 1.0),
-            maths.Pt2(1.0, 1.0),
-            maths.Pt2(1.0, 0.0),
-            maths.Pt2(0.0, 0.0),
-
-            maths.Pt2(0.0, 1.0),
-            maths.Pt2(1.0, 1.0),
-            maths.Pt2(1.0, 0.0),
-            maths.Pt2(0.0, 0.0)
+        self.tex_coords= [
+            1.0, 0.0,
+            0.0, 0.0,
+            0.0, 1.0,
+            1.0, 1.0,
+            0.0, 0.0,
+            0.0, 1.0,
+            1.0, 1.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            1.0, 0.0,
+            0.0, 0.0,
+            0.0, 1.0,
+            1.0, 0.0,
+            0.0, 0.0,
+            0.0, 1.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            1.0, 1.0,
+            1.0, 0.0,
+            0.0, 0.0,
+            0.0, 1.0,
+            1.0, 1.0,
+            1.0, 0.0,
+            0.0, 0.0
         ]
    
-        self.indices: list[maths.Pt3Int]= [
-            maths.Pt3Int( 0,  1,  2),
-            maths.Pt3Int( 2,  3,  0),
-            maths.Pt3Int( 4,  5,  6),
-            maths.Pt3Int( 6,  7,  4),
-            maths.Pt3Int( 8,  9, 10),
-            maths.Pt3Int(10, 11,  8),
-            maths.Pt3Int(12, 13, 14),
-            maths.Pt3Int(14, 15, 12),
-            maths.Pt3Int(16, 17, 18),
-            maths.Pt3Int(18, 19, 16),
-            maths.Pt3Int(20, 21, 22),
-            maths.Pt3Int(22, 23, 20)
+        self.indices= [
+             0,  1,  2,
+             2,  3,  0,
+             4,  5,  6,
+             6,  7,  4,
+             8,  9, 10,
+            10, 11,  8,
+            12, 13, 14,
+            14, 15, 12,
+            16, 17, 18,
+            18, 19, 16,
+            20, 21, 22,
+            22, 23, 20
         ]
 
-        self.vbo_= vbo.Vbo(length=len(self.indices) * 3)
         self.shader_= shader.Shader() 
         self.texture_= texture.Texture()
         self.transform_= transform.Transform()
 
         self.texture_.compile('grid512.bmp')
         self.shader_.compile('shader.vert', 'shader.frag')
-        self.vbo_.setup(
-            self.verts,
-            self.colors,
-            self.tex_coords,
-            self.indices
-        )
+    
+        self.cube_id= buffer.Vao()
+        self.vert_vbo= buffer.Vbo(index=0)
+        self.color_vbo= buffer.Vbo(index=1)
+        self.texture_vbo= buffer.Vbo(index=2, components=2)
+        self.indices_ibo= buffer.Ibo()
+
+        self.vert_vbo.setup(self.verts)
+        self.color_vbo.setup(self.colors)
+        self.texture_vbo.setup(self.tex_coords)
+        self.indices_ibo.setup(self.indices)
+    
 
     def draw(self) -> None:
         self.texture_.use()
         self.shader_.use()
-        self.vbo_.use(vbo.VboDrawMode.TRIANGLES)
+
+        GL.glDrawElements(GL.GL_TRIANGLES, self.indices_ibo.length, GL.GL_UNSIGNED_INT, utils.C_VOID_POINTER)
 
     def clean(self) -> None:
         self.texture_.clean()
         self.shader_.clean()
-        self.vbo_.clean()
-
-
-
-# --- FUNCS
-
-
-# def aabb_from_verts(t: transform.Transform, verts: list[maths.Vec3]):
-#     if not verts:
-#         return geometry.AABB3()
-
-#     pt= t.get_transformed(maths.Vec3.create_from_pt(verts[0]))
-
-#     min_x: float= pt.x
-#     max_x: float= pt.x
-#     min_y: float= pt.y
-#     max_y: float= pt.y
-#     min_z: float= pt.z
-#     max_z: float= pt.z
-
-#     for vert in verts[1:]:
-#         tvert: maths.Vec3= t.get_transformed(maths.Vec3.create_from_pt(vert))
-
-#         min_x= maths.minf(min_x, tvert.x)
-#         max_x= maths.maxf(max_x, tvert.x)
-#         min_y= maths.minf(min_y, tvert.y)
-#         max_y= maths.maxf(max_y, tvert.y)
-#         min_z= maths.minf(min_z, tvert.z)
-#         max_z= maths.maxf(max_z, tvert.z)
-
-#     return geometry.AABB3.from_min_max(
-#         maths.Vec3(min_x, min_y, min_z),
-#         maths.Vec3(max_x, max_y, max_z)
-#     )
+        
+        self.cube_id.clean()
+        self.vert_vbo.clean()
+        self.color_vbo.clean()
+        self.texture_vbo.clean()
+        self.indices_ibo.clean()
 
 
 # --- CALLBACKS
@@ -316,6 +223,7 @@ def main() -> None:
         glwin.center_screen_position()
         glwin.set_window_resize_callback(cb_window_resize)
 
+
         bg_col= color.Color.from_rgba(75, 75, 75, 255)
         
         time= clock.Clock()
@@ -348,11 +256,9 @@ def main() -> None:
 
             shape.transform_.rotated_xyz(maths.Vec3(x= 25.0, y= 15.0) * time.delta)
 
-            m: maths.Mat4= shape.transform_.model_matrix()
-            v: maths.Mat4= cam.view_matrix()
-            p: maths.Mat4= cam.projection_matrix()
-            
-            shape.shader_.set_m4('mvp', m * v * p)
+            shape.shader_.set_mat4('m_matrix', shape.transform_.model_matrix())
+            shape.shader_.set_mat4('v_matrix', cam.view_matrix())
+            shape.shader_.set_mat4('p_matrix', cam.projection_matrix())
 
             # keyboard
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):

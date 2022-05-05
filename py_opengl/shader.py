@@ -117,7 +117,7 @@ class Shader:
             value.w
         )
 
-    def set_m4(self, variable_name: str, value: maths.Mat4) -> None:
+    def set_mat4(self, variable_name: str, value: maths.Mat4) -> None:
         """Set a global uniform mat4 variable within the shader program
 
         Parameters
