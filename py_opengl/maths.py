@@ -149,30 +149,12 @@ def normalize(val: float, low: float, high: float) -> float:
 
 def stepify(val: float, steps: float) -> float:
     """Snaps value to given steps
-
-    Parameters
-    ---
-    value : float
-
-    steps : float
-
-    Returns
-    ---
-    float
     """
     return (val // steps) * steps
 
 
 def wrap(val: int, low: int, high: int) -> int:
     """wrap int value between low and high - 1
-
-    Parameters
-    ---
-    value : int
-    
-    low : int
-    
-    high : int
 
     Example
     ---
@@ -181,26 +163,12 @@ def wrap(val: int, low: int, high: int) -> int:
     wrap(5, 1, 6) => 1
     
     wrap(7, 2, 5) => 4
-
-    Returns
-    ---
-    int
     """
     return ((val - low) % (high - low) + low)
 
 
 def ping_pong(val: int, length:int) -> int:
     """repeat value from 0 to high and back
-    
-    Parameters    
-    ---
-    value : int
-
-    length : int
-    
-    Return
-    ---
-    int
     """
     val= wrap(val, 0, length * 2)
     val= length - absi(val - length)
@@ -209,22 +177,6 @@ def ping_pong(val: int, length:int) -> int:
 
 def catmullrom(pos_a: float, pos_b: float, pos_c: float, pos_d: float, amount: float) -> float:
     """catmull_rom interpolation using the specified positions
-
-    Parameters
-    ---
-    pos_a : float
-
-    pos_b : float
-
-    pos_c : float
-
-    pos_d : float
-
-    amount : float
-
-    Returns
-    ---
-    float
     """
     squared: float= amount * amount
     cubed: float= squared * amount
@@ -237,22 +189,6 @@ def catmullrom(pos_a: float, pos_b: float, pos_c: float, pos_d: float, amount: f
 
 def hetmit(value_a: float, tangent_a: float, value_b: float, tangent_b: float, amount: float) -> float:
     """hermite spline interpolation
-
-    Parameters
-    ---
-    value_a : float
-
-    tangent_a : float
-
-    value_b : float
-
-    tangent_b : float
-
-    amount : float
-
-    Returns
-    ---
-    float
     """
     if amount == 0.0:
         return value_a
@@ -274,85 +210,12 @@ def tri_area_signed(
     bx: float, by: float,
     cx: float, cy: float
 ) -> float:
+    """Return tri signed area
+    """
     return (ax - cx) * (by - cy) - (ay - cy) * (bx - cx)
 
 
-# --- POINTS
-
-
-@dataclass(eq= False, repr= False, slots= True)
-class Pt2:
-    """Points 2D
-    """
-    x: float= 0.0
-    y: float= 0.0
-
-    def to_list(self) -> list[float]:
-        return [self.x, self.y]
-
-@dataclass(eq= False, repr= False, slots= True)
-class Pt2Int:
-    """Int Points 2D
-    """
-    x: int= 0
-    y: int= 0
-
-    def to_list(self) -> list[int]:
-        return [self.x, self.y]
-
-@dataclass(eq= False, repr= False, slots= True)
-class Pt3:
-    """Points 3D
-    """
-    x: float= 0.0
-    y: float= 0.0
-    z: float= 0.0
-
-    def to_list(self) -> list[float]:
-        return [self.x, self.y, self.z]
-
-
-@dataclass(eq= False, repr= False, slots= True)
-class Pt3Int:
-    """Int Points 3D
-    """
-    x: int= 0
-    y: int= 0
-    z: int= 0
-
-    def to_list(self) -> list[int]:
-        return [self.x, self.y, self.z]
-
-
-@dataclass(eq= False, repr= False, slots= True)
-class Pt4:
-    """Points 4D
-    """
-    x: float= 0.0
-    y: float= 0.0
-    z: float= 0.0
-    w: float= 0.0
-
-    def to_list(self) -> list[float]:
-        return [self.x, self.y, self.z, self.w]
-
-
-@dataclass(eq= False, repr= False, slots= True)
-class Pt4Int:
-    """Int Points 4D
-    """
-    x: int= 0
-    y: int= 0
-    z: int= 0
-    w: int= 0
-
-    def to_list(self) -> list[int]:
-        return [self.x, self.y, self.z, self.w]
-
-
-
 # --- VECTOR_2 (X, Y)
-
 
 
 class Vec2Error(Exception):
@@ -430,39 +293,16 @@ class Vec2:
 
     def to_str(self) -> str:
         """Return string format
-
-        Returns
-        ---
-        str
         """
         return f"X: {self.x}, Y: {self.y}"
 
-    def to(self, other: 'Vec2') -> 'Vec2':
-        return (other - self)
-
     def sum(self) -> float:
         """Return sum of components
-
-        Returns
-        ---
-        float
         """
         return self.x + self.y
 
     def lerp(self, to: 'Vec2', weight: float) -> 'Vec2':
-        """Return lerp between begin end end vec3
-
-        Parameters
-        ---
-        begin : Vec2
-
-        end : Vec2
-            
-        weight : float
-
-        Returns
-        ---
-        Vec2
+        """Return a lerped vec3 between self and to
         """
         x: float= lerp(self.x, to.x, weight)
         y: float= lerp(self.y, to.y, weight)
@@ -471,11 +311,6 @@ class Vec2:
     
     def to_unit(self) -> None:
         """Normalize length
-
-        Raises
-        ---
-        Vec2Error
-            if current length is zero
         """
         lsq: float= self.length_sqr()
 
@@ -487,12 +322,7 @@ class Vec2:
         self.y *= inv
 
     def unit(self) -> 'Vec2':
-        """Return a copy of self with a normal length
-
-        Returns
-        ---
-        Vec2
-            a copy of self with a normalized length
+        """Return a copy of self with a unit length
         """
         lsq: float= self.length_sqr()
         if is_zero(lsq):
@@ -502,30 +332,16 @@ class Vec2:
 
     def copy(self) -> 'Vec2':
         """Return a copy of the self
-
-        Returns
-        ---
-        Vec2
-            a copy
         """ 
         return Vec2(self.x, self.y)
 
     def perpendicular(self) -> 'Vec2':
         """Return the prpendicular of self
-
-        Returns
-        ---
-        Vec2
         """
         return Vec2(-self.y, self.x)
 
     def rotate_by(self, angle_deg: float) -> 'Vec2':
-        """Rotate by angle
-
-        Returns
-        ---
-        Vec2
-            vec2 rotated by
+        """Return vec2 rotate by angle
         """
         angle_rad: float= to_radians(angle_deg)
         c: float= cos(angle_rad)
@@ -537,16 +353,7 @@ class Vec2:
         return Vec2(x, y)
 
     def angle_to(self, other: 'Vec2') -> float:
-        """Return the nagle in radians to other
-
-        Parameters
-        ---
-        other : Vec2
-
-        Returns
-        ---
-        float
-            angle to in radians
+        """Return angle in radians to self and other
         """
         ang: float= arctan2(other.y, self.x) - arctan2(self.y, other.x)
         
@@ -558,145 +365,71 @@ class Vec2:
         return ang
 
     def angle_between(self, other: 'Vec2') -> float:
-        """Return the angle in radians between self and other
-
-        Parameters
-        ---
-        other : Vec2
-
-        Returns
-        ---
-        float
-            angle between self and other
+        """Return angle in radians between self and other
         """
         return arccos(
             self.dot(other) / (self.length_sqrt() * other.length_sqrt())
         )
     
     def sum_total(self) -> float:
-        """Return sum total of all values
-
-        Returns
-        ---
-        float
+        """Return sum total of all values 'xyz'
         """
         return self.x + self.y
 
     def cross(self, other: 'Vec2') -> float:
         """Return the cross product between self and another vec2
-
-        Returns
-        ---
-        float
-            cross product between self and other
         """
         return (self.y * other.z) - (self.z * other.y)
 
     def project(self, other: 'Vec2') -> 'Vec2':
         """Return the projection between self and other vec3
-
-        Returns
-        ---
-        Vec2
         """
         return other * (self.dot(other) / other.length_sqr())
 
     def reject(self, other: 'Vec2') -> 'Vec2':
         """Return the reject between self and other vec3
-
-        Returns
-        ---
-        Vec2
         """
         return self - self.project(other)
 
     def length_sqr(self) -> float:
         """Return the squared length
-
-        Returns
-        ---
-        float
         """
         return sqr(self.x) + sqr(self.y)
 
     def length_sqrt(self) -> float:
         """Return the square root length
-
-        Returns
-        ---
-        float
         """
         return sqrt(self.length_sqr())
 
     def distance_sqrt(self, other: 'Vec2') -> float:
         """Return the distance between self and other vec2
-
-        Parameters
-        ---
-        other : Vec2
-
-        Returns
-        ---
-        float
         """
         dir: Vec2= other - self
         return dir.length_sqrt()
 
     def distance_sqr(self, other: 'Vec2') -> float:
         """Return the distance between self and other vec2
-
-        Parameters
-        ---
-        other : Vec2
-
-        Returns
-        ---
-        float
         """
         dir: Vec2= other - self
         return dir.length_sqr()
 
     def dot(self, other: 'Vec2') -> float:
         """Return the dot product between self and other vec3
-
-        Parameters
-        ---
-        other : Vec2
-
-        Returns
-        ---
-        float
         """
         return (self.x * other.x) + (self.y * other.y)
 
     def is_unit(self) -> bool:
         """Check if the current length of self is normalized
-
-        Returns
-        ---
-        bool
         """
         return is_one(self.length_sqr())
 
     def is_zero(self) -> bool:
         """Check if the current *x, y* components of self are zero in value
-
-        Returns
-        ---
-        bool
         """
         return is_zero(self.x) and is_zero(self.y)
 
     def is_equil(self, other: 'Vec2') -> bool:
         """Check if self and other have the same *x, y* component values
-
-        Parameters
-        ---
-        other : Vec2
-
-        Returns
-        ---
-        bool
         """
         return is_equil(self.x, other.x) and is_equil(self.y, other.y)
 
@@ -781,10 +514,6 @@ class Vec3:
         return Vec3(v2.x, v2.y, z)
 
     @staticmethod
-    def create_from_pt(pt: Pt3) -> 'Vec3':
-        return Vec3(pt.x, pt.y, pt.z)
-
-    @staticmethod
     def create_from_max(a: 'Vec3', b: 'Vec3') -> 'Vec3':
         return Vec3(
             maxf(a.x, b.x),
@@ -805,23 +534,12 @@ class Vec3:
         return Vec3(value, value, value)
 
     def sum(self) -> float:
-        """Return sum of components
-
-        Returns
-        ---
-        float
+        """Return sum of components 'xyz'
         """
         return self.x + self.y + self.z
 
-    def to(self, other: 'Vec3') -> 'Vec3':
-        return (other - self)
-
     def abs(self) -> 'Vec3':
         """Return a copy of self with positive values
-        
-        Returns
-        ---
-        Vec3
         """
         return Vec3(absf(self.x), absf(self.y), absf(self.z))
         
@@ -831,28 +549,11 @@ class Vec3:
 
     def to_str(self) -> str:
         """Return string format
-
-        Returns
-        ---
-        str
         """
         return f"X: {self.x}, Y: {self.y}, Z: {self.z}"
 
     def lerp(self, to: 'Vec3', weight: float) -> 'Vec3':
-        """Return lerp between begin and end vec3
-
-        Parameters
-        ---
-        begin : Vec3
-        
-        end : Vec3
-            
-        weight : float
-
-        Returns
-        ---
-        Vec3
-            
+        """Return lerped vec3 between self and to
         """
         return Vec3(
             lerp(self.x, to.x, weight),
@@ -861,11 +562,7 @@ class Vec3:
         )
     
     def xy(self) -> Vec2:
-        """Return *xy* components
-
-        Returns
-        ---
-        Vec3
+        """Return 'xy' components
         """
         return Vec2(self.x, self.y)
 
@@ -915,10 +612,6 @@ class Vec3:
         ---
         Vec3Error
             if length is zero
-
-        Returns
-        ---
-        Vec3
         """
         lsq: float= self.length_sqr()
 
@@ -933,22 +626,12 @@ class Vec3:
         self.z = other.z
 
     def copy(self) -> 'Vec3':
-        """Return a copy of the vec3
-
-        Returns
-        ---
-        Vec3
-            a copy
+        """Return a copy of self
         """ 
         return Vec3(self.x, self.y, self.z)
 
     def cross(self, other: 'Vec3') -> 'Vec3':
-        """Return the cross product between self and another vec3
-
-        Returns
-        ---
-        Vec3
-            cross product between self and other
+        """Return the cross product between self and another
         """
         return Vec3(
             (self.y * other.z) - (self.z * other.y),
@@ -957,11 +640,7 @@ class Vec3:
         )
 
     def triple_cross(self, a: 'Vec3', b: 'Vec3') -> 'Vec3':
-        """Return triple crosss
-        
-        Returns
-        ---
-        Vec3
+        """Return triple cross between self a and b
         """
         cross0: Vec3= self.cross(a)
         cross1: Vec3= cross0.cross(b)
@@ -969,19 +648,11 @@ class Vec3:
 
     def project(self, other: 'Vec3') -> 'Vec3':
         """Return the projection between self and other vec3
-
-        Returns
-        ---
-        Vec3
         """
         return other * (self.dot(other) / other.length_sqr())
 
     def reject(self, other: 'Vec3') -> 'Vec3':
         """Return the reject between self and other vec3
-
-        Returns
-        ---
-        Vec3
         """
         return self - self.project(other)
 
@@ -992,17 +663,6 @@ class Vec3:
 
     def rotate_by(self, angle_deg: float, axis: 'Vec3') -> 'Vec3':
         """Rotate by angle along unit axis
-
-        Parameters
-        ----------
-        angle_deg : float
-
-        axis : Vec3
-
-        Returns
-        -------
-        Vec3
-            rotated vec3
         """
         rad: float = to_radians(angle_deg)
 
@@ -1041,100 +701,48 @@ class Vec3:
 
     def sum_total(self) -> float:
         """Return sum total of all values
-
-        Returns
-        ---
-        float
         """
         return self.x + self.y + self.z
 
     def length_sqr(self) -> float:
         """Return the squared length
-
-        Returns
-        ---
-        float
         """
         return sqr(self.x) + sqr(self.y) + sqr(self.z)
 
     def length_sqrt(self) -> float:
         """Return the square root length
-
-        Returns
-        ---
-        float
         """
         return sqrt(self.length_sqr())
 
     def distance_sqrt(self, other: 'Vec3') -> float:
         """Return the distance between self and other vec3
-
-        Parameters
-        ---
-        other : Vec3
-
-        Returns
-        ---
-        float
         """
         dir: Vec3= other - self
         return dir.length_sqrt()
 
     def distance_sqr(self, other: 'Vec3') -> float:
         """Return the distance between self and other vec3
-
-        Parameters
-        ---
-        other : Vec3
-
-        Returns
-        ---
-        float
         """
         dir: Vec3= other - self
         return dir.length_sqr()
 
     def dot(self, other: 'Vec3') -> float:
         """Return the dot product between self and other vec3
-
-        Parameters
-        ---
-        other : Vec3
-
-        Returns
-        ---
-        float
         """
         return (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
 
     def is_unit(self) -> bool:
         """Check if the current length of self is normalized
-
-        Returns
-        ---
-        bool
         """
         return is_one(self.length_sqr())
 
     def is_zero(self) -> bool:
         """Check if the current *x, y, z* components of self are zero in value
-
-        Returns
-        ---
-        bool
         """
         return is_zero(self.x) and is_zero(self.y) and is_zero(self.z)
 
     def is_equil(self, other: 'Vec3') -> bool:
         """Check if self and other have the same *x, y, z* component values
-
-        Parameters
-        ---
-        other : Vec3
-
-        Returns
-        ---
-        bool
         """
         return (
             is_equil(self.x, other.x) and
@@ -1243,63 +851,31 @@ class Vec4:
 
     def sum(self) -> float:
         """Return sum of components
-
-        Returns
-        ---
-        float
         """
         return self.x + self.y + self.z + self.w
 
     def to_list(self) -> list[float]:
         """Return list[float] of *xyzw* components
-
-        Returns
-        ---
-        list[float]
         """
         return [self.x, self.y, self.z, self.w]
 
     def to_str(self) -> str:
-        """Return string format
-
-        Returns
-        ---
-        str
+        """Return self in string format
         """
-        return f"X: {self.x}, Y: {self.y} Z: {self.z}, W: {self.w}"
+        return f"V4 ( X: {self.x}, Y: {self.y} Z: {self.z}, W: {self.w} )"
 
     def xy(self) -> Vec2:
-        """Return *xy* components
-
-        Returns
-        ---
-        Vec3
+        """Return 'xy' components
         """
         return Vec2(self.x, self.y)
 
     def xyz(self) -> Vec3:
-        """Return *xyz* components
-
-        Returns
-        ---
-        Vec3
+        """Return 'xyz' components
         """
         return Vec3(self.x, self.y, self.z)
 
     def lerp(self, to: 'Vec4', weight: float) -> 'Vec4':
-        """Return lerp between begin ben and end vec4
-
-        Parameters
-        ---
-        begin : Vec4
-            
-        end : Vec4
-            
-        weight : float
-            
-        Returns
-        ---
-        Vec4
+        """Return lerped vec4 between self and to
         """
         return Vec4(
             lerp(self.x, to.x, weight),
@@ -1307,9 +883,6 @@ class Vec4:
             lerp(self.z, to.z, weight),
             lerp(self.w, to.w, weight)
         )
-
-    def to(self, other: 'Vec4') -> 'Vec4':
-        return (other - self)
 
     def copy_from(self, other: 'Vec4') -> None:
         self.x = other.x
@@ -1328,7 +901,7 @@ class Vec4:
         return Vec4(self.x, self.y, self.z, self.w)
 
     def to_unit(self) -> None:
-        """Normalize length
+        """United length
 
         Raises
         ---
@@ -1347,12 +920,7 @@ class Vec4:
         self.w *= inv
 
     def unit(self) -> 'Vec4':
-        """Return a copy of this vec4 with a normal length
-
-        Returns
-        ---
-        Vec4
-            a copy with a normalized length
+        """Return self with unit length
         """
         lsq: float = self.length_sqr()
 
@@ -1368,70 +936,34 @@ class Vec4:
         return result
 
     def sum_total(self) -> float:
-        """Return sum total of all values
-
-        Returns
-        ---
-        float
+        """Return sum of all values 'xyzw'
         """
         return self.x + self.y + self.z + self.w
 
     def length_sqr(self) -> float:
         """Return the squared length
-
-        Returns
-        ---
-        float
         """
         return sqr(self.x) + sqr(self.y) + sqr(self.z) + sqr(self.w)
 
     def length_sqrt(self) -> float:
         """Return the square root length
-
-        Returns
-        ---
-        float
         """
         return sqrt(self.length_sqr())
 
     def distance_sqrt(self, other: 'Vec4') -> float:
         """Return the distance between self and other vec4
-
-        Parameters
-        ---
-        other : Vec4
-
-        Returns
-        ---
-        float
         """
         dir: Vec4= other - self
         return dir.length_sqrt()
 
     def distance_sqr(self, other: 'Vec4') -> float:
         """Return the distance between self and other vec4
-
-        Parameters
-        ---
-        other : Vec4
-
-        Returns
-        ---
-        float
         """
         dir: Vec4= other - self
         return dir.length_sqr()
 
     def dot(self, other: 'Vec4') -> float:
         """Return the dot product between self and other vec4
-
-        Parameters
-        ---
-        other : Vec4
-
-        Returns
-        ---
-        float
         """
         x: float= self.x * other.x
         y: float= self.y * other.y
@@ -1441,23 +973,11 @@ class Vec4:
 
     def is_unit(self) -> bool:
         """Check if the current length of self is normalized
-
-        Returns
-        ---
-        bool
         """
         return is_one(self.length_sqr())
 
     def is_equil(self, other: 'Vec4') -> bool:
         """Check if self and other have the same *x, y, z, w* component values
-
-        Parameters
-        ---
-        other : Vec4
-
-        Returns
-        ---
-        bool
         """
         return (
             is_equil(self.x, other.x) and
@@ -1468,10 +988,6 @@ class Vec4:
 
     def is_zero(self) -> bool:
         """Check if the current *x, y, z* components of self are zero in value
-
-        Returns
-        ---
-        bool
         """
         return (
             is_zero(self.x) and
@@ -1576,16 +1092,6 @@ class Mat3:
     @staticmethod
     def create_from_axis(angle_deg: float, unit_axis: Vec3) -> 'Mat3':
         """Create a rotated matrix
-
-        Parameters
-        ---
-        angle_deg : float
-
-        unit_axis : Vec3
-
-        Returns
-        ---
-        Mat3
         """
         if not unit_axis.is_unit():
             unit_axis.to_unit()
@@ -1627,6 +1133,8 @@ class Mat3:
 
     @staticmethod
     def create_from_quaternion(q: 'Quaternion') -> 'Mat3':
+        """Create matrix from quetrnion values
+        """
         x2: float= sqr(q.x)
         y2: float= sqr(q.y)
         z2: float= sqr(q.z)
@@ -1661,11 +1169,7 @@ class Mat3:
 
     @staticmethod
     def identity() -> 'Mat3':
-        """Create an identity mat3 matrix
-
-        Returns
-        ---
-        Mat3
+        """Create an identity matrix
         """
         return Mat3(
             Vec3(x= 1.0),
@@ -1675,11 +1179,7 @@ class Mat3:
 
     @staticmethod
     def create_scaler(v3: Vec3) -> 'Mat3':
-        """Create a scaler mat3 matrix
-
-        Returns
-        ---
-        Mat3
+        """Create a scaler matrix
         """
         return Mat3(
             Vec3(x= v3.x),
@@ -1689,11 +1189,7 @@ class Mat3:
     
     @staticmethod
     def create_rotation_x(angle_deg: float) -> 'Mat3':
-        """Create a rotation *X* mat3 matrix
-
-        Returns
-        ---
-        Mat3
+        """Create a rotation on x axis matrix
         """
         angle_rad: float= to_radians(angle_deg)
 
@@ -1708,11 +1204,7 @@ class Mat3:
 
     @staticmethod
     def create_rotation_y(angle_deg: float) -> 'Mat3':
-        """Create a rotation *y* mat3 matrix
-
-        Returns
-        ---
-        Mat3
+        """Create a rotation on y axis matrix
         """
         angle_rad: float= to_radians(angle_deg)
 
@@ -1727,11 +1219,7 @@ class Mat3:
 
     @staticmethod
     def create_rotation_z(angle_deg: float) -> 'Mat3':
-        """Create a rotation *z* mat3 matrix
-
-        Returns
-        ---
-        Mat3
+        """Create a rotation on z axis matrix
         """
         angle_rad: float= to_radians(angle_deg)
 
@@ -1745,20 +1233,12 @@ class Mat3:
         )
 
     def copy(self) -> 'Mat3':
-        """Return a copy
-
-        Returns
-        ---
-        Mat3
+        """Return a copy of self
         """
         return Mat3(self.row0.copy(), self.row1.copy(), self.row2.copy)
 
     def scale(self, by: float) -> 'Mat3':
         """Return a scaled copy of self
-
-        Returns
-        ---
-        Mat3
         """
         r0: Vec3= self.row0 * by
         r1: Vec3= self.row1 * by
@@ -1767,10 +1247,6 @@ class Mat3:
 
     def transpose(self) -> 'Mat3':
         """Return a transposed copy of self
-
-        Returns
-        ---
-        Mat3
         """
         r0: Vec3= self.col0()
         r1: Vec3= self.col1()
@@ -1779,10 +1255,6 @@ class Mat3:
 
     def cofactor(self) -> 'Mat3':
         """Return a cofactor copy of self
-
-        Returns
-        ---
-        Mat3
         """
         ax: float= self.row0.x
         ay: float= -self.row0.y
@@ -1821,10 +1293,6 @@ class Mat3:
     def unit(self) -> 'Mat3':
         """Return a copy of self with normalized length
 
-        Returns
-        ---
-        Mat3
-            
         Raises
         ---
         Mat3Error
@@ -1845,10 +1313,6 @@ class Mat3:
 
     def inverse(self) -> 'Mat3':
         """Return the inverse of self
-
-        Returns
-        ---
-        Mat3
         """
         a: float= self.row0.x
         b: float= self.row0.y
@@ -1881,37 +1345,21 @@ class Mat3:
 
     def col0(self) -> Vec3:
         """Return column of float values
-
-        Returns
-        ---
-        Vec3
         """
         return Vec3(self.row0.x, self.row1.x, self.row2.x)
 
     def col1(self) -> Vec3:
         """Return column of float values
-
-        Returns
-        ---
-        Vec3
         """
         return Vec3(self.row0.y, self.row1.y, self.row2.y)
 
     def col2(self) -> Vec3:
         """Return column of float values
-
-        Returns
-        ---
-        Vec3
         """
         return Vec3(self.row0.z, self.row1.z, self.row2.z)
 
     def multiply_v3(self, v3: Vec3) -> Vec3:
         """Return mat3 multiplyed by vec3
-        
-        Returns
-        ---
-        Vec3
         """
         x: float= v3.dot(self.col0()),
         y: float= v3.dot(self.col1()),
@@ -1920,10 +1368,6 @@ class Mat3:
 
     def get_rotation(self) -> 'Quaternion':
         """Get rotation from matrix
-        
-        Returns
-        ---
-        Quaternion
         """
         result: Vec4= Vec4()
 
@@ -1993,10 +1437,6 @@ class Mat3:
 
     def determinant(self) -> float:
         """Return the determinant of self
-
-        Returns
-        ---
-        float
         """
         a0: float= self.row0.x * self.row1.y * self.row2.z
         a1: float= self.row0.y * self.row1.z * self.row2.x
@@ -2009,19 +1449,11 @@ class Mat3:
 
     def trace(self) -> float:
         """Return the sum of the trace values
-
-        Returns
-        ---
-        float
         """
         return self.row0.x + self.row1.y + self.row2.z
 
     def array(self) -> list[float]:
-        """
-
-        Returns
-        ---
-        list[float]
+        """Return a single array of matrix values
         """
         return [
             self.row0.x, self.row0.y, self.row0.z,
@@ -2030,11 +1462,7 @@ class Mat3:
         ]
 
     def multi_array(self) -> list[list[float]]:
-        """
-
-        Returns
-        ---
-        list[list[float]]
+        """Return a multi dimentional array of matrix values
         """
         return [
             [self.row0.x, self.row0.y, self.row0.z],
@@ -2169,10 +1597,6 @@ class Mat4:
     @staticmethod
     def identity() -> 'Mat4':
         """Create an identity mat4 matrix
-
-        Returns
-        ---
-        Mat4
         """
         return  Mat4(
             Vec4(x= 1.0),
@@ -2184,10 +1608,6 @@ class Mat4:
     @staticmethod
     def create_scaler(v3: Vec3) -> 'Mat4':
         """Create a scaler mat4 matrix
-
-        Returns
-        ---
-        Mat4
         """
         return  Mat4(
             Vec4(x= v3.x),
@@ -2199,10 +1619,6 @@ class Mat4:
     @staticmethod
     def create_translation(v3: Vec3) -> 'Mat4':
         """Create a translation mat4 matrix
-
-        Returns
-        ---
-        Mat4
         """
         return  Mat4(
             Vec4(x= 1.0),
@@ -2214,10 +1630,6 @@ class Mat4:
     @staticmethod
     def create_shear_x(shear_y: float, shear_z: float) -> 'Mat4':
         """Create a shear mat4 matrix on x axis
-
-        Returns
-        ---
-        Mat4
         """
         return  Mat4(
             Vec4(x= 1.0, y= shear_y, z= shear_z),
@@ -2229,10 +1641,6 @@ class Mat4:
     @staticmethod
     def create_shear_y(shear_x: float, shear_z: float) -> 'Mat4':
         """Create a shear mat4 matrix on y axis
-
-        Returns
-        ---
-        Mat4
         """
         return  Mat4(
             Vec4(x= 1.0),
@@ -2244,10 +1652,6 @@ class Mat4:
     @staticmethod
     def create_shear_z(shear_x: float, shear_y: float) -> 'Mat4':
         """Create a shear mat4 matrix on z axis
-
-        Returns
-        ---
-        Mat4
         """
         return  Mat4(
             Vec4(x= 1.0),
@@ -2259,10 +1663,6 @@ class Mat4:
     @staticmethod
     def create_rotation_x(angle_deg: float) -> 'Mat4':
         """Create a rotation *X* mat4 matrix
-
-        Returns
-        ---
-        Mat4
         """
         angle_rad: float= to_radians(angle_deg)
 
@@ -2279,10 +1679,6 @@ class Mat4:
     @staticmethod
     def create_rotation_y(angle_deg: float) -> 'Mat4':
         """Create a rotation *y* mat4 matrix
-
-        Returns
-        ---
-        Mat4
         """
         angle_rad: float= to_radians(angle_deg)
 
@@ -2299,10 +1695,6 @@ class Mat4:
     @staticmethod
     def create_rotation_z(angle_deg: float) -> 'Mat4':
         """Create a rotation *z* mat4 matrix
-
-        Returns
-        ---
-        Mat4
         """
         angle_rad: float= to_radians(angle_deg)
 
@@ -2319,16 +1711,6 @@ class Mat4:
     @staticmethod
     def create_from_axis(angle_deg: float, unit_axis: Vec3) -> 'Mat4':
         """Create a rotated matrix
-
-        Parameters
-        ---
-        angle_deg : float
-
-        axis : Vec3
-
-        Returns
-        ---
-        Mat4
         """
         if not unit_axis.is_unit():
             unit_axis.to_unit()
@@ -2414,10 +1796,6 @@ class Mat4:
         far: float
     ) -> 'Mat4':
         """Create a orthographic projection matrix
-
-        Returns
-        ---
-        Mat4
         """
         inv_rl: float= 1.0 / (right - left)
         inv_tb: float= 1.0 / (top - bottom)
@@ -2437,15 +1815,10 @@ class Mat4:
 
     @staticmethod
     def create_perspective(fov: float, aspect: float, near: float, far: float) -> 'Mat4':
-        """Create a mat4 matrix *perspective* field of view
-
-        Returns
-        ---
-        Mat4
+        """Create a matrix 'perspective' field of view
 
         Raises
         ---
-
         Mat4Error
             if values like aspect equil zero
         """
@@ -2467,11 +1840,7 @@ class Mat4:
 
     @staticmethod
     def create_look_at(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
-        """Create a mat4 matrix *look at* field of view
-
-        Returns
-        ---
-        Mat4
+        """Create a  matrix 'look at' field of view
         """
         z: Vec3 = (eye - target)
         if not z.is_unit():
@@ -2502,6 +1871,8 @@ class Mat4:
         )
 
     def added(self, other: 'Mat4') -> None:
+        """Set self to the addition between self and other matrix
+        """
         r0: Vec4= self.row0 + other.row0
         r1: Vec4= self.row1 + other.row1
         r2: Vec4= self.row2 + other.row2
@@ -2528,11 +1899,7 @@ class Mat4:
         self.row3.w = r3.w
 
     def multiplyed(self, other: 'Mat4') -> None:
-        """Multiply self with other
-
-        Parameters
-        ---
-        other : Mat4
+        """Set matrix to multipication between self with other matrix
         """
         self.row0.x= self.row0.dot(other.col0())
         self.row0.y= self.row0.dot(other.col1())
@@ -2557,10 +1924,6 @@ class Mat4:
 
     def copy(self) -> 'Mat4':
         """Return a copy
-
-        Returns
-        ---
-        Mat4
         """
         return Mat4(
             self.row0.copy(),
@@ -2570,11 +1933,7 @@ class Mat4:
         )
 
     def scale(self, by: float) -> 'Mat4':
-        """Return a scaled copy of self
-
-        Returns
-        ---
-        Mat4
+        """Return matrix scaled by value
         """
         r0: Vec4= self.row0 * by
         r1: Vec4= self.row1 * by
@@ -2584,11 +1943,7 @@ class Mat4:
         return Mat4(r0, r1, r2, r3)
 
     def transpose(self) -> 'Mat4':
-        """Return a transposed copy of self
-
-        Returns
-        ---
-        Mat4
+        """Return the transpose of self matrix
         """
         r0: Vec4= self.col0()
         r1: Vec4= self.col1()
@@ -2598,11 +1953,7 @@ class Mat4:
         return Mat4(r0, r1, r2, r3)
 
     def cofactor(self) -> 'Mat4':
-        """Return a cofactor copy of self
-
-        Returns
-        ---
-        Mat4
+        """Return the cofactor of self matrix
         """
         ax: float= self.row0.x
         ay: float= -self.row0.y
@@ -2629,11 +1980,7 @@ class Mat4:
         )
 
     def inverse(self) -> 'Mat4':
-        """Return the inverse of self
-
-        Returns
-        ---
-        Mat4
+        """Return the inverse of self matrix
         """
         a00: float= self.row0.x
         a01: float= self.row0.y
@@ -2699,12 +2046,7 @@ class Mat4:
         )
 
     def to_unit(self) -> None:
-        """Normalize the length of self
-
-        Raises
-        ---
-        Mat4Error
-            if the determinant of self is zero
+        """Set matrix values to unit length
         """
         det: float= self.determinant()
 
@@ -2718,16 +2060,7 @@ class Mat4:
         self.row3.copy_from(self.row3 * inv)
 
     def unit(self) -> 'Mat4':
-        """Return a copy of self with normalized length
-
-        Returns
-        ---
-        Mat4
-            
-        Raises
-        ---
-        Mat4Error
-            if the determinant of self is zero
+        """Return a copy of matrix with unit length
         """
         det: float= self.determinant()
 
@@ -2744,20 +2077,12 @@ class Mat4:
         )
 
     def get_transform(self) -> Vec3:
-        """Return matrix transform values
-
-        Retruns
-        ---
-        Vec3
+        """Return the transformed values from matrix
         """
         return self.row3.xyz()
 
     def get_rotation(self) -> 'Quaternion':
-        """Get rotation from matrix
-        
-        Returns
-        ---
-        Quaternion
+        """Return the rotation values from matrix
         """
 
         ax: float = self.row0.x
@@ -2802,7 +2127,7 @@ class Mat4:
         return Quaternion.create_from_vec4(result)
 
     def get_scale(self) -> Vec3:
-        """Return scaler from matrix
+        """Return the scaler values from matrix
         """
         x: float= self.row0.xyz().length_sqrt()
         y: float= self.row1.xyz().length_sqrt()
@@ -2811,11 +2136,7 @@ class Mat4:
         return Vec3(x, y, z)
 
     def multiply_v4(self, v4: Vec4) -> Vec4:
-        """Return mat4 multiplyed by vec4
-        
-        Returns
-        ---
-        Vec4
+        """Return matrix multiplyed by vec4
         """
         x: float= v4.dot(self.col0()),
         y: float= v4.dot(self.col1()),
@@ -2824,11 +2145,7 @@ class Mat4:
         return Vec4(x,y,z,w)
 
     def col0(self) -> Vec4:
-        """Return the first column of float values
-
-        Returns
-        ---
-        Vec4
+        """Return matrix column
         """
         x: float = self.row0.x
         y: float = self.row1.x
@@ -2837,11 +2154,7 @@ class Mat4:
         return Vec4(x,y,z,w)
 
     def col1(self) -> Vec4:
-        """Return the second column of float values
-
-        Returns
-        ---
-        Vec4
+        """Return matrix column
         """
         x: float = self.row0.y
         y: float = self.row1.y
@@ -2850,11 +2163,7 @@ class Mat4:
         return Vec4(x,y,z,w)
 
     def col2(self) -> Vec4:
-        """Return the third column of float values
-
-        Returns
-        ---
-        Vec4
+        """Return matrix column
         """
         x: float = self.row0.z
         y: float = self.row1.z
@@ -2863,11 +2172,7 @@ class Mat4:
         return Vec4(x,y,z,w)
 
     def col3(self) -> Vec4:
-        """Return the fourth column of float values
-
-        Returns
-        ---
-        Vec4
+        """Return matrix column
         """
         x: float = self.row0.w
         y: float = self.row1.w
@@ -2906,11 +2211,7 @@ class Mat4:
         raise Mat4Error('out of range')
 
     def determinant(self) -> float:
-        """Return the determinant of self
-
-        Returns
-        ---
-        float
+        """Return matrix determinant value
         """
         a00: float= self.row0.x
         a01: float= self.row0.y
@@ -2964,20 +2265,12 @@ class Mat4:
         )
 
     def trace(self) -> float:
-        """Return the sum of the trace values
-
-        Returns
-        ---
-        float
+        """Return matrix trace value
         """
         return self.row0.x + self.row1.y + self.row2.z + self.row3.w
 
     def array(self) -> list[float]:
         """
-
-        Returns
-        ---
-        list[float]
         """
         return [
             self.row0.x, self.row0.y, self.row0.z, self.row0.w,
@@ -2988,10 +2281,6 @@ class Mat4:
 
     def multi_array(self) -> list[list[float]]:
         """
-
-        Returns
-        ---
-        list[list[float]]
         """
         return [
             [self.row0.x, self.row0.y, self.row0.z, self.row0.w],
@@ -3090,18 +2379,6 @@ class Quaternion:
     @staticmethod
     def create_from_euler(v3: Vec3) -> 'Quaternion':
         """Create from euler angles
-
-        Parameters
-        ---
-        x : float
-        
-        y : float
-        
-        z : float
- 
-        Returns
-        ---
-        Quaternion
         """
         v0: Vec3= v3 * 0.5
 
@@ -3122,16 +2399,6 @@ class Quaternion:
     @staticmethod
     def create_from_axis(angle_deg: float, unit_axis: Vec3) -> 'Quaternion':
         """Create a quaternion from an angle and axis of rotation
-
-        Parameters
-        ---
-        angle_deg : float
-
-        unit_axis : Vec3
-
-        Returns
-        ---
-        Quaternion
 
         """
         if not unit_axis.is_unit():
@@ -3171,16 +2438,6 @@ class Quaternion:
 
     def lerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
         """Return the interpolation between two quaternions
-
-        Parameters
-        ---
-        to : Quaternion
-
-        weight : float
-
-        Returns
-        ---
-        Quaternion
         """
         return Quaternion(
             lerp(self.x, to.x, weight),
@@ -3201,16 +2458,6 @@ class Quaternion:
 
     def slerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
         """Return the spherical linear interpolation between two quaternions
-
-        Parameters
-        ---
-        to : Quaternion
-
-        weight : float
-
-        Returns
-        ---
-        Quaternion
         """
         weight0: float= 0.0
         weight1: float= 0.0
@@ -3244,10 +2491,6 @@ class Quaternion:
 
     def copy(self) -> 'Quaternion':
         """Return a copy of self
-
-        Returns
-        ---
-        Quaternion
         """
         return Quaternion(self.x, self.y, self.z, self.z)
 
@@ -3270,10 +2513,6 @@ class Quaternion:
 
     def scale(self, by: float) -> 'Quaternion':
         """Return a scaled copy of self based of *by* float value
-
-        Returns
-        ---
-        Quaternion
         """
         return Quaternion(
             self.x * by,
@@ -3284,10 +2523,6 @@ class Quaternion:
 
     def inverse(self) -> 'Quaternion':
         """Return the invserse of self
-
-        Returns
-        ---
-        Quaternion
         """
         inv: float= 1.0 / self.length_sqr()
         return Quaternion(
@@ -3300,10 +2535,6 @@ class Quaternion:
     def unit(self) -> 'Quaternion':
         """Return a copy of self with normalized length
 
-        Returns
-        ---
-        Quaternion  
-            
         Raises
         ---
         QuatError
@@ -3337,10 +2568,6 @@ class Quaternion:
 
     def to_euler(self) -> Vec3:
         """Return self as euler values
-
-        Returns
-        ---
-        Vec3
         """
         threshold: float= 0.4999995
 
@@ -3371,10 +2598,6 @@ class Quaternion:
 
     def to_axis(self) -> Vec3:
         """Return self as axis angles
-
-        Returns
-        ---
-        Vec3
         """
         qt_cpy: Quaternion= self.copy()
 
@@ -3398,10 +2621,6 @@ class Quaternion:
 
     def to_mat4(self) -> Mat4:
         """Create a mat4 matrix based on quaternion's current values
-
-        Returns
-        ---
-        Mat4
         """
         x2: float= sqr(self.x)
         y2: float= sqr(self.y)
@@ -3445,32 +2664,16 @@ class Quaternion:
 
     def length_sqr(self) -> float:
         """Return the squared length
-
-        Returns
-        ---
-        float
         """
         return sqr(self.x) + sqr(self.y) + sqr(self.z) + sqr(self.w)
 
     def length_sqrt(self) -> float:
         """Return the square root length
-
-        Returns
-        ---
-        float
         """
         return sqrt(self.length_sqr())
 
     def dot(self, other: 'Quaternion') -> float:
         """Return the dot product between self and other
-
-        Parameters
-        ---
-        other : Quaternion
-
-        Returns
-        ---
-        float
         """
         x2: float= self.x * other.x
         y2: float= self.y * other.y
@@ -3481,19 +2684,11 @@ class Quaternion:
 
     def get_axis_angle_rotation(self) -> float:
         """Return the current angle of self in radians
-
-        Returns
-        ---
-        float
         """
         return arccos(self.w) * 2.0
 
     def get_rotation_axis(self) -> Vec3:
         """Return the current axis
-
-        Returns
-        ---
-        Vec3
         """
         s: float= sin(self.get_axis_angle() * 0.5)
         if not is_zero(s):
@@ -3508,14 +2703,6 @@ class Quaternion:
 
     def is_equil(self, other: 'Quaternion') -> bool:
         """Check if the components of self are the same as other's components
-
-        Parameters
-        ---
-        other : Quaternion
-
-        Returns
-        ---
-        bool
         """
         return (
             is_equil(self.x, other.x) and
@@ -3526,9 +2713,5 @@ class Quaternion:
 
     def is_unit(self) -> bool:
         """Check if the length of self is one
-
-        Returns
-        ---
-        bool
         """
         return is_one(self.length_sqr())

@@ -22,27 +22,23 @@ class ShaderError(Exception):
 
 @dataclass(eq= False, repr= False, slots= True)
 class Shader:
+    vshader: str
+    fshader: str
     shader_id: int= 0
 
     def __post_init__(self):
         self.shader_id= GL.glCreateProgram()
 
-    def compile(self, vert_file: str, frag_file: str) -> None:
+    def setup(self) -> None:
         """Compile shader
-
-        Parameters
-        ---
-        vert_file : str
-
-        frag_file : str
 
         Raises
         ---
         ShaderError
             if shader is not located within *shaders* folder
         """
-        v_file: Path= Path(f'py_opengl/shaders/{vert_file}').absolute()
-        f_file: Path= Path(f'py_opengl/shaders/{frag_file}').absolute()
+        v_file: Path= Path(f'py_opengl/shaders/{self.vshader}').absolute()
+        f_file: Path= Path(f'py_opengl/shaders/{self.fshader}').absolute()
 
         if not v_file.exists():
             raise ShaderError('vert file was not found within shaders folder')

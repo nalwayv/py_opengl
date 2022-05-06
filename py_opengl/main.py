@@ -10,127 +10,132 @@ from OpenGL import GL
 
 from py_opengl import utils
 from py_opengl import maths
-from py_opengl import transform
 from py_opengl import clock
+from py_opengl import transform
 from py_opengl import shader
-from py_opengl import buffer
+# from py_opengl import texture
 from py_opengl import keyboard
 from py_opengl import mouse
 from py_opengl import camera
 from py_opengl import window
-from py_opengl import texture
 from py_opengl import color
 
 
-# --- SHAPE
+# ---
+
+
+# TODO
+@dataclass(eq= False, repr= False, slots= True)
+class Vertex:
+    position: maths.Vec3
+    color: maths.Vec3
+
+    def to_list(self) -> list[float]:
+        return [
+            self.position.x,
+            self.position.y,
+            self.position.z,
+            self.color.x,
+            self.color.y,
+            self.color.z,
+        ]
+
+
+# TODO
+@dataclass(eq= False, repr= False, slots= True)
+class Mesh:
+    vertices: list[Vertex]= field(default_factory=list)
+    indices: list[int]= field(default_factory=list)
+    vao: int= -1
+    vbo: int= -1
+    ebo: int= -1
+
+    def setup(self) -> None:
+        self.vao= GL.glGenVertexArrays(1)
+        self.vbo= GL.glGenBuffers(1)
+        self.ebo= GL.glGenBuffers(1)
+
+        GL.glBindVertexArray(self.vao)
+        
+        v_array= [value for vertex in self.vertices for value in vertex.to_list()]
+
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo)
+        GL.glBufferData(
+            GL.GL_ARRAY_BUFFER,
+            len(v_array) * utils.SIZEOF_FLOAT,
+            utils.c_arrayF(v_array),
+            GL.GL_STATIC_DRAW
+        )
+
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.ebo)
+        GL.glBufferData(
+            GL.GL_ELEMENT_ARRAY_BUFFER,
+            len(self.indices) * utils.SIZEOF_UINT,
+            utils.c_arrayU(self.indices),
+            GL.GL_STATIC_DRAW
+        )
+
+        # pos
+        GL.glEnableVertexAttribArray(0)
+        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 6 * utils.SIZEOF_FLOAT, utils.c_cast(0))
+        
+        # color
+        GL.glEnableVertexAttribArray(1)
+        GL.glVertexAttribPointer(1, 3, GL.GL_FLOAT, GL.GL_FALSE, 6 * utils.SIZEOF_FLOAT, utils.c_cast(3 * utils.SIZEOF_FLOAT))
+        
+        GL.glBindVertexArray(0)
+
+    def use(self):
+        GL.glBindVertexArray(self.vao)
+        i_len= len(self.indices)
+        GL.glDrawElements(GL.GL_TRIANGLES, i_len, GL.GL_UNSIGNED_INT, utils.c_cast(0))
+        GL.glBindVertexArray(0)
+
+    def clean(self) -> None:
+        GL.glDeleteVertexArrays(1, self.vao)
+        GL.glDeleteBuffers(1, self.vbo)
+        GL.glDeleteBuffers(1, self.ebo)
+
 
 @dataclass(eq= False, repr= False, slots= True)
-class Cube:
-    size: maths.Vec3= maths.Vec3(1.0, 1.0, 1.0)
-
-    shader_: Optional[shader.Shader]= None
-    texture_: Optional[texture.Texture]= None
-    transform_: Optional[transform.Transform]= None
-
-    verts: list[float]= field(default_factory=list)
-    colors: list[float]= field(default_factory=list)
-    tex_coords: list[float]= field(default_factory=list)
-    indices: list[int]= field(default_factory=list)
-
-    cube_id: Optional[buffer.Vao]= None
-    vert_vbo: Optional[buffer.Vbo]= None
-    color_vbo: Optional[buffer.Vbo]= None
-    texture_vbo: Optional[buffer.Vbo]= None
-    indices_ibo: Optional[buffer.Ibo]= None
+class Shape:
+    _mesh: Optional[Mesh]=None
+    _shader: Optional[shader.Shader]= None
 
     def __post_init__(self):
+        verts: list[Vertex]= [
+            Vertex(maths.Vec3( 0.5,  0.5, 0.5), maths.Vec3(1.0, 1.0, 1.0)),
+            Vertex(maths.Vec3(-0.5,  0.5, 0.5), maths.Vec3(1.0, 1.0, 0.0)),
+            Vertex(maths.Vec3(-0.5, -0.5, 0.5), maths.Vec3(1.0, 0.0, 0.0)),
+            Vertex(maths.Vec3( 0.5, -0.5, 0.5), maths.Vec3(1.0, 0.0, 1.0)),
 
-        hw: float= self.size.x * 0.5
-        hh: float= self.size.y * 0.5
-        hd: float= self.size.z * 0.5
+            Vertex(maths.Vec3( 0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 1.0)),
+            Vertex(maths.Vec3( 0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 1.0)),
+            Vertex(maths.Vec3( 0.5, -0.5, -0.5), maths.Vec3(0.0, 0.0, 1.0)),
+            Vertex(maths.Vec3( 0.5,  0.5, -0.5), maths.Vec3(0.0, 1.0, 1.0)),
 
-        self.verts= [
-             hw, hh, hd, 
-            -hw, hh, hd,
-            -hw,-hh, hd, 
-             hw,-hh, hd,
-             hw, hh, hd, 
-             hw,-hh, hd, 
-             hw,-hh,-hd, 
-             hw, hh,-hd,
-             hw, hh, hd,
-             hw, hh,-hd,
-            -hw, hh,-hd,
-            -hw, hh, hd,
-            -hw, hh, hd,
-            -hw, hh,-hd,
-            -hw,-hh,-hd,
-            -hw,-hh, hd,
-            -hw,-hh,-hd,
-             hw,-hh,-hd,
-             hw,-hh, hd,
-            -hw,-hh, hd,
-             hw,-hh,-hd,
-            -hw,-hh,-hd,
-            -hw, hh,-hd,
-             hw, hh,-hd
+            Vertex(maths.Vec3( 0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 1.0)),
+            Vertex(maths.Vec3( 0.5,  0.5, -0.5), maths.Vec3(0.0, 1.0, 1.0)),
+            Vertex(maths.Vec3(-0.5,  0.5, -0.5), maths.Vec3(0.0, 1.0, 0.0)),
+            Vertex(maths.Vec3(-0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 0.0)),
+
+            Vertex(maths.Vec3(-0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 0.0)),
+            Vertex(maths.Vec3(-0.5,  0.5, -0.5), maths.Vec3(0.0, 1.0, 0.0)),
+            Vertex(maths.Vec3(-0.5, -0.5, -0.5), maths.Vec3(0.0, 0.0, 0.0)),
+            Vertex(maths.Vec3(-0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 0.0)),
+
+            Vertex(maths.Vec3(-0.5, -0.5, -0.5), maths.Vec3(0.0, 0.0, 0.0)),
+            Vertex(maths.Vec3( 0.5, -0.5, -0.5), maths.Vec3(0.0, 0.0, 1.0)),
+            Vertex(maths.Vec3( 0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 1.0)),
+            Vertex(maths.Vec3(-0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 0.0)),
+
+            Vertex(maths.Vec3( 0.5, -0.5, -0.5), maths.Vec3(0.0, 0.0, 1.0)),
+            Vertex(maths.Vec3(-0.5, -0.5, -0.5), maths.Vec3(0.0, 0.0, 0.0)),
+            Vertex(maths.Vec3(-0.5,  0.5, -0.5), maths.Vec3(0.0, 1.0, 0.0)),
+            Vertex(maths.Vec3( 0.5,  0.5, -0.5), maths.Vec3(0.0, 1.0, 1.0))
         ]
 
-        self.colors = [
-            1.0, 1.0, 1.0, 
-            1.0, 1.0, 0.0, 
-            1.0, 0.0, 0.0, 
-            1.0, 0.0, 1.0,
-            1.0, 1.0, 1.0, 
-            1.0, 0.0, 1.0, 
-            0.0, 0.0, 1.0,
-            0.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,
-            0.0, 1.0, 1.0,
-            0.0, 1.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 1.0, 0.0, 
-            0.0, 1.0, 0.0, 
-            0.0, 0.0, 0.0, 
-            1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 
-            0.0, 0.0, 1.0, 
-            1.0, 0.0, 1.0, 
-            1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 
-            0.0, 0.0, 0.0, 
-            0.0, 1.0, 0.0, 
-            0.0, 1.0, 1.0
-        ]
-
-        self.tex_coords= [
-            1.0, 0.0,
-            0.0, 0.0,
-            0.0, 1.0,
-            1.0, 1.0,
-            0.0, 0.0,
-            0.0, 1.0,
-            1.0, 1.0,
-            1.0, 0.0,
-            1.0, 1.0,
-            1.0, 0.0,
-            0.0, 0.0,
-            0.0, 1.0,
-            1.0, 0.0,
-            0.0, 0.0,
-            0.0, 1.0,
-            1.0, 1.0,
-            0.0, 1.0,
-            1.0, 1.0,
-            1.0, 0.0,
-            0.0, 0.0,
-            0.0, 1.0,
-            1.0, 1.0,
-            1.0, 0.0,
-            0.0, 0.0
-        ]
-   
-        self.indices= [
+        indices: list[int]= [
              0,  1,  2,
              2,  3,  0,
              4,  5,  6,
@@ -145,40 +150,18 @@ class Cube:
             22, 23, 20
         ]
 
-        self.shader_= shader.Shader() 
-        self.texture_= texture.Texture()
-        self.transform_= transform.Transform()
-
-        self.texture_.compile('grid512.bmp')
-        self.shader_.compile('shader.vert', 'shader.frag')
+        self._mesh = Mesh(vertices= verts, indices= indices)
+        self._mesh.setup()
+        self._shader= shader.Shader(vshader= 'debug_shader.vert', fshader= 'debug_shader.frag')
+        self._shader.setup()
     
-        self.cube_id= buffer.Vao()
-        self.vert_vbo= buffer.Vbo(index=0)
-        self.color_vbo= buffer.Vbo(index=1)
-        self.texture_vbo= buffer.Vbo(index=2, components=2)
-        self.indices_ibo= buffer.Ibo()
-
-        self.vert_vbo.setup(self.verts)
-        self.color_vbo.setup(self.colors)
-        self.texture_vbo.setup(self.tex_coords)
-        self.indices_ibo.setup(self.indices)
-    
-
     def draw(self) -> None:
-        self.texture_.use()
-        self.shader_.use()
-
-        GL.glDrawElements(GL.GL_TRIANGLES, self.indices_ibo.length, GL.GL_UNSIGNED_INT, utils.C_VOID_POINTER)
+        self._shader.use()
+        self._mesh.use()
 
     def clean(self) -> None:
-        self.texture_.clean()
-        self.shader_.clean()
-        
-        self.cube_id.clean()
-        self.vert_vbo.clean()
-        self.color_vbo.clean()
-        self.texture_vbo.clean()
-        self.indices_ibo.clean()
+        self._shader.clean()
+        self._mesh.clean()
 
 
 # --- CALLBACKS
@@ -239,7 +222,7 @@ def main() -> None:
         first_move: bool= True
         last_mp:maths.Vec3= maths.Vec3.zero()
 
-        shape: Cube= Cube()
+        shape= Shape()
 
         while not glwin.should_close():
             time.update()
@@ -254,11 +237,11 @@ def main() -> None:
             # shape
             shape.draw()
 
-            shape.transform_.rotated_xyz(maths.Vec3(x= 25.0, y= 15.0) * time.delta)
+            # shape.transform_.rotated_xyz(maths.Vec3(x= 25.0, y= 15.0) * time.delta)
 
-            shape.shader_.set_mat4('m_matrix', shape.transform_.model_matrix())
-            shape.shader_.set_mat4('v_matrix', cam.view_matrix())
-            shape.shader_.set_mat4('p_matrix', cam.projection_matrix())
+            shape._shader.set_mat4('m_matrix', maths.Mat4.identity())
+            shape._shader.set_mat4('v_matrix', cam.view_matrix())
+            shape._shader.set_mat4('p_matrix', cam.projection_matrix())
 
             # keyboard
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
