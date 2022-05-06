@@ -34,10 +34,6 @@ class Transform:
 
     def model_matrix(self) -> maths.Mat4:
         """Return model matrix
-
-        Returns
-        ---
-        maths.Mat4
         """
         t: maths.Mat4= maths.Mat4.create_translation(self.origin)
         r: maths.Mat4= maths.Mat4.create_from_quaternion(self.rotation)
@@ -45,10 +41,6 @@ class Transform:
 
     def inverse(self) -> maths.Mat4:
         """Return inverse model matrix
-
-        Returns
-        ---
-        maths.Mat4
         """
         t: maths.Mat4= maths.Mat4.create_translation(self.origin)
         r: maths.Mat4= maths.Mat4.create_from_quaternion(self.rotation)
@@ -56,10 +48,6 @@ class Transform:
 
     def get_transformed(self, v3: maths.Vec3) -> maths.Vec3:
         """Return v3 transformed
-
-        Returns
-        ---
-        maths.Vec3
         """
         to= self.origin.to(v3)
         t: maths.Mat4= maths.Mat4.create_translation(to)
@@ -68,10 +56,6 @@ class Transform:
 
     def get_inverse_transformed(self, v3: maths.Vec3) -> maths.Vec3:
         """Return v3 inverse transformed
-
-        Returns
-        ---
-        maths.Vec3
         """
         to= self.origin.to(v3)
         t: maths.Mat4= maths.Mat4.create_translation(to)

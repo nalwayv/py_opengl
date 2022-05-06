@@ -30,10 +30,6 @@ class Texture:
     def compile(self, file_name: str) -> None:
         """Create and compile a texture for opengl to use within a shader
 
-        Parameters
-        ---
-        file_name : str
-
         Raises
         ---
         TextureError

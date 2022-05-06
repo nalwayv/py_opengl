@@ -51,17 +51,6 @@ class Camera:
     def move_by(self, dir: CameraDirection, sensativity: float, dt: float) -> None:
         """Move camera
 
-        Parameters
-        ----
-        dir : CameraDir
-            move direction
-
-        sensativity : float
-            speed of movement
-
-        dt : float
-            delta time to scale move by
-
         Raises
         ---
         CameraError
@@ -107,14 +96,6 @@ class Camera:
     def rotate_by(self, dir: CameraRotation, value: float, sensativity: float) -> None:
         """Rotate camera by value
 
-        Parameters
-        ---
-        dir : CameraRot
-
-        value : float
-
-        sensativity : float
-            
         Raises
         ---
         CameraError
@@ -133,14 +114,6 @@ class Camera:
 
     def zoom_by(self, dir: CameraZoom, value: float, sensativity: float) -> None:
         """Zoom camera by value
-
-        Parameters
-        ---
-        dir : CameraZoom
-
-        value : float
-
-        sensativity : float
             
         Raises
         ---
@@ -181,18 +154,10 @@ class Camera:
 
     def projection_matrix(self) -> maths.Mat4:
         """Return projection matrix
-
-        Returns
-        ---
-        maths.Mat4
         """
         return maths.Mat4.create_perspective(self.fovy, self.aspect, self.znear, self.zfar)
 
     def view_matrix(self) -> maths.Mat4:
         """Return view matrix
-
-        Returns
-        ---
-        maths.Mat4
         """
         return maths.Mat4.create_look_at(self.position, self.position + self.front, self.up)

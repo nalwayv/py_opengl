@@ -98,10 +98,6 @@ class AABB3:
 
     def copy(self) -> 'AABB3':
         """Return a copy of self
-
-        Returns
-        ---
-        Abbb
         """
         return AABB3(
             center= self.center.copy(),
@@ -155,10 +151,6 @@ class AABB3:
         """Return true is self aabb is degenerate
         
         check if its min points equil its max points
-        
-        Returns
-        ---
-        bool
         """
         amin= self.get_min()
         bmax= self.get_max()
@@ -273,19 +265,11 @@ class Sphere3:
 
     def area(self) -> float:
         """Return area
-
-        Returns
-        ---
-        float
         """
         return maths.PI * maths.sqr(self.radius)
 
     def copy(self) -> 'Sphere3':
         """Return a copy of self
-
-        Returns
-        ---
-        Sphere
         """
         return Sphere3(self.center.copy(), self.radius)
 
@@ -381,10 +365,6 @@ class Plain:
 
     def copy(self) -> 'Plain':
         """Return a copy of self
-
-        Returns
-        ---
-        Plain
         """
         return Plain(
             normal= self.normal.copy(),
@@ -416,10 +396,6 @@ class Plain:
 
     def unit(self) -> 'Plain':
         """Return a copy of self that has been normalized
-
-        Returns
-        ---
-        Plain
         """
         len_sqr: float= self.normal.length_sqr()
 
@@ -524,14 +500,6 @@ class Ray3:
 
     def get_hit(self, t: float) -> maths.Vec3:
         """Return point along ray
-
-        Parameters
-        ---
-        t : float
-
-        Returns
-        ---
-        Vec3
         """
         return self.origin + (self.direction * t)
     

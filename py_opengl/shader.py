@@ -64,13 +64,6 @@ class Shader:
 
     def set_vec2(self, variable_name: str, value: maths.Vec2) -> None:
         """Set a global uniform vec2 variable within the shader program
-
-        Parameters
-        ---
-        variable_name : str
-
-        value : maths.Vec2
-
         """
         GL.glUniform2f(
             GL.glGetUniformLocation(self.shader_id, variable_name),
@@ -80,13 +73,6 @@ class Shader:
 
     def set_vec3(self, variable_name: str, value: maths.Vec3) -> None:
         """Set a global uniform vec3 variable within the shader program
-
-        Parameters
-        ---
-        variable_name : str
-
-        value : maths.Vec3
-
         """
         GL.glUniform3f(
             GL.glGetUniformLocation(self.shader_id, variable_name),
@@ -97,13 +83,6 @@ class Shader:
 
     def set_vec4(self, variable_name: str, value: maths.Vec4) -> None:
         """Set a global uniform vec4 variable within the shader program
-
-        Parameters
-        ---
-        variable_name : str
-
-        value : maths.Vec4
-
         """
         GL.glUniform4f(
             GL.glGetUniformLocation(self.shader_id, variable_name),
@@ -115,13 +94,6 @@ class Shader:
 
     def set_mat4(self, variable_name: str, value: maths.Mat4) -> None:
         """Set a global uniform mat4 variable within the shader program
-
-        Parameters
-        ---
-        variable_name : str
-
-        value : maths.Mat4
-
         """
         GL.glUniformMatrix4fv(
             GL.glGetUniformLocation(self.shader_id, variable_name),
