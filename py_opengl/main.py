@@ -32,10 +32,10 @@ class Shape:
 
     def __post_init__(self):
         verts: list[mesh.Vertex]= [
-            mesh.Vertex(maths.Vec3( 0.5,  0.5, 0.5), maths.Vec3(1.0, 1.0, 1.0)),
-            mesh.Vertex(maths.Vec3(-0.5,  0.5, 0.5), maths.Vec3(1.0, 1.0, 0.0)),
-            mesh.Vertex(maths.Vec3(-0.5, -0.5, 0.5), maths.Vec3(1.0, 0.0, 0.0)),
-            mesh.Vertex(maths.Vec3( 0.5, -0.5, 0.5), maths.Vec3(1.0, 0.0, 1.0)),
+            mesh.Vertex(maths.Vec3( 0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 1.0)),
+            mesh.Vertex(maths.Vec3(-0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 0.0)),
+            mesh.Vertex(maths.Vec3(-0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 0.0)),
+            mesh.Vertex(maths.Vec3( 0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 1.0)),
 
             mesh.Vertex(maths.Vec3( 0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 1.0)),
             mesh.Vertex(maths.Vec3( 0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 1.0)),
@@ -78,10 +78,14 @@ class Shape:
             22, 23, 20
         ]
 
-        self._mesh = mesh.Mesh(vertices= verts, indices= indices)
-        self._mesh.setup()
-        self._shader= shader.Shader(vshader= 'debug_shader.vert', fshader= 'debug_shader.frag')
-        self._shader.setup()
+        self._mesh = mesh.Mesh(
+            vertices= verts,
+            indices= indices
+        )
+        self._shader= shader.Shader(
+            vshader= 'debug_shader.vert',
+            fshader= 'debug_shader.frag'
+        )
     
     def draw(self) -> None:
         self._shader.use()
@@ -155,7 +159,7 @@ def main() -> None:
         while not glwin.should_close():
             time.update()
 
-            GL.glClearColor(*bg_col.get_data_norm())
+            GL.glClearColor(*bg_col.get_data_unit())
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
             GL.glEnable(GL.GL_DEPTH_TEST)
             GL.glEnable(GL.GL_CULL_FACE)
@@ -207,6 +211,7 @@ def main() -> None:
                     cam.rotate_by(camera.CameraRotation.PITCH, new_mp.y, 0.2)
 
             # ---
+            
             glfw.poll_events()
             glfw.swap_buffers(glwin.window)
 

@@ -315,8 +315,6 @@ class Sphere3:
 
 
 class PlainError(Exception):
-    """Custom error for plain"""
-
     def __init__(self, msg: str):
         super().__init__(msg)
 
@@ -395,7 +393,7 @@ class Plain:
         return pt - (self.normal * scale)
 
     def unit(self) -> 'Plain':
-        """Return a copy of self that has been normalized
+        """Return a copy of self with unit length
         """
         len_sqr: float= self.normal.length_sqr()
 

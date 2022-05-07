@@ -10,7 +10,7 @@ from py_opengl import maths
 
 @dataclass(eq= False, repr= False, slots= True)
 class Color:
-    rgba: int= 0xFF
+    _rgba: int= 0xFF
 
     @staticmethod
     def from_rgba(red: int, green: int, blue: int, alpha: int) -> 'Color':
@@ -22,28 +22,28 @@ class Color:
         return c
 
     def get_red(self) -> int:
-        return 0xFF & (self.rgba)
+        return 0xFF & (self._rgba)
 
     def get_green(self) -> int:
-        return 0xFF & (self.rgba >> 8)
+        return 0xFF & (self._rgba >> 8)
 
     def get_blue(self) -> int:
-        return 0xFF & (self.rgba >> 16)
+        return 0xFF & (self._rgba >> 16)
 
     def get_alpha(self) -> int:
-        return 0xFF & (self.rgba >> 24)
+        return 0xFF & (self._rgba >> 24)
 
     def set_red(self, value: int) -> None: 
-        self.rgba= (self.rgba & 0xFFFFFF00) | (maths.clampi(value, 0, 255))
+        self._rgba= (self._rgba & 0xFFFFFF00) | (maths.clampi(value, 0, 255))
 
     def set_green(self, value: int) -> None:
-        self.rgba= (self.rgba & 0xFFFF00FF) | (maths.clampi(value, 0, 255) << 8)
+        self._rgba= (self._rgba & 0xFFFF00FF) | (maths.clampi(value, 0, 255) << 8)
 
     def set_blue(self, value: int) -> None:
-        self.rgba= (self.rgba & 0xFF00FFFF) | (maths.clampi(value, 0, 255) << 16)
+        self._rgba= (self._rgba & 0xFF00FFFF) | (maths.clampi(value, 0, 255) << 16)
 
     def set_alpha(self, value: int) -> None:
-        self.rgba= (self.rgba & 0x00FFFFFF) | (maths.clampi(value, 0, 255) << 24)
+        self._rgba= (self._rgba & 0x00FFFFFF) | (maths.clampi(value, 0, 255) << 24)
 
     def get_data(self) -> tuple[int, int, int, int]:
         return (
@@ -53,7 +53,7 @@ class Color:
             self.get_alpha()
         )
 
-    def get_data_norm(self) -> tuple[float, float, float, float]:
+    def get_data_unit(self) -> tuple[float, float, float, float]:
         inv= 1.0 / 255.0
         return (
             float(self.get_red()) * inv,

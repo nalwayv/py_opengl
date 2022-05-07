@@ -28,25 +28,24 @@ class Vertex:
         ]
 
 
-
 @dataclass(eq= False, repr= False, slots= True)
 class Mesh:
     vertices: list[Vertex]= field(default_factory=list)
     indices: list[int]= field(default_factory=list)
-    vao: int= -1
-    vbo: int= -1
-    ebo: int= -1
+    _vao: int= -1
+    _vbo: int= -1
+    _ebo: int= -1
 
-    def setup(self) -> None:
-        self.vao= GL.glGenVertexArrays(1)
-        self.vbo= GL.glGenBuffers(1)
-        self.ebo= GL.glGenBuffers(1)
+    def __post_init__(self) -> None:
+        self._vao= GL.glGenVertexArrays(1)
+        self._vbo= GL.glGenBuffers(1)
+        self._ebo= GL.glGenBuffers(1)
 
-        GL.glBindVertexArray(self.vao)
+        GL.glBindVertexArray(self._vao)
         
         v_array= [value for vertex in self.vertices for value in vertex.to_list()]
 
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._vbo)
         GL.glBufferData(
             GL.GL_ARRAY_BUFFER,
             len(v_array) * utils.SIZEOF_FLOAT,
@@ -54,7 +53,7 @@ class Mesh:
             GL.GL_STATIC_DRAW
         )
 
-        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.ebo)
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self._ebo)
         GL.glBufferData(
             GL.GL_ELEMENT_ARRAY_BUFFER,
             len(self.indices) * utils.SIZEOF_UINT,
@@ -73,12 +72,12 @@ class Mesh:
         GL.glBindVertexArray(0)
 
     def use(self):
-        GL.glBindVertexArray(self.vao)
+        GL.glBindVertexArray(self._vao)
         i_len= len(self.indices)
         GL.glDrawElements(GL.GL_TRIANGLES, i_len, GL.GL_UNSIGNED_INT, utils.c_cast(0))
         GL.glBindVertexArray(0)
 
     def clean(self) -> None:
-        GL.glDeleteVertexArrays(1, self.vao)
-        GL.glDeleteBuffers(1, self.vbo)
-        GL.glDeleteBuffers(1, self.ebo)
+        GL.glDeleteVertexArrays(1, self._vao)
+        GL.glDeleteBuffers(1, self._vbo)
+        GL.glDeleteBuffers(1, self._ebo)

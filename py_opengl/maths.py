@@ -219,8 +219,6 @@ def tri_area_signed(
 
 
 class Vec2Error(Exception):
-    """Custom error for Vec2"""
-
     def __init__(self, msg: str):
         super().__init__(msg)
 
@@ -283,11 +281,7 @@ class Vec2:
         return Vec2(value, value)
 
     def to_list(self) -> list[float]:
-        """Return list[float] of *xy* components
-        
-        Returns
-        ---
-        list[float]
+        """Return 'xy' components
         """
         return [self.x, self.y]
 
@@ -302,7 +296,7 @@ class Vec2:
         return self.x + self.y
 
     def lerp(self, to: 'Vec2', weight: float) -> 'Vec2':
-        """Return a lerped vec3 between self and to
+        """Return a lerped vec2 between self and to
         """
         x: float= lerp(self.x, to.x, weight)
         y: float= lerp(self.y, to.y, weight)
@@ -310,7 +304,12 @@ class Vec2:
         return Vec2(x, y)
     
     def to_unit(self) -> None:
-        """Normalize length
+        """Convert to unit length
+
+        Raises
+        ---
+        Vec2Error
+            if length is zero
         """
         lsq: float= self.length_sqr()
 
@@ -322,7 +321,7 @@ class Vec2:
         self.y *= inv
 
     def unit(self) -> 'Vec2':
-        """Return a copy of self with a unit length
+        """Return a copy of self with unit length
         """
         lsq: float= self.length_sqr()
         if is_zero(lsq):
@@ -336,7 +335,7 @@ class Vec2:
         return Vec2(self.x, self.y)
 
     def perpendicular(self) -> 'Vec2':
-        """Return the prpendicular of self
+        """Return the perpendicular of self
         """
         return Vec2(-self.y, self.x)
 
@@ -372,12 +371,12 @@ class Vec2:
         )
     
     def sum_total(self) -> float:
-        """Return sum total of all values 'xyz'
+        """Return sum total of components 'xyz'
         """
         return self.x + self.y
 
     def cross(self, other: 'Vec2') -> float:
-        """Return the cross product between self and another vec2
+        """Return the cross product between self and another
         """
         return (self.y * other.z) - (self.z * other.y)
 
@@ -408,28 +407,28 @@ class Vec2:
         return dir.length_sqrt()
 
     def distance_sqr(self, other: 'Vec2') -> float:
-        """Return the distance between self and other vec2
+        """Return the  squared distance between self and other vec2
         """
         dir: Vec2= other - self
         return dir.length_sqr()
 
     def dot(self, other: 'Vec2') -> float:
-        """Return the dot product between self and other vec3
+        """Return the dot product between self and other vec2
         """
         return (self.x * other.x) + (self.y * other.y)
 
     def is_unit(self) -> bool:
-        """Check if the current length of self is normalized
+        """Check if the current length of self is unit
         """
         return is_one(self.length_sqr())
 
     def is_zero(self) -> bool:
-        """Check if the current *x, y* components of self are zero in value
+        """Check if the 'xy' components have a zero value
         """
         return is_zero(self.x) and is_zero(self.y)
 
     def is_equil(self, other: 'Vec2') -> bool:
-        """Check if self and other have the same *x, y* component values
+        """Check if self and other have the same 'xy' component values
         """
         return is_equil(self.x, other.x) and is_equil(self.y, other.y)
 
@@ -515,6 +514,8 @@ class Vec3:
 
     @staticmethod
     def create_from_max(a: 'Vec3', b: 'Vec3') -> 'Vec3':
+        """Vec3 with the max 'xyz' component values from ever a or b
+        """
         return Vec3(
             maxf(a.x, b.x),
             maxf(a.y, b.y),
@@ -523,6 +524,8 @@ class Vec3:
 
     @staticmethod
     def create_from_min(a: 'Vec3', b: 'Vec3') -> 'Vec3':
+        """Vec3 with the min 'xyz' component values from ever a or b
+        """
         return Vec3(
             minf(a.x, b.x),
             minf(a.y, b.y),
@@ -531,6 +534,8 @@ class Vec3:
 
     @staticmethod
     def create_from_value(value: float) -> 'Vec3':
+        """Create from single value
+        """
         return Vec3(value, value, value)
 
     def sum(self) -> float:
@@ -544,7 +549,8 @@ class Vec3:
         return Vec3(absf(self.x), absf(self.y), absf(self.z))
         
     def to_list(self) -> list[float]:
-        """Return list[float] of *xyz* components"""
+        """Return 'xyz' components
+        """
         return [self.x, self.y, self.z]
 
     def to_str(self) -> str:
@@ -588,7 +594,7 @@ class Vec3:
         self.z -= other.z
 
     def to_unit(self) -> None:
-        """Normalize length
+        """Convert to unit length
 
         Raises
         ---
@@ -700,7 +706,7 @@ class Vec3:
 
 
     def sum_total(self) -> float:
-        """Return sum total of all values
+        """Return sum total of components
         """
         return self.x + self.y + self.z
 
@@ -737,7 +743,7 @@ class Vec3:
         return is_one(self.length_sqr())
 
     def is_zero(self) -> bool:
-        """Check if the current *x, y, z* components of self are zero in value
+        """Check if the 'xyz' components have a zero value
         """
         return is_zero(self.x) and is_zero(self.y) and is_zero(self.z)
 
@@ -757,8 +763,6 @@ class Vec3:
 
 
 class Vec4Error(Exception):
-    '''Custom error for Vec4'''
-
     def __init__(self, msg: str):
         super().__init__(msg)
 
@@ -901,12 +905,12 @@ class Vec4:
         return Vec4(self.x, self.y, self.z, self.w)
 
     def to_unit(self) -> None:
-        """United length
+        """Convert to unit length
 
         Raises
         ---
         Vec4Error
-            if current length is zero
+            if length is zero
         """
         lsq: float = self.length_sqr()
 
@@ -987,7 +991,7 @@ class Vec4:
         )
 
     def is_zero(self) -> bool:
-        """Check if the current *x, y, z* components of self are zero in value
+        """Check if the 'xyzw' components have a zero value
         """
         return (
             is_zero(self.x) and
@@ -1001,8 +1005,6 @@ class Vec4:
 
   
 class Mat3Error(Exception):
-    '''Custom error for matrix 3x3'''
-
     def __init__(self, msg: str):
         super().__init__(msg)
 
@@ -1273,12 +1275,12 @@ class Mat3:
         )
 
     def to_unit(self) -> None:
-        """Normalize the length of self
+        """Convert to unit length
 
         Raises
         ---
         Mat3Error
-            if the determinant of self is zero
+            if the determinant is zero
         """
         det: float= self.determinant()
 
@@ -1477,8 +1479,6 @@ class Mat3:
 
 
 class Mat4Error(Exception):
-    '''Custom error for matrix 4x4'''
-
     def __init__(self, msg: str):
         super().__init__(msg)
 
@@ -2046,7 +2046,12 @@ class Mat4:
         )
 
     def to_unit(self) -> None:
-        """Set matrix values to unit length
+        """Convert to unit length
+
+        Raises
+        ---
+        Mat4Error
+            if determinant is zero
         """
         det: float= self.determinant()
 
@@ -2296,8 +2301,6 @@ class Mat4:
 
 
 class QuatError(Exception):
-    '''Custom error for quaternion'''
-
     def __init__(self, msg: str):
         super().__init__(msg)
 
@@ -2399,7 +2402,6 @@ class Quaternion:
     @staticmethod
     def create_from_axis(angle_deg: float, unit_axis: Vec3) -> 'Quaternion':
         """Create a quaternion from an angle and axis of rotation
-
         """
         if not unit_axis.is_unit():
             unit_axis.to_unit()
@@ -2504,10 +2506,6 @@ class Quaternion:
 
     def conjugate(self) -> 'Quaternion':
         """Return the conjugate of self
-
-        Returns
-        ---
-        Quaternion
         """
         return Quaternion(-self.x, -self.y, -self.z, self.w)
 
@@ -2548,12 +2546,12 @@ class Quaternion:
         return self.scale(inv_sqrt(lsq))
 
     def to_unit(self) -> None:
-        """Normalize the length of self
+        """Convert to unit length
 
         Raises
         ---
         QuatError
-            length of self was zero
+            if length was zero
         """
         lsq: float= self.length_sqr()
 
@@ -2617,6 +2615,8 @@ class Quaternion:
         )
 
     def xyz(self) -> Vec3:
+        """Return 'xyz' components as a vec3
+        """
         return Vec3(self.x, self.y, self.z)
 
     def to_mat4(self) -> Mat4:

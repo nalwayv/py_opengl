@@ -10,8 +10,6 @@ import glfw
 
 
 class GlWindowError(Exception):
-    """Gl Window Error
-    """
     def __init__(self, msg: str):
         super().__init__(msg)
 
@@ -45,11 +43,10 @@ class GlWindow:
         """
         return True if glfw.window_should_close(self.window) else False
 
-
     def center_screen_position(self) -> None:
         """Center glfw window
         """
-        video = glfw.get_video_mode(glfw.get_primary_monitor())
+        video= glfw.get_video_mode(glfw.get_primary_monitor())
 
         x: float= (video.size.width // 2) - (self.width // 2)
         y: float= (video.size.height // 2) - (self.height // 2)

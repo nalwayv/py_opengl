@@ -19,34 +19,34 @@ class MouseState(Enum):
 
 @dataclass(eq= False, repr= False, slots= True)
 class Mouse:
-    states: list[int]= field(default_factory=list)
+    _states: list[int]= field(default_factory=list)
 
     def __post_init__(self):
-        self.states= [0xFF]*3
+        self._states= [0xFF]*3
 
 
     def _set_current_state_at(self, key: int, value: int) -> None:
         """Set glfw mouse button number stored current state
         """
-        self.states[key]= (self.states[key] & 0xFFFFFF00) | value
+        self._states[key]= (self._states[key] & 0xFFFFFF00) | value
 
 
     def _set_previous_state_at(self, key: int, value: int) -> None:
         """Set glfw mouse button number stored previous state
         """
-        self.states[key]= (self.states[key] & 0xFFFF00FF) | (value << 8)
+        self._states[key]= (self._states[key] & 0xFFFF00FF) | (value << 8)
 
 
     def _get_current_state_at(self, key: int) -> int:
         """Get glfw mouse button number stored current state
         """
-        return 0xFF & self.states[key]
+        return 0xFF & self._states[key]
 
 
     def _get_previous_state_at(self, key: int) -> int:
         """Get glfw mouse button number stored previous state
         """
-        return 0xFF & (self.states[key] >> 8)
+        return 0xFF & (self._states[key] >> 8)
 
 
     def get_state(self, glfw_mouse_state: tuple[int, int]) -> MouseState:
