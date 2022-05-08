@@ -53,6 +53,10 @@ def absi(x: int) -> int:
     return int(abs(x))
 
 
+def gcd(x: int, y: int) -> int:
+    return math.gcd(x, y)
+
+
 def is_zero(val: float) -> bool:
     return absf(val) <= EPSILON
 
@@ -626,7 +630,7 @@ class Vec3:
 
         return self * inv_sqrt(lsq)
 
-    def copy_from(self, other: 'Vec3') -> None:
+    def set_from(self, other: 'Vec3') -> None:
         self.x = other.x
         self.y = other.y
         self.z = other.z
@@ -888,7 +892,7 @@ class Vec4:
             lerp(self.w, to.w, weight)
         )
 
-    def copy_from(self, other: 'Vec4') -> None:
+    def set_from(self, other: 'Vec4') -> None:
         self.x = other.x
         self.y = other.y
         self.z = other.z
@@ -1288,9 +1292,9 @@ class Mat3:
             raise Mat3Error('length of this Mat4 was zero')
 
         inv: float= 1.0 / det
-        self.row0.copy_from(self.row0 * inv)
-        self.row1.copy_from(self.row1 * inv)
-        self.row2.copy_from(self.row2 * inv)
+        self.row0.set_from(self.row0 * inv)
+        self.row1.set_from(self.row1 * inv)
+        self.row2.set_from(self.row2 * inv)
 
     def unit(self) -> 'Mat3':
         """Return a copy of self with normalized length
@@ -2059,10 +2063,10 @@ class Mat4:
             raise Mat4Error('length of this Mat4 was zero')
 
         inv: float= 1.0 / det
-        self.row0.copy_from(self.row0 * inv)
-        self.row1.copy_from(self.row1 * inv)
-        self.row2.copy_from(self.row2 * inv)
-        self.row3.copy_from(self.row3 * inv)
+        self.row0.set_from(self.row0 * inv)
+        self.row1.set_from(self.row1 * inv)
+        self.row2.set_from(self.row2 * inv)
+        self.row3.set_from(self.row3 * inv)
 
     def unit(self) -> 'Mat4':
         """Return a copy of matrix with unit length
@@ -2496,7 +2500,7 @@ class Quaternion:
         """
         return Quaternion(self.x, self.y, self.z, self.z)
 
-    def copy_from(self, other: 'Quaternion') -> None:
+    def set_from(self, other: 'Quaternion') -> None:
         """Set values based on other quaternions values
         """
         self.w = other.w

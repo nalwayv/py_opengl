@@ -71,7 +71,7 @@ class AABBTree:
         return self._is_valid(self.root)
 
     def _add_node(self, obj: geometry.Sphere3):
-        self.update_aabb.copy_from(obj.compute_aabb())
+        self.update_aabb.set_from(obj.compute_aabb())
         self.update_aabb.expanded(MARGIN)
 
         node= AABBNode(
@@ -86,7 +86,7 @@ class AABBTree:
         # TODO update
 
     def _update_node(self, obj: geometry.Sphere3, node: AABBNode) -> None:
-        self.update_aabb.copy_from(obj.compute_aabb())
+        self.update_aabb.set_from(obj.compute_aabb())
         check: bool= node.aabb.intersect_aabb(self.update_aabb)
 
         # TODO
@@ -101,7 +101,7 @@ class AABBTree:
 
         self._remove(node)
 
-        node.aabb.copy_from(self.update_aabb)
+        node.aabb.set_from(self.update_aabb)
 
         self._insert(node)
         #TODO update

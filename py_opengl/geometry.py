@@ -78,8 +78,8 @@ class AABB3:
 
     def expanded(self, by: float) -> None:
         expand= self.expand(by)
-        self.center.copy_from(expand.center)
-        self.extents.copy_from(expand.extents)
+        self.center.set_from(expand.center)
+        self.extents.set_from(expand.extents)
 
     def get_size_x(self) -> float:
         p0= self.get_min()
@@ -104,9 +104,9 @@ class AABB3:
             extents= self.extents.copy()
         )
 
-    def copy_from(self, other: 'AABB3') -> None:
-        self.center.copy_from(other.center)
-        self.extents.copy_from(other.extents)
+    def set_from(self, other: 'AABB3') -> None:
+        self.center.set_from(other.center)
+        self.extents.set_from(other.extents)
 
     def perimeter(self) -> float:
         p0: maths.Vec3= self.get_min()
@@ -197,25 +197,6 @@ class AABB3:
 
         return True
 
-    def intersect_sphere(self, sph: 'Sphere3') -> bool:
-        close_pt: maths.Vec3= self.closest_pt(sph.center)
-        dis: float= (sph.center - close_pt).length_sqr()
-        r2= maths.sqr(sph.radius)
-
-        return dis < r2
-
-    def intersect_plain(self, plain: 'Plain') -> bool:
-        len_sq: float = (
-            self.extents.x * maths.absf(plain.normal.x) +
-            self.extents.y * maths.absf(plain.normal.y) +
-            self.extents.z * maths.absf(plain.normal.z)
-        )
-
-        dot: float= plain.normal.dot(self.center)
-        dis: float= dot - plain.direction
-
-        return maths.absf(dis) <= len_sq
-
 
 # --- LINE
 
@@ -303,7 +284,7 @@ class Sphere3:
 
         return dis < r2
 
-    def intersect_plain(self, plain: 'Plain'):
+    def intersect_plain(self, plain: 'Plain3'):
         close_pt: maths.Vec3= plain.closest_pt(self.center)
         dis: float= (self.center - close_pt).length_sqr()
         r2: float= maths.sqr(self.radius)
@@ -320,7 +301,7 @@ class PlainError(Exception):
 
 
 @dataclass(eq=False, repr=False, slots=True)
-class Plain:
+class Plain3:
     normal: maths.Vec3= maths.Vec3(x=1.0)
     direction: float= 0.0
     id: GeometryID= GeometryID.PLAIN
@@ -328,7 +309,7 @@ class Plain:
     def __hash__(self):
         return hash((self.direction, self.normal.x, self.normal.y, self.normal.z))
     
-    def __eq__(self, other: 'Plain') -> bool:
+    def __eq__(self, other: 'Plain3') -> bool:
         check_d= maths.is_equil(self.direction, other.direction)
         check_n= self.normal.is_equil(other.normal)
         check_id= self.id == other.id
@@ -346,10 +327,10 @@ class Plain:
         n: maths.Vec3= unit_v3.copy()
         d: float= n.dot(pt)
 
-        return Plain(normal=n, direction=d)
+        return Plain3(normal=n, direction=d)
 
     @staticmethod
-    def create_from_points(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plain':
+    def create_from_points(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plain3':
         v0: maths.Vec3= b - a
         v1: maths.Vec3= c - a
         
@@ -359,12 +340,12 @@ class Plain:
 
         d: float= n.dot(a)
         
-        return Plain(normal= n, direction= d)
+        return Plain3(normal= n, direction= d)
 
-    def copy(self) -> 'Plain':
+    def copy(self) -> 'Plain3':
         """Return a copy of self
         """
-        return Plain(
+        return Plain3(
             normal= self.normal.copy(),
             direction= self.direction
         )
@@ -392,7 +373,7 @@ class Plain:
         scale: float= pt.dot(self.normal) - self.direction
         return pt - (self.normal * scale)
 
-    def unit(self) -> 'Plain':
+    def unit(self) -> 'Plain3':
         """Return a copy of self with unit length
         """
         len_sqr: float= self.normal.length_sqr()
@@ -411,7 +392,7 @@ class Plain:
             normal= self.normal * inv
             direction= self.direction * inv
 
-        return Plain(normal, direction)
+        return Plain3(normal, direction)
 
     def to_unit(self) -> None:
         """Normalize the length of self
@@ -427,7 +408,7 @@ class Plain:
         self.normal.z *= inv
         self.direction *= inv
 
-    def intersect_plain(self, other: 'Plain') -> bool:
+    def intersect_plain(self, other: 'Plain3') -> bool:
         dis: float= (self.normal.cross(other.nomal)).length_sqr()
         return not maths.is_zero(dis)
 
@@ -549,7 +530,7 @@ class Ray3:
 
         return True, self.get_hit(t)
 
-    def cast_plain(self, pl: Plain) -> tuple[bool, maths.Vec3]:
+    def cast_plain(self, pl: Plain3) -> tuple[bool, maths.Vec3]:
         nd: float= self.direction.dot(pl.normal)
         pn: float= self.origin.dot(pl.normal)
  

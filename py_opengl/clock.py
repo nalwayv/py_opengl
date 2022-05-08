@@ -1,7 +1,11 @@
 """Clock
 """
-import glfw
 from dataclasses import dataclass
+import glfw
+
+
+# ---
+
 
 @dataclass(eq= False, repr= False, slots= True)
 class Clock:

@@ -1,8 +1,8 @@
 """Main
 """
-from dataclasses import dataclass
+# from dataclasses import dataclass
 # from abc import ABC, abstractmethod
-from typing import Optional
+# from typing import Optional
 
 import glfw
 from loguru import logger
@@ -11,7 +11,6 @@ from OpenGL import GL
 from py_opengl import utils
 from py_opengl import maths
 from py_opengl import clock
-# from py_opengl import transform
 from py_opengl import shader
 # from py_opengl import texture
 from py_opengl import keyboard
@@ -20,73 +19,57 @@ from py_opengl import camera
 from py_opengl import window
 from py_opengl import color
 from py_opengl import mesh
+from py_opengl import transform
+from py_opengl import geometry
 
 
 # ---
 
+class Cube3D:
 
-@dataclass(eq= False, repr= False, slots= True)
-class Shape:
-    _mesh: Optional[mesh.Mesh]= None
-    _shader: Optional[shader.Shader]= None
+    __slots__= ('_mesh', '_shader', '_transform')
 
-    def __post_init__(self):
-        verts: list[mesh.Vertex]= [
-            mesh.Vertex(maths.Vec3( 0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 1.0)),
-            mesh.Vertex(maths.Vec3(-0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 0.0)),
-            mesh.Vertex(maths.Vec3(-0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 0.0)),
-            mesh.Vertex(maths.Vec3( 0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 1.0)),
+    def __init__(self):
 
-            mesh.Vertex(maths.Vec3( 0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 1.0)),
-            mesh.Vertex(maths.Vec3( 0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 1.0)),
-            mesh.Vertex(maths.Vec3( 0.5, -0.5, -0.5), maths.Vec3(0.0, 0.0, 1.0)),
-            mesh.Vertex(maths.Vec3( 0.5,  0.5, -0.5), maths.Vec3(0.0, 1.0, 1.0)),
+        self._mesh = mesh.CubeMesh(maths.Vec3.create_from_value(0.5))
 
-            mesh.Vertex(maths.Vec3( 0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 1.0)),
-            mesh.Vertex(maths.Vec3( 0.5,  0.5, -0.5), maths.Vec3(0.0, 1.0, 1.0)),
-            mesh.Vertex(maths.Vec3(-0.5,  0.5, -0.5), maths.Vec3(0.0, 1.0, 0.0)),
-            mesh.Vertex(maths.Vec3(-0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 0.0)),
-
-            mesh.Vertex(maths.Vec3(-0.5,  0.5,  0.5), maths.Vec3(1.0, 1.0, 0.0)),
-            mesh.Vertex(maths.Vec3(-0.5,  0.5, -0.5), maths.Vec3(0.0, 1.0, 0.0)),
-            mesh.Vertex(maths.Vec3(-0.5, -0.5, -0.5), maths.Vec3(0.0, 0.0, 0.0)),
-            mesh.Vertex(maths.Vec3(-0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 0.0)),
-
-            mesh.Vertex(maths.Vec3(-0.5, -0.5, -0.5), maths.Vec3(0.0, 0.0, 0.0)),
-            mesh.Vertex(maths.Vec3( 0.5, -0.5, -0.5), maths.Vec3(0.0, 0.0, 1.0)),
-            mesh.Vertex(maths.Vec3( 0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 1.0)),
-            mesh.Vertex(maths.Vec3(-0.5, -0.5,  0.5), maths.Vec3(1.0, 0.0, 0.0)),
-
-            mesh.Vertex(maths.Vec3( 0.5, -0.5, -0.5), maths.Vec3(0.0, 0.0, 1.0)),
-            mesh.Vertex(maths.Vec3(-0.5, -0.5, -0.5), maths.Vec3(0.0, 0.0, 0.0)),
-            mesh.Vertex(maths.Vec3(-0.5,  0.5, -0.5), maths.Vec3(0.0, 1.0, 0.0)),
-            mesh.Vertex(maths.Vec3( 0.5,  0.5, -0.5), maths.Vec3(0.0, 1.0, 1.0))
-        ]
-
-        indices: list[int]= [
-             0,  1,  2,
-             2,  3,  0,
-             4,  5,  6,
-             6,  7,  4,
-             8,  9, 10,
-            10, 11,  8,
-            12, 13, 14,
-            14, 15, 12,
-            16, 17, 18,
-            18, 19, 16,
-            20, 21, 22,
-            22, 23, 20
-        ]
-
-        self._mesh = mesh.Mesh(
-            vertices= verts,
-            indices= indices
-        )
         self._shader= shader.Shader(
             vshader= 'debug_shader.vert',
             fshader= 'debug_shader.frag'
         )
+
+        self._transform= transform.Transform()
     
+    def aabb(self) -> geometry.AABB3:
+        return self._mesh.compute_aabb(self._transform)
+    
+    def draw(self) -> None:
+        self._shader.use()
+        self._mesh.use()
+
+    def clean(self) -> None:
+        self._shader.clean()
+        self._mesh.clean()
+
+
+class Sphere3D:
+
+    __slots__= ('_mesh', '_shader', '_transform')
+
+    def __init__(self):
+
+        self._mesh = mesh.SphereMesh()
+
+        self._shader= shader.Shader(
+            vshader= 'debug_shader.vert',
+            fshader= 'debug_shader.frag'
+        )
+
+        self._transform= transform.Transform()
+    
+    def aabb(self) -> geometry.AABB3:
+        return self._mesh.compute_aabb(self._transform)
+        
     def draw(self) -> None:
         self._shader.use()
         self._mesh.use()
@@ -154,7 +137,7 @@ def main() -> None:
         first_move: bool= True
         last_mp:maths.Vec3= maths.Vec3.zero()
 
-        shape= Shape()
+        shape= Cube3D()
 
         while not glwin.should_close():
             time.update()
@@ -164,14 +147,15 @@ def main() -> None:
             GL.glEnable(GL.GL_DEPTH_TEST)
             GL.glEnable(GL.GL_CULL_FACE)
 
+            # GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
             # ---
 
             # shape
             shape.draw()
 
-            # shape.transform_.rotated_xyz(maths.Vec3(x= 25.0, y= 15.0) * time.delta)
+            shape._transform.rotated_xyz(maths.Vec3(x=20.0, y=10.0) * (1.4 * time.delta))
 
-            shape._shader.set_mat4('m_matrix', maths.Mat4.identity())
+            shape._shader.set_mat4('m_matrix', shape._transform.model_matrix())
             shape._shader.set_mat4('v_matrix', cam.view_matrix())
             shape._shader.set_mat4('p_matrix', cam.projection_matrix())
 
