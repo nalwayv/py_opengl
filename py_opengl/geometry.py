@@ -68,6 +68,7 @@ class AABB3:
         self.extents= aabb.extents
 
     def expand(self, by: float) -> 'AABB3':
+        """Expanded by float value"""
         if by < 0.0:
             by = maths.absf(by)
 
@@ -75,6 +76,51 @@ class AABB3:
         p1: maths.Vec3= self.get_max() + maths.Vec3.create_from_value(by)
 
         return AABB3.from_min_max(p0, p1)
+
+    def expand_to(self, v3: maths.Vec3) -> 'AABB3':
+        """Expand by vec3"""
+        begin: maths.Vec3= self.copy()
+        end: maths.Vec3= self.center + self.extents
+
+        if v3.x < begin.x:
+            begin.x= v3.x
+        if v3.y < begin.y:
+            begin.y= v3.y
+        if v3.z < begin.z:
+            begin.z= v3.z
+
+        if v3.x > end.x:
+            end.x= v3.x
+        if v3.y > end.y:
+            end.y= v3.y
+        if v3.z > end.z:
+            end.z= v3.z
+
+        return AABB3(
+            center= begin,
+            extents= end - begin
+        )
+
+    def expanded_to(self, v3: maths.Vec3) -> None:
+        begin: maths.Vec3= self.copy()
+        end: maths.Vec3= self.center + self.extents
+
+        if v3.x < begin.x:
+            begin.x= v3.x
+        if v3.y < begin.y:
+            begin.y= v3.y
+        if v3.z < begin.z:
+            begin.z= v3.z
+
+        if v3.x > end.x:
+            end.x= v3.x
+        if v3.y > end.y:
+            end.y= v3.y
+        if v3.z > end.z:
+            end.z= v3.z
+
+        self.center.set_from(begin)
+        self.extents.set_from(end - begin)
 
     def expanded(self, by: float) -> None:
         expand= self.expand(by)

@@ -102,10 +102,10 @@ class Camera:
         """
         match dir:
             case CameraRotation.YAW:
-                self.yaw -= maths.to_radians(value * sensativity)
+                self.yaw -= maths.to_rad(value * sensativity)
 
             case CameraRotation.PITCH:
-                self.pitch += maths.to_radians(maths.clampf(value * sensativity, -89.0, 89.0))
+                self.pitch += maths.to_rad(maths.clampf(value * sensativity, -89.0, 89.0))
 
             case CameraRotation.ROLL:
                 return
@@ -122,13 +122,13 @@ class Camera:
         match dir:
             case CameraZoom.OUT: 
                 self.fovy= maths.clampf(
-                    self.fovy + maths.to_radians(maths.clampf(value * sensativity, 1.0, 45.0)), 
+                    self.fovy + maths.to_rad(maths.clampf(value * sensativity, 1.0, 45.0)), 
                     0.1, 
                     maths.PI
                 )
             case CameraZoom.IN: 
                 self.fovy= maths.clampf(
-                    self.fovy - maths.to_radians(maths.clampf(value * sensativity, 1.0, 45.0)), 
+                    self.fovy - maths.to_rad(maths.clampf(value * sensativity, 1.0, 45.0)), 
                     0.1, 
                     maths.PI
                 )

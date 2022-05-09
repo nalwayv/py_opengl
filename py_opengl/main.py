@@ -39,10 +39,10 @@ class Cube3D:
         )
 
         self._transform= transform.Transform()
-    
+
     def aabb(self) -> geometry.AABB3:
         return self._mesh.compute_aabb(self._transform)
-    
+
     def draw(self) -> None:
         self._shader.use()
         self._mesh.use()
@@ -66,10 +66,10 @@ class Sphere3D:
         )
 
         self._transform= transform.Transform()
-    
+
     def aabb(self) -> geometry.AABB3:
         return self._mesh.compute_aabb(self._transform)
-        
+
     def draw(self) -> None:
         self._shader.use()
         self._mesh.use()
@@ -90,7 +90,7 @@ def cb_window_resize(window, width, height):
     window : GLFWwindow*
 
     width : float
-    
+
     height : float
     """
     GL.glViewport(0, 0, width, height)
@@ -121,21 +121,20 @@ def main() -> None:
         glwin.center_screen_position()
         glwin.set_window_resize_callback(cb_window_resize)
 
-
         bg_col= color.Color.from_rgba(75, 75, 75, 255)
-        
+
         time= clock.Clock()
 
         cam= camera.Camera(
-            position= maths.Vec3(z=3.0),
-            aspect= utils.SCREEN_WIDTH/utils.SCREEN_HEIGHT
+            position= maths.Vec3(z= 3.0),
+            aspect= utils.SCREEN_WIDTH / utils.SCREEN_HEIGHT
         )
 
         kb: keyboard.Keyboard= keyboard.Keyboard()
 
         ms: mouse.Mouse= mouse.Mouse()
         first_move: bool= True
-        last_mp:maths.Vec3= maths.Vec3.zero()
+        last_mp: maths.Vec3= maths.Vec3.zero()
 
         shape= Cube3D()
 
@@ -153,7 +152,7 @@ def main() -> None:
             # shape
             shape.draw()
 
-            shape._transform.rotated_xyz(maths.Vec3(x=20.0, y=10.0) * (1.4 * time.delta))
+            shape._transform.rotated_xyz(maths.Vec3(x= 20.0, y= 10.0) * (1.4 * time.delta))
 
             shape._shader.set_mat4('m_matrix', shape._transform.model_matrix())
             shape._shader.set_mat4('v_matrix', cam.view_matrix())
@@ -190,12 +189,12 @@ def main() -> None:
                     new_mp= maths.Vec3(x=mx, y=my) - last_mp
                     last_mp.x= mx
                     last_mp.y= my
-                    
+
                     cam.rotate_by(camera.CameraRotation.YAW, new_mp.x, 0.2)
                     cam.rotate_by(camera.CameraRotation.PITCH, new_mp.y, 0.2)
 
             # ---
-            
+
             glfw.poll_events()
             glfw.swap_buffers(glwin.window)
 

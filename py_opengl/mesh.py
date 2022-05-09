@@ -132,9 +132,9 @@ class SphereMesh(Mesh):
 
         for i in range(prec + 1):
             for j in range(prec + 1):
-                y: float= maths.cos(maths.to_radians(180.0 - i * 180.0 / prec))
-                x: float= -maths.cos(maths.to_radians(j * 360.0 / prec)) * maths.absf(maths.cos(maths.arcsin(y)))
-                z: float= maths.sin(maths.to_radians(j * 360.0 / prec)) * maths.absf(maths.cos(maths.arcsin(y)))
+                y: float= maths.cos(maths.to_rad(180.0 - i * 180.0 / prec))
+                x: float= -maths.cos(maths.to_rad(j * 360.0 / prec)) * maths.absf(maths.cos(maths.arcsin(y)))
+                z: float= maths.sin(maths.to_rad(j * 360.0 / prec)) * maths.absf(maths.cos(maths.arcsin(y)))
 
                 vertices[i * (prec + 1) + j]= Vertex(
                     position= maths.Vec3(x ,y, z) * self.radius,

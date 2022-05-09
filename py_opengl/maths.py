@@ -12,6 +12,8 @@ PI: Final[float]= 3.14159265358979323846
 PHI: Final[float]= 1.57079632679489661923
 TAU: Final[float]= 6.28318530717958647693
 EPSILON: Final[float]= 1e-6
+RAD: Final[float]= 0.01745329251994329577
+DEG: Final[float]= 57.2957795130823208768
 MAX_FLOAT: Final[float]= 1.7976931348623157e+308
 MIN_FLOAT: Final[float]= 2.2250738585072014e-308
 E: Final[float]= 2.71828182845904523536
@@ -20,6 +22,7 @@ NEGATIVE_INFINITY: Final[float]= -math.inf
 
 
 # --- FUNCTIONS
+
 
 def tan(val: float) -> float:
     return math.tan(val)
@@ -73,12 +76,12 @@ def is_infinite(val: float) -> bool:
     return math.isinf(val)
 
 
-def to_radians(degrees: float) -> float:
-    return degrees * 0.01745329251994329577
+def to_rad(degrees: float) -> float:
+    return degrees * RAD
 
 
-def to_degreese(radians: float) -> float:
-    return radians * 57.2957795130823208768
+def to_deg(radians: float) -> float:
+    return radians * DEG
 
 
 def sqr(val: float) -> float:
@@ -89,62 +92,60 @@ def sqrt(val: float) -> float:
     return math.sqrt(val)
 
 
+def floor(val: float) -> float:
+    return float(math.floor(val))
+
+
 def inv_sqrt(val: float) -> float:
     return 1.0 / sqrt(val)
 
 
 def maxf(x: float, y: float) -> float:
-    return x if x > y else y
+    if x > y:
+        return float(x)
+    return float(y)
 
 
 def maxi(x: int, y: int) -> int:
-    return x if x > y else y
+    if x > y:
+        return int(x)
+    return int(y)
 
 
 def minf(x: float, y: float) -> float:
-    return x if x < y else y
+    if x < y:
+        return float(x)
+    return float(y)
 
 
 def mini(x: int, y: int) -> int:
-    return x if x < y else y
+    if x < y:
+        return int(x)
+    return int(y)
 
 
 def clampf(val: float, low: float, high: float) -> float:
     if val <= low:
-        return low
+        return float(low)
 
     if val >= high:
-        return high
+        return float(high)
 
-    return val
+    return float(val)
 
 
 def clampi(val: int, low: int, high: int) -> int:
     if val <= low:
-        return low
+        return int(low)
 
     if val >= high:
-        return high
+        return int(high)
 
-    return val
+    return int(val)
 
 
 def lerp(start: float, to: float, weight: float) -> float:
     return start + weight * (to - start)
-
-
-def cubic_lerp(start: float, start_tan: float, to: float, to_tan: float, weight) -> float:
-    a: float= start
-    b: float= start_tan
-    c: float= to
-    d: float= to_tan
-    t: float= weight
-    p: float= (d - c) - (a - b)
-
-    squared: float= t * t
-    cubed: float= squared * t
-
-    return cubed * p + squared * ((a - b) - p) + t * (c - a) + b
 
 
 def normalize(val: float, low: float, high: float) -> float:
@@ -171,42 +172,43 @@ def wrap(val: int, low: int, high: int) -> int:
     return ((val - low) % (high - low) + low)
 
 
+def wrap_rad(val: float) -> float:
+    """Wrap radian between -PI and PI
+    """
+    if absf(val) > PI:
+        val += PI
+        val -= float(val // TAU) * TAU
+        val -= PI
+    return val
+
+
+def wrap_pi(angle_rad: float) -> float:
+    """
+    """
+    if absf(angle_rad) <= PI:
+        inv: float= 1.0 / TAU
+        api: float= angle_rad + PI
+        angle_rad -= floor(api * inv) * TAU
+
+    return angle_rad
+
+
+def wrap_deg(val: float) -> float:
+    """Wrap deg between -180 and 180
+    """
+    while val < -180.0:
+        val += 360.0
+    while val > 180.0:
+        val -= 360.0
+    return val
+
+
 def ping_pong(val: int, length:int) -> int:
     """repeat value from 0 to high and back
     """
     val= wrap(val, 0, length * 2)
     val= length - absi(val - length)
     return val
-
-
-def catmullrom(pos_a: float, pos_b: float, pos_c: float, pos_d: float, amount: float) -> float:
-    """catmull_rom interpolation using the specified positions
-    """
-    squared: float= amount * amount
-    cubed: float= squared * amount
-    return (
-        0.5 * (2.0 * pos_b + (pos_c - pos_a) * amount +
-        (2.0 * pos_a - 5.0 * pos_b + 4.0 * pos_c - pos_d) * squared +
-        (3.0 * pos_b - pos_a - 3.0 * pos_c + pos_d) * cubed)
-    )  
-
-
-def hetmit(value_a: float, tangent_a: float, value_b: float, tangent_b: float, amount: float) -> float:
-    """hermite spline interpolation
-    """
-    if amount == 0.0:
-        return value_a
-
-    if amount == 1.0:
-        return value_b
-
-    squared: float= amount * amount
-    cubed: float= squared * amount
-    return (
-        (2.0 * value_a - 2.0 * value_b + tangent_b + tangent_a) * cubed +
-        (3.0 * value_b - 3.0 * value_a - 2.0 * tangent_a - tangent_b) * squared +
-        tangent_a * amount + value_a
-    )
 
 
 def tri_area_signed(
@@ -346,7 +348,7 @@ class Vec2:
     def rotate_by(self, angle_deg: float) -> 'Vec2':
         """Return vec2 rotate by angle
         """
-        angle_rad: float= to_radians(angle_deg)
+        angle_rad: float= to_rad(angle_deg)
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
 
@@ -674,7 +676,7 @@ class Vec3:
     def rotate_by(self, angle_deg: float, axis: 'Vec3') -> 'Vec3':
         """Rotate by angle along unit axis
         """
-        rad: float = to_radians(angle_deg)
+        rad: float = to_rad(angle_deg)
 
         u: Vec3 = axis.copy()
 
@@ -1102,7 +1104,7 @@ class Mat3:
         if not unit_axis.is_unit():
             unit_axis.to_unit()
 
-        rad: float= to_radians(angle_deg)
+        rad: float= to_rad(angle_deg)
         x: float= unit_axis.x
         y: float= unit_axis.y
         z: float= unit_axis.z
@@ -1197,7 +1199,7 @@ class Mat3:
     def create_rotation_x(angle_deg: float) -> 'Mat3':
         """Create a rotation on x axis matrix
         """
-        angle_rad: float= to_radians(angle_deg)
+        angle_rad: float= to_rad(angle_deg)
 
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
@@ -1212,7 +1214,7 @@ class Mat3:
     def create_rotation_y(angle_deg: float) -> 'Mat3':
         """Create a rotation on y axis matrix
         """
-        angle_rad: float= to_radians(angle_deg)
+        angle_rad: float= to_rad(angle_deg)
 
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
@@ -1227,7 +1229,7 @@ class Mat3:
     def create_rotation_z(angle_deg: float) -> 'Mat3':
         """Create a rotation on z axis matrix
         """
-        angle_rad: float= to_radians(angle_deg)
+        angle_rad: float= to_rad(angle_deg)
 
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
@@ -1668,7 +1670,7 @@ class Mat4:
     def create_rotation_x(angle_deg: float) -> 'Mat4':
         """Create a rotation *X* mat4 matrix
         """
-        angle_rad: float= to_radians(angle_deg)
+        angle_rad: float= to_rad(angle_deg)
 
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
@@ -1684,7 +1686,7 @@ class Mat4:
     def create_rotation_y(angle_deg: float) -> 'Mat4':
         """Create a rotation *y* mat4 matrix
         """
-        angle_rad: float= to_radians(angle_deg)
+        angle_rad: float= to_rad(angle_deg)
 
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
@@ -1700,7 +1702,7 @@ class Mat4:
     def create_rotation_z(angle_deg: float) -> 'Mat4':
         """Create a rotation *z* mat4 matrix
         """
-        angle_rad: float= to_radians(angle_deg)
+        angle_rad: float= to_rad(angle_deg)
 
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
@@ -1719,7 +1721,7 @@ class Mat4:
         if not unit_axis.is_unit():
             unit_axis.to_unit()
 
-        rad: float= to_radians(angle_deg)
+        rad: float= to_rad(angle_deg)
         x: float= unit_axis.x
         y: float= unit_axis.y
         z: float= unit_axis.z
@@ -1826,7 +1828,7 @@ class Mat4:
         Mat4Error
             if values like aspect equil zero
         """
-        inv_r: float= 1.0 / to_radians(fov * 0.5)
+        inv_r: float= 1.0 / to_rad(fov * 0.5)
         dz: float= far - near
         s: float= sin(inv_r)
 
@@ -2389,12 +2391,12 @@ class Quaternion:
         """
         v0: Vec3= v3 * 0.5
 
-        sx: float= sin(to_radians(v0.x))
-        cx: float= cos(to_radians(v0.x))
-        sy: float= sin(to_radians(v0.y))
-        cy: float= cos(to_radians(v0.y))
-        sz: float= sin(to_radians(v0.z))
-        cz: float= cos(to_radians(v0.z))
+        sx: float= sin(to_rad(v0.x))
+        cx: float= cos(to_rad(v0.x))
+        sy: float= sin(to_rad(v0.y))
+        cy: float= cos(to_rad(v0.y))
+        sz: float= sin(to_rad(v0.z))
+        cz: float= cos(to_rad(v0.z))
 
         return Quaternion(
             (sx * cy * cz) + (cx * sy * sz),
@@ -2410,7 +2412,7 @@ class Quaternion:
         if not unit_axis.is_unit():
             unit_axis.to_unit()
 
-        angle_rad: float= to_radians(angle_deg * 0.5)
+        angle_rad: float= to_rad(angle_deg * 0.5)
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
 
@@ -2434,7 +2436,7 @@ class Quaternion:
                 v3= Vec3.create_unit_y().cross(start)
         
             v3.to_unit()
-            return Quaternion.create_from_axis(to_degreese(PI), v3)
+            return Quaternion.create_from_axis(to_deg(PI), v3)
 
         if dot > absf(-1.0 + EPSILON):
             return Quaternion(w=1.0)
