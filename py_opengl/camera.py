@@ -1,8 +1,13 @@
 """Camera
 """
 from dataclasses import dataclass
-from py_opengl import maths
 from enum import Enum, auto
+
+from py_opengl import maths
+from py_opengl import geometry
+
+
+# ---
 
 
 class CameraError(Exception):
@@ -161,3 +166,30 @@ class Camera:
         """Return view matrix
         """
         return maths.Mat4.create_look_at(self.position, self.position + self.front, self.up)
+
+    def frustum(self) -> geometry.Frustum:
+        result: geometry.Frustum= geometry.Frustum()
+        vp: maths.Mat4= self.view_matrix() * self.projection_matrix()
+
+        result.left.normal.set_from(vp.col3().xyz() + vp.col0().xyz())
+        result.right.normal.set_from(vp.col3().xyz() - vp.col0().xyz())
+        result.bottom.normal.set_from(vp.col3().xyz() + vp.col1().xyz())
+        result.top.normal.set_from(vp.col3().xyz() - vp.col1().xyz())
+        result.near.normal.set_from(vp.col2().xyz())
+        result.far.normal.set_from(vp.col3().xyz() - vp.col2().xyz())
+
+        result.left.direction= vp.get_at(3,3) + vp.get_at(3,0)
+        result.right.direction= vp.get_at(3,3) - vp.get_at(3,0)
+        result.bottom.direction= vp.get_at(3,3) + vp.get_at(3,1) 
+        result.top.direction= vp.get_at(3,3) - vp.get_at(3,1) 
+        result.near.direction= vp.get_at(3,2)
+        result.far.direction= vp.get_at(3,3) - vp.get_at(3,2) 
+
+        result.left.normal.to_unit()
+        result.right.normal.to_unit()
+        result.bottom.normal.to_unit()
+        result.top.normal.to_unit()
+        result.far.normal.to_unit()
+        result.near.normal.to_unit()
+
+        return result

@@ -42,8 +42,13 @@ class Mesh:
         self._ebo= GL.glGenBuffers(1)
 
         GL.glBindVertexArray(self._vao)
-        
-        v_array= [value for vertex in self.vertices for value in vertex.to_list()]
+
+        # flattern
+        v_array= [
+            value
+            for vertex in self.vertices
+            for value in vertex.to_list()
+        ]
 
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._vbo)
         GL.glBufferData(
@@ -68,33 +73,33 @@ class Mesh:
         # color
         GL.glEnableVertexAttribArray(1)
         GL.glVertexAttribPointer(1, 3, GL.GL_FLOAT, GL.GL_FALSE, 6 * utils.SIZEOF_FLOAT, utils.c_cast(3 * utils.SIZEOF_FLOAT))
-        
+
         GL.glBindVertexArray(0)
 
     def compute_aabb(self, transform: transform.Transform) -> geometry.AABB3:
-        pos= transform.get_transformed(self.vertices[0].position)
-        minp= pos.copy()
-        maxp= pos.copy()
+        # pos= transform.get_transformed(self.vertices[0].position)
+        min_pt= maths.Vec3()
+        max_pt= maths.Vec3()
 
-        for v in self.vertices[1:]:
-            p= transform.get_transformed(v.position)
+        for vert in self.vertices:
+            pt= transform.get_transformed(vert.position)
 
-            if p.x < minp.x:
-                minp.x= p.x
-            elif p.x > maxp.x:
-                maxp.x= p.x
+            if pt.x < min_pt.x:
+                min_pt.x= pt.x
+            elif pt.x > max_pt.x:
+                max_pt.x= pt.x
 
-            if p.y < minp.y:
-                minp.y= p.y
-            elif p.y > maxp.y:
-                maxp.y= p.y
+            if pt.y < min_pt.y:
+                min_pt.y= pt.y
+            elif pt.y > max_pt.y:
+                max_pt.y= pt.y
 
-            if p.z < minp.z:
-                minp.z= p.z
-            elif p.z > maxp.z:
-                maxp.z= p.z
+            if pt.z < min_pt.z:
+                min_pt.z= pt.z
+            elif pt.z > max_pt.z:
+                max_pt.z= pt.z
 
-        return geometry.AABB3.from_min_max(minp, maxp)
+        return geometry.AABB3.from_min_max(min_pt, max_pt)
 
     def position_verts(self) -> list[maths.Vec3]:
         """Return a list of position verts only
@@ -103,8 +108,7 @@ class Mesh:
 
     def use(self):
         GL.glBindVertexArray(self._vao)
-        i_len= len(self.indices)
-        GL.glDrawElements(GL.GL_TRIANGLES, i_len, GL.GL_UNSIGNED_INT, utils.c_cast(0))
+        GL.glDrawElements(GL.GL_TRIANGLES, len(self.indices), GL.GL_UNSIGNED_INT, utils.c_cast(0))
         GL.glBindVertexArray(0)
 
     def clean(self) -> None:
@@ -119,7 +123,7 @@ class Mesh:
 class SphereMesh(Mesh):
 
     __slots__= ('radius',)
-    
+
     def __init__(self, radius: float= 1.0) -> None:
         self.radius: float= radius
 
@@ -137,8 +141,8 @@ class SphereMesh(Mesh):
                 z: float= maths.sin(maths.to_rad(j * 360.0 / prec)) * maths.absf(maths.cos(maths.arcsin(y)))
 
                 vertices[i * (prec + 1) + j]= Vertex(
-                    position= maths.Vec3(x ,y, z) * self.radius,
-                    color= maths.Vec3(x,y,z)
+                    position= maths.Vec3(x, y, z) * self.radius,
+                    color= maths.Vec3(x, y, z)
                 )
 
         for i in range(prec):
@@ -173,22 +177,22 @@ class CubeMesh(Mesh):
             Vertex(maths.Vec3( self.size.x, -self.size.y,  self.size.z), maths.Vec3(0.5, 0.0, 0.0)),
             Vertex(maths.Vec3( self.size.x, -self.size.y, -self.size.z), maths.Vec3(0.5, 0.0, 0.0)),
             Vertex(maths.Vec3( self.size.x,  self.size.y, -self.size.z), maths.Vec3(0.5, 0.0, 0.0)),
-            
+
             Vertex(maths.Vec3( self.size.x,  self.size.y,  self.size.z), maths.Vec3(0.5, 1.0, 0.5)),
             Vertex(maths.Vec3( self.size.x,  self.size.y, -self.size.z), maths.Vec3(0.5, 1.0, 0.5)),
             Vertex(maths.Vec3(-self.size.x,  self.size.y, -self.size.z), maths.Vec3(0.5, 1.0, 0.5)),
             Vertex(maths.Vec3(-self.size.x,  self.size.y,  self.size.z), maths.Vec3(0.5, 1.0, 0.5)),
-            
+
             Vertex(maths.Vec3(-self.size.x,  self.size.y,  self.size.z), maths.Vec3(0.0, 0.5, 0.0)),
             Vertex(maths.Vec3(-self.size.x,  self.size.y, -self.size.z), maths.Vec3(0.0, 0.5, 0.0)),
             Vertex(maths.Vec3(-self.size.x, -self.size.y, -self.size.z), maths.Vec3(0.0, 0.5, 0.0)),
             Vertex(maths.Vec3(-self.size.x, -self.size.y,  self.size.z), maths.Vec3(0.0, 0.5, 0.0)),
-            
+
             Vertex(maths.Vec3(-self.size.x, -self.size.y, -self.size.z), maths.Vec3(0.5, 0.5, 1.0)),
             Vertex(maths.Vec3( self.size.x, -self.size.y, -self.size.z), maths.Vec3(0.5, 0.5, 1.0)),
             Vertex(maths.Vec3( self.size.x, -self.size.y,  self.size.z), maths.Vec3(0.5, 0.5, 1.0)),
             Vertex(maths.Vec3(-self.size.x, -self.size.y,  self.size.z), maths.Vec3(0.5, 0.5, 1.0)),
-            
+
             Vertex(maths.Vec3( self.size.x, -self.size.y, -self.size.z), maths.Vec3(0.0, 0.0, 0.5)),
             Vertex(maths.Vec3(-self.size.x, -self.size.y, -self.size.z), maths.Vec3(0.0, 0.0, 0.5)),
             Vertex(maths.Vec3(-self.size.x,  self.size.y, -self.size.z), maths.Vec3(0.0, 0.0, 0.5)),
@@ -205,3 +209,4 @@ class CubeMesh(Mesh):
         ]
 
         super().__init__(vertices, indices)
+

@@ -23,13 +23,12 @@ class GeometryID(Enum):
 @dataclass(eq= False, repr= True, slots= True)
 class AABB3:
     """AABB using center and extents
-    
+
 
     Aabb(center= Vec3(0, 0, 0), extents= Vec3(1, 1, 1))
 
     get_min == Vec3(-1, -1, -1)\n
     get_max == Vec3(1, 1, 1)
-    
     """
     center: maths.Vec3= maths.Vec3()
     extents: maths.Vec3= maths.Vec3()
@@ -58,7 +57,7 @@ class AABB3:
         self.center= aabb.center
         self.extents= aabb.extents
 
-    def combined_from(self, a:'AABB3', b:'AABB3') -> None:
+    def combined_from(self, a: 'AABB3', b: 'AABB3') -> None:
         """Set self to the union of a and b"""
         aabb= AABB3.from_min_max(
             maths.Vec3.create_from_min(a.get_min(), b.get_min()),
@@ -165,7 +164,7 @@ class AABB3:
     def get_area(self) -> float:
         p0= self.get_min()
         p1= self.get_max()
-        
+
         return(p1 - p0).sum()
 
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
@@ -195,7 +194,7 @@ class AABB3:
 
     def is_degenerate(self) -> bool:
         """Return true is self aabb is degenerate
-        
+
         check if its min points equil its max points
         """
         amin= self.get_min()
@@ -216,9 +215,9 @@ class AABB3:
         check_x: bool= amin.x <= bmin.x and amax.x >= bmax.x
         check_y: bool= amin.y <= bmin.y and amax.y >= bmax.y
         check_z: bool= amin.z <= bmin.z and amax.z >= bmax.z
-        
+
         return check_x and check_y and check_z
-		
+
     def intersect_aabb(self, other: 'AABB3') -> bool:
         amin: maths.Vec3= self.get_min()
         amax: maths.Vec3= self.get_max()
@@ -255,7 +254,7 @@ class Line3:
 
     def __hash__(self):
         return hash((self.start.x, self.start.y, self.end.x, self.end.y))
-    
+
     def __eq__(self, other: 'Line3') -> bool:
         check_s= self.start.is_equil(other.start)
         check_e= self.end.is_equil(other.end)
@@ -277,7 +276,7 @@ class Sphere3:
 
     def __hash__(self):
         return hash((self.radius, self.center.x, self.center.y, self.center.z))
-    
+
     def __eq__(self, other: 'Sphere3') -> bool:
         check_r= maths.is_equil(self.radius, other.radius)
         check_p= self.center.is_equil(other.center)
@@ -303,7 +302,7 @@ class Sphere3:
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         point: maths.Vec3= pt - self.center
         point.to_unit()
-    
+
         return self.center + (point * self.radius)
 
     def furthest_pt(self, pt: maths.Vec3) -> maths.Vec3:
@@ -354,7 +353,7 @@ class Plain3:
 
     def __hash__(self):
         return hash((self.direction, self.normal.x, self.normal.y, self.normal.z))
-    
+
     def __eq__(self, other: 'Plain3') -> bool:
         check_d= maths.is_equil(self.direction, other.direction)
         check_n= self.normal.is_equil(other.normal)
@@ -369,24 +368,31 @@ class Plain3:
     def create_from_normal_and_point(unit_v3: maths.Vec3, pt: maths.Vec3):
         if not unit_v3.is_unit():
             unit_v3.to_unit()
-            
+
         n: maths.Vec3= unit_v3.copy()
         d: float= n.dot(pt)
 
         return Plain3(normal=n, direction=d)
 
     @staticmethod
-    def create_from_points(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plain3':
+    def create_from_points(
+        a: maths.Vec3,
+        b: maths.Vec3,
+        c: maths.Vec3
+    ) -> 'Plain3':
         v0: maths.Vec3= b - a
         v1: maths.Vec3= c - a
-        
+
         n: maths.Vec3= v0.cross(v1)
         if not n.is_unit():
             n.to_unit()
 
         d: float= n.dot(a)
-        
+
         return Plain3(normal= n, direction= d)
+
+    def to_str(self) -> str:
+        return f'N(X: {self.normal.x}, Y: {self.normal.y}, Z: {self.normal.z}), D({self.direction})'
 
     def copy(self) -> 'Plain3':
         """Return a copy of self
@@ -428,27 +434,24 @@ class Plain3:
         direction: float= 0.0
 
         if maths.is_one(len_sqr):
-            normal.x= self.normal.x
-            normal.y= self.normal.y
-            normal.z= self.normal.z
+            normal.set_from(self.normal)
             direction= self.direction
         else:
             inv: float= maths.inv_sqrt(len_sqr)
-
             normal= self.normal * inv
             direction= self.direction * inv
 
         return Plain3(normal, direction)
 
     def to_unit(self) -> None:
-        """Normalize the length of self
+        """Convert to unit length
         """
         len_sqr: float= self.normal.length_sqr()
+        
         if maths.is_zero(len_sqr):
-            raise PlainError('length of plain was zero')
+            return
 
         inv: float= maths.inv_sqrt(len_sqr)
-
         self.normal.x *= inv
         self.normal.y *= inv
         self.normal.z *= inv
@@ -481,6 +484,28 @@ class Plain3:
         return maths.absf(dis) <= len_sq
 
 
+# --- FRUSTUM
+
+
+@dataclass(eq= False, repr= False, slots= True)
+class Frustum:
+    top: Plain3= Plain3()
+    bottom: Plain3= Plain3()
+    left: Plain3= Plain3()
+    right: Plain3= Plain3()
+    near: Plain3= Plain3()
+    far: Plain3= Plain3()
+
+    def to_str(self) -> str:
+        return f"""
+        FRUSTUM = 
+        TOP:    {self.top.to_str()}
+        BOTTOM: {self.bottom.to_str()}
+        LEFT:   {self.left.to_str()}
+        RIGHT:  {self.right.to_str()}
+        NEAR:   {self.near.to_str()}
+        FAR:    {self.far.to_str()}
+        """
 # --- RAY3D
 
 
@@ -495,7 +520,7 @@ class Ray3:
             self.direction.to_unit()
 
     @staticmethod
-    def from_points(origin: maths.Vec3, target:maths.Vec3) -> 'Ray3':
+    def from_points(origin: maths.Vec3, target: maths.Vec3) -> 'Ray3':
         o: maths.Vec3= origin.copy()
         d: maths.Vec3= target - origin
 
@@ -527,7 +552,7 @@ class Ray3:
         """Return point along ray
         """
         return self.origin + (self.direction * t)
-    
+
     def cast_aabb(self, aabb: AABB3) -> tuple[bool, maths.Vec3]:
         amin: maths.Vec3= aabb.get_min()
         amax: maths.Vec3= aabb.get_max()
@@ -546,7 +571,7 @@ class Ray3:
 
                 if t1 > t2:
                     t1, t2= t2, t1
-        
+
                 if t1 > tmin:
                     tmin= t1
 
@@ -555,7 +580,7 @@ class Ray3:
 
                 if tmin > tmax:
                     return False, maths.Vec3.zero()
-    
+
         return True, self.get_hit(tmin)
 
     def cast_sphere(self, sph: Sphere3) -> tuple[bool, maths.Vec3]:
@@ -569,7 +594,7 @@ class Ray3:
         d: float= maths.sqr(b) - c
         if d < 0.0:
             return False, maths.Vec3.zero()
-        
+
         t: float= -b - maths.sqrt(d)
         if t < 0.0:
             t= 0.0
@@ -579,12 +604,12 @@ class Ray3:
     def cast_plain(self, pl: Plain3) -> tuple[bool, maths.Vec3]:
         nd: float= self.direction.dot(pl.normal)
         pn: float= self.origin.dot(pl.normal)
- 
+
         if nd >= 0.0:
             return False, maths.Vec3.zero()
-        
+
         t: float= (pl.direction - pn) / nd
-        
+
         if t >= 0.0:
             return False, maths.Vec3.zero()
 
