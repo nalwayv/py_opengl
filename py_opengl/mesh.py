@@ -77,7 +77,6 @@ class Mesh:
         GL.glBindVertexArray(0)
 
     def compute_aabb(self, transform: transform.Transform) -> geometry.AABB3:
-        # pos= transform.get_transformed(self.vertices[0].position)
         min_pt= maths.Vec3()
         max_pt= maths.Vec3()
 

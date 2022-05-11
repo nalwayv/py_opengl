@@ -59,3 +59,17 @@ class Transform:
         t: maths.Mat4= maths.Mat4.create_translation(v3 - self.origin)
         r: maths.Mat4= maths.Mat4.create_from_quaternion(self.rotation)
         return (r * t).inverse().get_transform()
+
+    def get_transformed_rotation(self, v3: maths.Vec3) -> maths.Vec3:
+        """Return v3 transformed by rotation only
+        """
+        t: maths.Mat4= maths.Mat4.create_translation(v3)
+        r: maths.Mat4= maths.Mat4.create_from_quaternion(self.rotation)
+        return (r * t).get_transform()
+
+    def get_inverse_transformed_rotation(self, v3: maths.Vec3) -> maths.Vec3:
+        """Return v3 inverse transformed by rotation only
+        """
+        t: maths.Mat4= maths.Mat4.create_translation(v3)
+        r: maths.Mat4= maths.Mat4.create_from_quaternion(self.rotation)
+        return (r * t).inverse().get_transform()

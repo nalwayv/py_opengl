@@ -14,6 +14,7 @@ class GeometryID(Enum):
     AABB3= auto()
     SPHERE= auto()
     PLAIN= auto()
+    FRUSTUM= auto()
     RAY= auto()
 
 
@@ -33,7 +34,7 @@ class AABB3:
     center: maths.Vec3= maths.Vec3()
     extents: maths.Vec3= maths.Vec3()
 
-    id: GeometryID= GeometryID.AABB3
+    _id: GeometryID= GeometryID.AABB3
 
     @staticmethod
     def from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'AABB3':
@@ -170,15 +171,15 @@ class AABB3:
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         p0: maths.Vec3= self.get_min()
         p1: maths.Vec3= self.get_max()
-        p2: list[float]= [0.0, 0.0, 0.0]
+        p2: maths.Vec3= maths.Vec3.zero()
 
         for i in range(3):
-            val: float= pt[i]
-            val= maths.minf(val, p0[i])
-            val= maths.maxf(val, p1[i])
-            p2[i]= val
+            val: float= pt.get_at(i)
+            val= maths.minf(val, p0.get_at(i))
+            val= maths.maxf(val, p1.get_at(i))
+            p2.set_at(i, val)
 
-        return maths.Vec3(p2[0], p2[1], p2[2])
+        return p2
 
     def get_min(self) -> maths.Vec3:
         p0: maths.Vec3= self.center + self.extents
@@ -243,14 +244,15 @@ class AABB3:
         return True
 
 
-# --- LINE
+# --- Line
 
 
 @dataclass(eq= False, repr= False, slots= True)
 class Line3:
     start: maths.Vec3= maths.Vec3()
     end: maths.Vec3= maths.Vec3()
-    id: GeometryID= GeometryID.LINE
+
+    _id: GeometryID= GeometryID.LINE
 
     def __hash__(self):
         return hash((self.start.x, self.start.y, self.end.x, self.end.y))
@@ -258,11 +260,12 @@ class Line3:
     def __eq__(self, other: 'Line3') -> bool:
         check_s= self.start.is_equil(other.start)
         check_e= self.end.is_equil(other.end)
-        check_id= self.id == other.id
+        check_id= self._id == other._id
         return check_s and check_e and check_id
 
-    def length(self) -> float:
-        return self.start.distance_sqrt(self.end)
+    def edge(self) -> maths.Vec3:
+        return (self.end - self.start)
+
 
 
 # --- SPHERE
@@ -272,7 +275,7 @@ class Line3:
 class Sphere3:
     center: maths.Vec3= maths.Vec3()
     radius: float= 1.0
-    id: GeometryID= GeometryID.SPHERE
+    _id: GeometryID= GeometryID.SPHERE
 
     def __hash__(self):
         return hash((self.radius, self.center.x, self.center.y, self.center.z))
@@ -280,7 +283,7 @@ class Sphere3:
     def __eq__(self, other: 'Sphere3') -> bool:
         check_r= maths.is_equil(self.radius, other.radius)
         check_p= self.center.is_equil(other.center)
-        check_id= self.id == other.id
+        check_id= self._id == other._id
         return check_r and check_p and check_id
 
     def compute_aabb(self) -> AABB3:
@@ -301,13 +304,16 @@ class Sphere3:
 
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         point: maths.Vec3= pt - self.center
-        point.to_unit()
+        
+        if not point.is_unit():
+            point.to_unit()
 
         return self.center + (point * self.radius)
 
     def furthest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         if not pt.is_unit():
             pt.to_unit()
+        
         return self.center + (pt * self.radius)
 
     def intersect_sphere(self, other: 'Sphere3') -> bool:
@@ -349,7 +355,7 @@ class PlainError(Exception):
 class Plain3:
     normal: maths.Vec3= maths.Vec3(x=1.0)
     direction: float= 0.0
-    id: GeometryID= GeometryID.PLAIN
+    _id: GeometryID= GeometryID.PLAIN
 
     def __hash__(self):
         return hash((self.direction, self.normal.x, self.normal.y, self.normal.z))
@@ -357,7 +363,7 @@ class Plain3:
     def __eq__(self, other: 'Plain3') -> bool:
         check_d= maths.is_equil(self.direction, other.direction)
         check_n= self.normal.is_equil(other.normal)
-        check_id= self.id == other.id
+        check_id= self._id == other._id
         return check_d and check_n and check_id
 
     def __post_init__(self):
@@ -496,16 +502,9 @@ class Frustum:
     near: Plain3= Plain3()
     far: Plain3= Plain3()
 
-    def to_str(self) -> str:
-        return f"""
-        FRUSTUM = 
-        TOP:    {self.top.to_str()}
-        BOTTOM: {self.bottom.to_str()}
-        LEFT:   {self.left.to_str()}
-        RIGHT:  {self.right.to_str()}
-        NEAR:   {self.near.to_str()}
-        FAR:    {self.far.to_str()}
-        """
+    _id = GeometryID.FRUSTUM
+
+
 # --- RAY3D
 
 
@@ -513,7 +512,8 @@ class Frustum:
 class Ray3:
     origin: maths.Vec3= maths.Vec3()
     direction: maths.Vec3= maths.Vec3(z=1.0)
-    id: GeometryID= GeometryID.RAY
+    
+    _id: GeometryID= GeometryID.RAY
 
     def __post_init__(self):
         if not self.direction.is_unit():
@@ -560,14 +560,17 @@ class Ray3:
         tmax: float= maths.MAX_FLOAT
 
         for idx in range(3):
-            if maths.is_zero(self.direction[idx]):
-                if self.origin[idx] < amin[idx] or self.origin[idx] > amax[idx]:
+            if maths.is_zero(self.direction.get_at(idx)):
+                if(
+                    self.origin.get_at(idx) < amin.get_at(idx) or 
+                    self.origin.get_at(idx) > amax.get_at(idx)
+                ):
                     return False, maths.Vec3.zero()
             else:
-                inv: float= 1.0 / self.direction[idx]
+                inv: float= 1.0 / self.direction.get_at(idx)
 
-                t1: float= (amin[idx] - self.origin[idx]) * inv
-                t2: float= (amax[idx] - self.origin[idx]) * inv
+                t1: float= (amin.get_at(idx) - self.origin.get_at(idx)) * inv
+                t2: float= (amax.get_at(idx) - self.origin.get_at(idx)) * inv
 
                 if t1 > t2:
                     t1, t2= t2, t1

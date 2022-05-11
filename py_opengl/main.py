@@ -137,7 +137,7 @@ def main() -> None:
         last_mp: maths.Vec3= maths.Vec3.zero()
 
         shape= Cube3D()
-        
+
         while not glwin.should_close():
             time.update()
 

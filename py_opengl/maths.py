@@ -211,11 +211,6 @@ class Vec2:
     x: float= 0.0
     y: float= 0.0
 
-    def __getitem__(self, idx):
-        match clampi(idx, 0, 1):
-            case 0: return self.x
-            case 1: return self.y
-        raise Vec2Error('out of range')
 
     def __add__(self, other):
         if not isinstance(other, Vec2):
@@ -273,6 +268,20 @@ class Vec2:
         """
         return f"X: {self.x}, Y: {self.y}"
 
+    def get_at(self, idx: int) -> float:
+        if idx == 0:
+            return self.x
+        if idx == 1:
+            return self.y
+        raise Vec2Error('out of range')
+
+    def set_at(self, idx: int, value: float) -> None:
+        match idx:
+            case 0:
+                self.x= value
+            case 1:
+                self.y= value
+    
     def sum(self) -> float:
         """Return sum of components
         """
@@ -378,18 +387,6 @@ class Vec2:
         """
         return sqrt(self.length_sqr())
 
-    def distance_sqrt(self, other: 'Vec2') -> float:
-        """Return the distance between self and other vec2
-        """
-        dir: Vec2= other - self
-        return dir.length_sqrt()
-
-    def distance_sqr(self, other: 'Vec2') -> float:
-        """Return the  squared distance between self and other vec2
-        """
-        dir: Vec2= other - self
-        return dir.length_sqr()
-
     def dot(self, other: 'Vec2') -> float:
         """Return the dot product between self and other vec2
         """
@@ -426,13 +423,6 @@ class Vec3:
     x: float= 0.0
     y: float= 0.0
     z: float= 0.0
-
-    def __getitem__(self, idx):
-        match clampi(idx, 0, 2):
-            case 0: return self.x
-            case 1: return self.y
-            case 2: return self.z
-        raise Vec3Error('out of range')
 
     def __add__(self, other):
         if not isinstance(other, Vec3):
@@ -616,6 +606,25 @@ class Vec3:
 
         return self * inv_sqrt(lsq)
 
+    def get_at(self, idx: int) -> float:
+        if idx == 0:
+            return self.x
+        if idx == 1:
+            return self.y
+        if idx == 2:
+            return self.z
+
+        raise Vec3Error('out of range')
+
+    def set_at(self, idx: int, value: float) -> None:
+         match idx:
+            case 0:
+                self.x= value
+            case 1:
+                self.y= value
+            case 2:
+                self.z= value
+
     def set_from(self, other: 'Vec3') -> None:
         self.x = other.x
         self.y = other.y
@@ -704,18 +713,6 @@ class Vec3:
         """
         return sqrt(self.length_sqr())
 
-    def distance_sqrt(self, other: 'Vec3') -> float:
-        """Return the distance between self and other vec3
-        """
-        dir: Vec3= other - self
-        return dir.length_sqrt()
-
-    def distance_sqr(self, other: 'Vec3') -> float:
-        """Return the distance between self and other vec3
-        """
-        dir: Vec3= other - self
-        return dir.length_sqr()
-
     def dot(self, other: 'Vec3') -> float:
         """Return the dot product between self and other vec3
         """
@@ -756,14 +753,6 @@ class Vec4:
     z: float= 0.0
     w: float= 0.0
 
-    def __getitem__(self, idx):
-        match clampi(idx, 0, 3):
-            case 0: return self.x
-            case 1: return self.y
-            case 2: return self.z
-            case 3: return self.w
-
-        raise Vec4Error('out of range')
 
     def __add__(self, other):
         if not isinstance(other, Vec4):
@@ -869,6 +858,29 @@ class Vec4:
             lerp(self.w, to.w, weight)
         )
 
+    def get_at(self, idx: int) -> float:
+        if idx == 0:
+            return self.x
+        if idx == 1:
+            return self.y
+        if idx == 2:
+            return self.z
+        if idx == 3:
+            return self.w
+
+        raise Vec4Error('out of range')
+
+    def set_at(self, idx: int, value: float) -> None:
+        match idx:
+            case 0:
+                self.x= value
+            case 1:
+                self.y= value
+            case 2:
+                self.z= value
+            case 3:
+                self.w= value
+
     def set_from(self, other: 'Vec4') -> None:
         self.x = other.x
         self.y = other.y
@@ -930,18 +942,6 @@ class Vec4:
         """
         return sqrt(self.length_sqr())
 
-    def distance_sqrt(self, other: 'Vec4') -> float:
-        """Return the distance between self and other vec4
-        """
-        dir: Vec4= other - self
-        return dir.length_sqrt()
-
-    def distance_sqr(self, other: 'Vec4') -> float:
-        """Return the distance between self and other vec4
-        """
-        dir: Vec4= other - self
-        return dir.length_sqr()
-
     def dot(self, other: 'Vec4') -> float:
         """Return the dot product between self and other vec4
         """
@@ -990,29 +990,6 @@ class Mat3:
     row0: Vec3= Vec3()
     row1: Vec3= Vec3()
     row2: Vec3= Vec3()
-
-    def __getitem__(self, idx):
-        match clampi(idx, 0, 8):
-            case 0:
-                return self.row0.x
-            case 1:
-                return self.row0.y
-            case 2:
-                return self.row0.z
-            case 3:
-                return self.row1.x
-            case 4:
-                return self.row1.y
-            case 5:
-                return self.row1.z
-            case 6:
-                return self.row2.x
-            case 7:
-                return self.row2.y
-            case 8:
-                return self.row2.z
-
-        raise Mat3Error('out of range')
 
     def __add__(self, other):
         if not isinstance(other, Mat3):
@@ -1459,42 +1436,6 @@ class Mat4:
     row1: Vec4= Vec4()
     row2: Vec4= Vec4()
     row3: Vec4= Vec4()
-
-    def __getitem__(self, idx):
-        match clampi(idx, 0, 15):
-            case 0:
-                return self.row0.x
-            case 1:
-                return self.row0.y
-            case 2:
-                return self.row0.z
-            case 3:
-                return self.row0.w
-            case 4:
-                return self.row1.x
-            case 5:
-                return self.row1.y
-            case 6:
-                return self.row1.z
-            case 7:
-                return self.row1.w
-            case 8:
-                return self.row2.x
-            case 9:
-                return self.row2.y
-            case 10:
-                return self.row2.z
-            case 11:
-                return self.row2.w
-            case 12:
-                return self.row3.x
-            case 13:
-                return self.row3.y
-            case 14:
-                return self.row3.z
-            case 15:
-                return self.row3.w
-        raise Mat4Error('out of range')
 
     def __add__(self, other):
         if not isinstance(other, Mat4):
@@ -2115,6 +2056,7 @@ class Mat4:
         y: float= v4.dot(self.col1()),
         z: float= v4.dot(self.col2()),
         w: float= v4.dot(self.col3())
+
         return Vec4(x, y, z, w)
 
     def col0(self) -> Vec4:
@@ -2124,6 +2066,7 @@ class Mat4:
         y: float = self.row1.x
         z: float = self.row2.x
         w: float = self.row3.x
+
         return Vec4(x, y, z, w)
 
     def col1(self) -> Vec4:
@@ -2133,6 +2076,7 @@ class Mat4:
         y: float = self.row1.y
         z: float = self.row2.y
         w: float = self.row3.y
+
         return Vec4(x, y, z, w)
 
     def col2(self) -> Vec4:
@@ -2142,6 +2086,7 @@ class Mat4:
         y: float = self.row1.z
         z: float = self.row2.z
         w: float = self.row3.z
+
         return Vec4(x, y, z, w)
 
     def col3(self) -> Vec4:
@@ -2151,6 +2096,7 @@ class Mat4:
         y: float = self.row1.w
         z: float = self.row2.w
         w: float = self.row3.w
+
         return Vec4(x, y, z, w)
 
     def get_at(self, row: int, col: int) -> float:
@@ -2162,6 +2108,7 @@ class Mat4:
             return self.row2[col]
         if row == 3:
             return self.row3[col]
+
         raise Mat4Error('out of range')
 
     def set_at(self, row: int, col: int, value: float) -> float:
@@ -2329,28 +2276,15 @@ class Quaternion:
     z: float= 0.0
     w: float= 0.0
 
-    def __getitem__(self, idx):
-        match clampi(idx, 0, 3):
-            case 0:
-                return self.x
-            case 1:
-                return self.y
-            case 2:
-                return self.z
-            case 3:
-                return self.w
-
-        raise QuatError('out of range')
-
     def __add__(self, other):
         if not isinstance(other, Quaternion):
             raise QuatError('not of type Quaternion')
 
         return Quaternion(
-            x= self.x + other.x,
-            y= self.y + other.y,
-            z= self.z + other.z,
-            w= self.w + other.w
+            self.x + other.x,
+            self.y + other.y,
+            self.z + other.z,
+            self.w + other.w
         )
 
     def __sub__(self, other):
@@ -2358,10 +2292,10 @@ class Quaternion:
             raise QuatError('not of type Quaternion')
 
         return Quaternion(
-            x= self.x - other.x,
-            y= self.y - other.y,
-            z= self.z - other.z,
-            w= self.w - other.w
+            self.x - other.x,
+            self.y - other.y,
+            self.z - other.z,
+            self.w - other.w
         )
 
     def __mul__(self, other):
@@ -2511,6 +2445,29 @@ class Quaternion:
         """Return a copy of self
         """
         return Quaternion(self.x, self.y, self.z, self.z)
+
+    def get_at(self, idx: int) -> float:
+        match idx:
+            case 0:
+                return self.x
+            case 1:
+                return self.y
+            case 2:
+                return self.z
+            case 3:
+                return self.w
+        raise QuatError('out of range')
+
+    def set_at(self, idx: int, value: float) -> None:
+        match idx:
+            case 0:
+                self.x= value
+            case 1:
+                self.y= value
+            case 2:
+                self.z= value
+            case 3:
+                self.w= value
 
     def set_from(self, other: 'Quaternion') -> None:
         """Set values based on other quaternions values
