@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 from py_opengl import maths
+from py_opengl import transform
 
 
 # --- IDs
@@ -36,22 +37,40 @@ class AABB3:
 
     _id: GeometryID= GeometryID.AABB3
 
+    def __hash__(self) -> int:
+        data: tuple[float]= (
+            self.center.x, self.center.y, self.center.z,
+            self.extents.x, self.extents.y, self.extents.z
+        )
+        return hash(data)
+
+    def __eq__(self, other: 'AABB3') -> bool:
+        if isinstance(other, self.__class__):
+            if(
+                self.center.is_equil(other.center) and
+                self.extents.is_equil(other.extents) and
+                self._id == other._id
+            ):
+                return True
+        return False
+
     @staticmethod
-    def from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'AABB3':
+    def create_from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'AABB3':
         return AABB3(
             center= (min_pt + max_pt) * 0.5,
             extents= ((min_pt - max_pt) * 0.5).abs()
         )
 
-    def create_combined_with(self, other: 'AABB3') -> 'AABB3':
-        return AABB3.from_min_max(
-            maths.Vec3.create_from_min(self.get_min(), other.get_min()),
-            maths.Vec3.create_from_max(self.get_max(), other.get_max())
+    @staticmethod
+    def create_combined_from(a: 'AABB3', b: 'AABB3') -> 'AABB3':
+        return AABB3.create_from_min_max(
+            maths.Vec3.create_from_min(a.get_min(), b.get_min()),
+            maths.Vec3.create_from_max(a.get_max(), b.get_max())
         )
 
     def combined_with(self, a: 'AABB3') -> None:
         """Set self to the union of self and a"""
-        aabb= AABB3.from_min_max(
+        aabb= AABB3.create_from_min_max(
             maths.Vec3.create_from_min(self.get_min(), a.get_min()),
             maths.Vec3.create_from_max(self.get_max(), a.get_max())
         )
@@ -60,7 +79,7 @@ class AABB3:
 
     def combined_from(self, a: 'AABB3', b: 'AABB3') -> None:
         """Set self to the union of a and b"""
-        aabb= AABB3.from_min_max(
+        aabb= AABB3.create_from_min_max(
             maths.Vec3.create_from_min(a.get_min(), b.get_min()),
             maths.Vec3.create_from_max(a.get_max(), b.get_max())
         )
@@ -75,7 +94,7 @@ class AABB3:
         p0: maths.Vec3= self.get_min() - maths.Vec3.create_from_value(by)
         p1: maths.Vec3= self.get_max() + maths.Vec3.create_from_value(by)
 
-        return AABB3.from_min_max(p0, p1)
+        return AABB3.create_from_min_max(p0, p1)
 
     def expand_to(self, v3: maths.Vec3) -> 'AABB3':
         """Expand by vec3"""
@@ -254,18 +273,25 @@ class Line3:
 
     _id: GeometryID= GeometryID.LINE
 
-    def __hash__(self):
-        return hash((self.start.x, self.start.y, self.end.x, self.end.y))
+    def __hash__(self) -> int:
+        data: tuple[float]= (
+            self.start.x, self.start.y, self.start.z,
+            self.end.x, self.end.y, self.end.z
+        )
+        return hash(data)
 
     def __eq__(self, other: 'Line3') -> bool:
-        check_s= self.start.is_equil(other.start)
-        check_e= self.end.is_equil(other.end)
-        check_id= self._id == other._id
-        return check_s and check_e and check_id
+        if isinstance(other, self.__class__):
+            if(
+            self.start.is_equil(other.start) and
+            self.end.is_equil(other.end) and
+            self._id == other._id
+            ):
+                return True
+        return False
 
     def edge(self) -> maths.Vec3:
         return (self.end - self.start)
-
 
 
 # --- SPHERE
@@ -277,20 +303,30 @@ class Sphere3:
     radius: float= 1.0
     _id: GeometryID= GeometryID.SPHERE
 
-    def __hash__(self):
-        return hash((self.radius, self.center.x, self.center.y, self.center.z))
+    def __hash__(self) -> int:
+        data: tuple[float]= (
+            self.center.x, self.center.y, self.center.z,
+            self.radius
+        )
+        return hash(data)
 
     def __eq__(self, other: 'Sphere3') -> bool:
-        check_r= maths.is_equil(self.radius, other.radius)
-        check_p= self.center.is_equil(other.center)
-        check_id= self._id == other._id
-        return check_r and check_p and check_id
+        if isinstance(other, self.__class__):
+            if(
+                self.center.is_equil(other.center) and
+                maths.is_equil(self.radius, other.radius) and
+                self._id == other._id
+            ):
+                return True
+        return False
 
-    def compute_aabb(self) -> AABB3:
-        p0: maths.Vec3= self.center + maths.Vec3.create_from_value(self.radius)
-        p1: maths.Vec3= self.center - maths.Vec3.create_from_value(self.radius)
+    def compute_aabb(self, t: transform.Transform) -> AABB3:
+        center= t.get_transformed(self.center)
 
-        return AABB3.from_min_max(p0, p1)
+        p0: maths.Vec3= center + maths.Vec3.create_from_value(self.radius)
+        p1: maths.Vec3= center - maths.Vec3.create_from_value(self.radius)
+
+        return AABB3.create_from_min_max(p0, p1)
 
     def area(self) -> float:
         """Return area
@@ -357,14 +393,22 @@ class Plain3:
     direction: float= 0.0
     _id: GeometryID= GeometryID.PLAIN
 
-    def __hash__(self):
-        return hash((self.direction, self.normal.x, self.normal.y, self.normal.z))
+    def __hash__(self) -> int:
+        data: tuple[float]= (
+            self.normal.x, self.normal.y, self.normal.z,
+            self.direction
+        )
+        return hash(data)
 
     def __eq__(self, other: 'Plain3') -> bool:
-        check_d= maths.is_equil(self.direction, other.direction)
-        check_n= self.normal.is_equil(other.normal)
-        check_id= self._id == other._id
-        return check_d and check_n and check_id
+        if isinstance(other, self.__class__):
+            if(
+                self.normal.is_equil(other.normal) and
+                maths.is_equil(self.direction, other.direction) and
+                self._id == other._id 
+            ):
+                return True
+        return False
 
     def __post_init__(self):
         if not self.normal.is_unit():
@@ -504,6 +548,36 @@ class Frustum:
 
     _id = GeometryID.FRUSTUM
 
+    def __hash__(self) -> int:
+        data: tuple[float]= (
+            self.top.normal.x, self.top.normal.y, self.top.normal.z,
+            self.top.direction,
+            self.bottom.normal.x, self.bottom.normal.y, self.bottom.normal.z,
+            self.bottom.direction,
+            self.left.normal.x, self.left.normal.y, self.left.normal.z,
+            self.left.direction,
+            self.right.normal.x, self.right.normal.y, self.right.normal.z,
+            self.right.direction,
+            self.near.normal.x, self.near.normal.y, self.near.normal.z,
+            self.near.direction,
+            self.far.normal.x, self.far.normal.y, self.far.normal.z,
+            self.far.direction,
+        )
+        return hash(data)
+
+    def __eq__(self, other: 'Frustum') -> bool:
+        if isinstance(other, self.__class__):
+            if( 
+                self.top == other.top and
+                self.bottom == other.bottom and 
+                self.left == other.left and
+                self.right == other.right and
+                self.near == other.near and
+                self.far == other.far and
+                self._id == other._id
+            ):
+                return True
+        return False
 
 # --- RAY3D
 
@@ -518,6 +592,23 @@ class Ray3:
     def __post_init__(self):
         if not self.direction.is_unit():
             self.direction.to_unit()
+
+    def __hash__(self) -> int:
+        data: tuple[float]= (
+            self.origin.x, self.origin.y, self.origin.z,
+            self.direction.x, self.direction.y, self.direction.z,
+        )
+        return hash(data)
+
+    def __eq__(self, other: 'Ray3') -> bool:
+        if isinstance(other, self.__class__):
+            if(
+                self.origin.is_equil(other.origin) and
+                self.direction.is_equil(other.direction) and
+                self._id == other._id 
+            ):
+                return True
+        return False
 
     @staticmethod
     def from_points(origin: maths.Vec3, target: maths.Vec3) -> 'Ray3':

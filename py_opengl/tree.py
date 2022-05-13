@@ -1,112 +1,168 @@
 """AABB3 Tree
 """
 from dataclasses import dataclass, field
-from typing import Final, Optional
+from typing import Optional, Any
 
 from py_opengl import geometry
 from py_opengl import maths
 
 
+# TODO
+# ---
+
+# NULL_NODE: Final[int]= -1
+# MARGIN: Final[float]= 4.0
+# AABB_REDUCTION_RATIO: Final[float]= 2.0
+
+
 # ---
 
 
-MARGIN: Final[float] = 4.0
-AABB_REDUCTION_RATIO:  Final[float] = 2.0
+# COMPUTE_FN: Callable[[Any, geometry.AABB3], None]
+# EXPAND_FN: Callable[[Any, geometry.AABB3], None]
 
 
 # ---
 
 
 @dataclass(eq= False, repr= False, slots= True)
-class AABBNode:
-    left: Optional['AABBNode']= None
-    right: Optional['AABBNode']= None
-    parent: Optional['AABBNode']= None
+class Node:
+    left: Optional['Node']= None
+    right: Optional['Node']= None
+    parent: Optional['Node']= None
+
     height: int= 0
+
     aabb: geometry.AABB3= geometry.AABB3()
 
-    item: Optional[geometry.Sphere3]= None
+    item: Optional[Any]= None
 
     def is_leaf(self) -> bool:
         return self.left is None
 
 
-# TODO allow more shapes then just sphere3
-
-
 @dataclass(eq= False, repr= False, slots= True)
 class AABBTree:
-    root: Optional[AABBNode]= None
-    leaves: dict[geometry.Sphere3, AABBNode]= field(default_factory=dict)
-    update_aabb: geometry.AABB3= geometry.AABB3()
+    root: Optional[Node]= None
+    leaves: dict[Any, Node]= field(default_factory=dict)
+    updateAABB: geometry.AABB3= geometry.AABB3()
 
-    def add(self, obj: geometry.Sphere3):
-        if node := self.leaves.get(obj):
-            self._update_node(obj, node)
-        else:
-            self._add_node(obj)
-
-    def remove(self, obj: geometry.Sphere3):
-        if node := self.leaves.pop(obj, None):
-            self._remove(node)
-
-    def get_aabb(self, obj: geometry.Sphere3) -> geometry.AABB3:
-        if node := self.leaves.get(node):
-            return node.aabb
+    def _height(self, node: Node) -> int:
+        if node is None:
+            return 0
         
-        obj_aabb: geometry.AABB3= obj.compute_aabb()
-        if obj_aabb.is_degenerate():
-            return obj_aabb
+        a= self._height(node.left)
+        b= self._height(node.right)
+        return 1 + maths.maxi(a, b)
 
-        obj_aabb.expanded(MARGIN)
-        return obj_aabb
+    def _insert(self, node: Node) -> None:
+        if self.root is None:
+            self.root= node
+            return
 
-    def length(self) -> int:
-        return len(self.leaves)
+        leaf_aabb: geometry.AABB3= node.aabb
 
-    def contains_obj(self, obj: geometry.Sphere3) -> bool:
-        return obj in self.leaves
+        current: Optional[Node]= self.root
+        while not current.is_leaf():
+            area: float= current.aabb.perimeter()
 
-    def is_valid(self) -> bool:
-        return self._is_valid(self.root)
+            combined_AABB: geometry.AABB3= geometry.AABB3.create_combined_from(
+                leaf_aabb,
+                current.aabb
+            )
+            combined_area: float= combined_AABB.perimeter()
 
-    def _add_node(self, obj: geometry.Sphere3):
-        self.update_aabb.set_from(obj.compute_aabb())
-        self.update_aabb.expanded(MARGIN)
+            cost: float= 2.0 * combined_area
+            d_cost: float= 2.0 * (combined_area - area)
 
-        node= AABBNode(
-            aabb=self.update_aabb,
-            item= obj
+            left: Optional[Node]= current.left
+            right: Optional[Node]= current.right
+
+            # LEFT
+            cost_left: float= 0.0
+            if left.is_leaf():
+                aabb_0= geometry.AABB3.create_combined_from(
+                    leaf_aabb,
+                    left.aabb
+                )
+                cost_left= aabb_0.perimeter() + d_cost
+            else:
+                aabb_0= geometry.AABB3().create_combined_from(
+                    leaf_aabb,
+                    left.aabb
+                )
+                old_area: float= left.aabb.perimeter()
+                new_area: float= aabb_0.perimeter()
+                cost_left= (new_area - old_area) + d_cost
+
+            # RIGHT
+            cost_right: float= 0.0
+            if right.is_leaf():
+                aabb_1= geometry.AABB3.create_combined_from(
+                    leaf_aabb,
+                    right.aabb
+                )
+                cost_right= aabb_1.perimeter() + d_cost
+            else:
+                aabb_1= geometry.AABB3.create_combined_from(
+                    leaf_aabb,
+                    right.aabb
+                )
+                old_area: float= right.aabb.perimeter()
+                new_area: float= aabb_1.perimeter()
+                cost_right= (new_area - old_area) + d_cost
+
+            if cost < cost_left and cost < cost_right:
+                break
+
+            if cost_left < cost_right:
+                current= left
+            else:
+                current= right
+
+        sibling= current
+        old_parent= sibling.parent
+        new_parent= Node(
+            parent= old_parent,
+            aabb= geometry.AABB3.create_combined_from(
+                leaf_aabb,
+                sibling.aabb
+            ),
+            height= current.height + 1
         )
 
-        #insert
-        self.leaves[obj] = node
+        if old_parent is not None:
+            if old_parent.left is sibling:
+                old_parent.left= new_parent
+            else:
+                old_parent.right= new_parent
 
-        self._insert(node)
-        # TODO update
+            new_parent.left= sibling
+            new_parent.right= node
+            current.parent= new_parent
+            node.parent= new_parent
+        else:
+            new_parent.left= sibling
+            new_parent.right= node
+            current.parent= new_parent
+            node.parent= new_parent
+            self.root= new_parent
 
-    def _update_node(self, obj: geometry.Sphere3, node: AABBNode) -> None:
-        self.update_aabb.set_from(obj.compute_aabb())
-        check: bool= node.aabb.intersect_aabb(self.update_aabb)
+        current: Optional[Node]= node.parent
+        while current is not None:
+            current= self._balance(current)
 
-        # TODO
-        self.update_aabb.expanded(MARGIN)
-        
-        if check:
-            p0= node.aabb.perimeter()
-            p1= self.update_aabb.perimeter()
-            r= p0/p1
-            if r <= AABB_REDUCTION_RATIO:
-                return
+            left: Optional[Node]= current.left
+            right: Optional[Node]= current.right
 
-        self._remove(node)
+            current.height = 1 + maths.maxi(left.height, right.height)
+            current.aabb.combined_from(
+                left.aabb,
+                right.aabb
+            )
+            current= current.parent
 
-        node.aabb.set_from(self.update_aabb)
-
-        self._insert(node)
-        #TODO update
-
-    def _remove(self, node: AABBNode) -> None:
+    def _remove(self, node: Node) -> None:
         if not self.root:
             return
 
@@ -114,9 +170,9 @@ class AABBTree:
             self.root = None
             return
 
-        parent: Optional[AABBNode]=  node.parent
-        gparent: Optional[AABBNode]= parent.parent
-        sibling: Optional[AABBNode]= None
+        parent: Optional[Node]=  node.parent
+        gparent: Optional[Node]= parent.parent
+        sibling: Optional[Node]= None
 
         if parent.left is node:
             sibling= parent.right
@@ -131,35 +187,36 @@ class AABBTree:
 
             sibling.parent= gparent
 
-            next_node: Optional[AABBNode]= gparent
-            while next_node is not None:
-                next_node= self._balance(next_node)
+            current: Optional[Node]= gparent
+            while current is not None:
+                current= self._balance(current)
 
-                left: Optional[AABBNode]= next_node.left
-                right: Optional[AABBNode]= next_node.right
+                left: Optional[Node]= current.left
+                right: Optional[Node]= current.right
 
-                next_node.height= 1 + maths.maxi(left.height, right.height)
-                next_node.aabb.combined_from(left.aabb, right.aabb)
-                next_node= next_node.parent
+                current.height = 1 + maths.maxi(left.height, right.height)
+                current.aabb.combined_from(left.aabb, right.aabb)
+                current= current.parent
+
         else:
             self.root= sibling
             sibling.parent= None
 
-    def _balance(self, item: AABBNode) -> AABBNode:
-        a: Optional[AABBNode]= item
+    def _balance(self, node: Node) -> Optional[Node]:
+        a: Optional[Node]= node
 
         if a.is_leaf() or a.height < 2:
             return a
 
-        b: Optional[AABBNode]= a.left
-        c: Optional[AABBNode]= a.right
+        b: Optional[Node]= a.left
+        c: Optional[Node]= a.right
 
         balance: int= c.height - b.height
 
         # rotate c up
         if balance > 1:
-            f: Optional[AABBNode]= c.left
-            g: Optional[AABBNode]= c.right
+            f: Optional[Node]= c.left
+            g: Optional[Node]= c.right
 
             # swap
             c.left= a
@@ -199,8 +256,8 @@ class AABBTree:
 
         # rotate b up
         if balance < -1:
-            d: Optional[AABBNode]= b.left
-            e: Optional[AABBNode]= b.right
+            d: Optional[Node]= b.left
+            e: Optional[Node]= b.right
 
             # swap
             b.left= a
@@ -240,93 +297,7 @@ class AABBTree:
 
         return a
 
-    def _insert(self, item: AABBNode) -> None:
-        if self.root is None:
-            self.root= item
-            return
-
-        tmp: geometry.AABB3= geometry.AABB3()
-        item_aabb= item.aabb
-
-        current= self.root
-        while not current.is_leaf():
-            left: Optional[AABBNode]= current.left
-            right: Optional[AABBNode]= current.right
-
-            tmp= current.aabb
-
-            area: float= tmp.perimeter()
-            combined_area= tmp.create_combined_with(item_aabb).perimeter()
-
-            cost: float= 2.0 * combined_area
-            d_cost: float= 2.0 * (combined_area - area)
-
-            cost_left: float= 0.0
-            if left.is_leaf():
-                tmp.combined_from(left.aabb, item_aabb)
-                cost_left= tmp.perimeter() + d_cost
-            else:
-                old_cost= left.aabb.perimeter()
-                tmp.combined_from(left.aabb, item_aabb)
-                new_cost= tmp.perimeter()
-                cost_left = (new_cost - old_cost) + d_cost
-
-            cost_right: float= 0.0
-            if right.is_leaf():
-                tmp.combined_from(right.aabb, item_aabb)
-                cost_right= tmp.perimeter() + d_cost
-            else:
-                old_cost= right.aabb.perimeter()
-                tmp.combined_from(right.aabb, item_aabb)
-                new_cost= tmp.perimeter()
-                cost_right = (new_cost - old_cost) + d_cost
-
-            if cost < cost_left and cost < cost_right:
-                break
-
-            if cost_left < cost_right:
-                current= left
-            else:
-                current= right
-
-        parent= current.parent
-
-        new_parent= AABBNode(
-            parent= current.parent,
-            aabb= current.aabb.create_combined_with(item_aabb),
-            height= current.height + 1
-        )
-
-        if parent is not None:
-            if parent.left is current:
-                parent.left= new_parent
-            else:
-                parent.right= new_parent
-
-            new_parent.left= current
-            new_parent.right= item
-            current.parent= new_parent
-            item.parent= new_parent
-        else:
-            new_parent.left= current
-            new_parent.right= item
-            current.parent= new_parent
-            item.parent= new_parent
-            self.root= new_parent
-        
-
-        current= item.parent
-        while current is not None:
-            current= self._balance(current)
-
-            left: Optional[AABBNode]= current.left
-            right: Optional[AABBNode]= current.right
-
-            current.height = 1 + maths.maxi(left.height, right.height)
-            current.aabb.combined_from(left.aabb, right.aabb)
-            current= current.parent
-
-    def _is_valid(self, node: AABBNode) -> bool:
+    def _is_valid(self, node: Node) -> bool:
         if node is None:
             return True
 
@@ -334,31 +305,72 @@ class AABBTree:
             if node.parent is not None:
                 return False
         
-        left: Optional[AABBNode]= node.left
-        right: Optional[AABBNode]= node.right
+        left: Optional[Node]= node.left
+        right: Optional[Node]= node.right
 
         if node.is_leaf():
-            if (
-                node.left is not None or
-                node.right is not None or
-                node.height != 0 or
-                node.item is None
-            ):
+            if node.left is not None:
                 return False
+
+            if node.right is not None:
+                return False
+
+            if node.height != 0:
+                return False
+
             return True
 
-        if not node.aabb.contains_aabb(left.aabb):
+        
+        aabb= geometry.AABB3.create_combined_from(left.aabb, right.aabb)
+
+        min_0= aabb.get_min()
+        min_1= node.aabb.get_min()
+        if not min_0.is_equil(min_1):
             return False
 
-        if right is not None and not node.aabb.contains_aabb(right.aabb):
+        max_0= aabb.get_max()
+        max_1= node.aabb.get_max()
+        if not max_0.is_equil(max_1):
             return False
-        
+
+
+
         if left.parent is not node:
             return False
+
         if right.parent is not node:
             return False
 
         check_left= self._is_valid(left)
         check_right= self._is_valid(right)
-
         return check_left and check_right
+
+    def _insert_node(self, t: Any):
+        # TODO updateAABB
+        # TODO t need to have a hash
+
+        node= Node(item=t)
+        node.aabb.set_from(self.updateAABB)
+
+        self.leaves[t]= node
+        self._insert(node)
+
+    def clear(self):
+        self.leaves.clear()
+        self.root= None
+
+    def insert(self, t: Any):
+        node: Optional[Node]= self.leaves.get(t, None)
+        if node is None:
+            self._insert_node(t)
+
+    def remove(self, t: Any):
+        node: Optional[Node]= self.leaves.get(t, None)
+        if node is not None:
+            self._remove(node)
+
+    def is_valid(self):
+        return self._is_valid(self.root)
+
+    def height(self):
+        return self._height(self.root)

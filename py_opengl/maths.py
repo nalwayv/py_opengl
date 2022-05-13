@@ -263,11 +263,6 @@ class Vec2:
         """
         return [self.x, self.y]
 
-    def to_str(self) -> str:
-        """Return string format
-        """
-        return f"X: {self.x}, Y: {self.y}"
-
     def get_at(self, idx: int) -> float:
         if idx == 0:
             return self.x
@@ -537,11 +532,6 @@ class Vec3:
         """Return 'xyz' components
         """
         return [self.x, self.y, self.z]
-
-    def to_str(self) -> str:
-        """Return string format
-        """
-        return f"X: {self.x}, Y: {self.y}, Z: {self.z}"
 
     def lerp(self, to: 'Vec3', weight: float) -> 'Vec3':
         """Return lerped vec3 between self and to
@@ -832,11 +822,6 @@ class Vec4:
         """Return list[float] of *xyzw* components
         """
         return [self.x, self.y, self.z, self.w]
-
-    def to_str(self) -> str:
-        """Return self in string format
-        """
-        return f"V4 ( X: {self.x}, Y: {self.y} Z: {self.z}, W: {self.w} )"
 
     def xy(self) -> Vec2:
         """Return 'xy' components
@@ -1200,6 +1185,15 @@ class Mat3:
         r1: Vec3= self.row1 * by
         r2: Vec3= self.row2 * by
         return Mat3(r0, r1, r2)
+
+    def sum(self) -> float:
+        """Return sum of all rows
+        """
+        return (
+            self.row0.sum() +
+            self.row1.sum() +
+            self.row2.sum()
+        )
 
     def transpose(self) -> 'Mat3':
         """Return a transposed copy of self
@@ -2098,6 +2092,16 @@ class Mat4:
         w: float = self.row3.w
 
         return Vec4(x, y, z, w)
+
+    def sum(self) -> float:
+        """Return sum of all rows
+        """
+        return (
+            self.row0.sum() +
+            self.row1.sum() +
+            self.row2.sum() +
+            self.row3.sum()
+        )
 
     def get_at(self, row: int, col: int) -> float:
         if row == 0:
