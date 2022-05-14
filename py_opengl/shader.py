@@ -61,6 +61,14 @@ class Shader:
         """
         GL.glUseProgram(self._id)
 
+    # def stop(self) -> None:
+    #     """Stop
+    #     """
+    #     if GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM) == self._id:
+    #         return
+    #     GL.glUseProgram(0)
+    #     pass
+
     def set_vec2(self, variable_name: str, value: maths.Vec2) -> None:
         """Set a global uniform vec2 variable within shader
         """

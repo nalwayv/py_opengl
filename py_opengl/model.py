@@ -1,4 +1,4 @@
-"""Mesh
+"""Model
 """
 # TODO
 from dataclasses import dataclass
@@ -30,7 +30,7 @@ class Vertex:
 # ---
 
 
-class Mesh:
+class Model:
 
     __slots__= ('vertices', 'indices', '_vao', '_vbo', '_ebo')
 
@@ -123,7 +123,7 @@ class Mesh:
 # ---
 
 
-class SphereMesh(Mesh):
+class SphereModel(Model):
 
     __slots__= ('radius',)
 
@@ -164,7 +164,7 @@ class SphereMesh(Mesh):
 # ---
 
 
-class CubeMesh(Mesh):
+class CubeModel(Model):
 
     __slots__= ('size',)
     

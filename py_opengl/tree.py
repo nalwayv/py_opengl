@@ -1,7 +1,7 @@
 """AABB3 Tree
 """
 from dataclasses import dataclass, field
-from typing import Optional, Any
+from typing import Optional, TypeVar
 
 from py_opengl import geometry
 from py_opengl import maths
@@ -10,7 +10,16 @@ from py_opengl import maths
 # TODO
 # ---
 
-# NULL_NODE: Final[int]= -1
+
+# class IAABBCompute(ABC):
+#     @abstractmethod
+#     def compute(self) -> geometry.AABB3:
+#         """generate an aabb"""
+#         pass
+
+
+T= TypeVar('T')
+
 # MARGIN: Final[float]= 4.0
 # AABB_REDUCTION_RATIO: Final[float]= 2.0
 
@@ -25,17 +34,15 @@ from py_opengl import maths
 # ---
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class Node:
-    left: Optional['Node']= None
-    right: Optional['Node']= None
-    parent: Optional['Node']= None
-
-    height: int= 0
-
-    aabb: geometry.AABB3= geometry.AABB3()
-
-    item: Optional[Any]= None
+    __slots__= ('left', 'right', 'parent', 'height', 'aabb', 'item')
+    def __init__(self) -> None:
+        self.left: Optional['Node']= None
+        self.right: Optional['Node']= None
+        self.parent: Optional['Node']= None
+        self.height: int= 0
+        self.aabb: geometry.AABB3= geometry.AABB3()
+        self.item: T= T
 
     def is_leaf(self) -> bool:
         return self.left is None
@@ -44,7 +51,7 @@ class Node:
 @dataclass(eq= False, repr= False, slots= True)
 class AABBTree:
     root: Optional[Node]= None
-    leaves: dict[Any, Node]= field(default_factory=dict)
+    leaves: dict[T, Node]= field(default_factory=dict)
     updateAABB: geometry.AABB3= geometry.AABB3()
 
     def _height(self, node: Node) -> int:
@@ -122,14 +129,11 @@ class AABBTree:
 
         sibling= current
         old_parent= sibling.parent
-        new_parent= Node(
-            parent= old_parent,
-            aabb= geometry.AABB3.create_combined_from(
-                leaf_aabb,
-                sibling.aabb
-            ),
-            height= current.height + 1
-        )
+
+        new_parent= Node()
+        new_parent.parent= old_parent
+        new_parent.aabb= geometry.AABB3.create_combined_from(leaf_aabb, sibling.aabb)
+        new_parent.height= current.height + 1
 
         if old_parent is not None:
             if old_parent.left is sibling:
@@ -320,7 +324,6 @@ class AABBTree:
 
             return True
 
-        
         aabb= geometry.AABB3.create_combined_from(left.aabb, right.aabb)
 
         min_0= aabb.get_min()
@@ -333,8 +336,6 @@ class AABBTree:
         if not max_0.is_equil(max_1):
             return False
 
-
-
         if left.parent is not node:
             return False
 
@@ -345,26 +346,29 @@ class AABBTree:
         check_right= self._is_valid(right)
         return check_left and check_right
 
-    def _insert_node(self, t: Any):
+    def _insert_node(self, item: T):
         # TODO updateAABB
         # TODO t need to have a hash
+        # compute aabb from t, scale and store result withion updateaabb
+        # self.updateAABB.set_from(item.compute().expanded(2.0))
 
-        node= Node(item=t)
-        node.aabb.set_from(self.updateAABB)
+        node= Node()
+        node.item= item
+        # node.aabb.set_from(self.updateAABB)
 
-        self.leaves[t]= node
+        self.leaves[item]= node
         self._insert(node)
 
     def clear(self):
         self.leaves.clear()
         self.root= None
 
-    def insert(self, t: Any):
+    def insert(self, t: T):
         node: Optional[Node]= self.leaves.get(t, None)
         if node is None:
             self._insert_node(t)
 
-    def remove(self, t: Any):
+    def remove(self, t: T):
         node: Optional[Node]= self.leaves.get(t, None)
         if node is not None:
             self._remove(node)

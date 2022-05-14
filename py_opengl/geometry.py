@@ -74,8 +74,8 @@ class AABB3:
             maths.Vec3.create_from_min(self.get_min(), a.get_min()),
             maths.Vec3.create_from_max(self.get_max(), a.get_max())
         )
-        self.center= aabb.center
-        self.extents= aabb.extents
+        self.center.set_from(aabb.center)
+        self.extents.set_from(aabb.extents)
 
     def combined_from(self, a: 'AABB3', b: 'AABB3') -> None:
         """Set self to the union of a and b"""
@@ -83,8 +83,8 @@ class AABB3:
             maths.Vec3.create_from_min(a.get_min(), b.get_min()),
             maths.Vec3.create_from_max(a.get_max(), b.get_max())
         )
-        self.center= aabb.center
-        self.extents= aabb.extents
+        self.center.set_from(aabb.center)
+        self.extents.set_from(aabb.extents)
 
     def expand(self, by: float) -> 'AABB3':
         """Expanded by float value"""

@@ -1,12 +1,9 @@
 """Main
 """
-# from dataclasses import dataclass
-# from abc import ABC, abstractmethod
-# from typing import Optional
-
 import glfw
 from loguru import logger
 from OpenGL import GL
+# from abc import ABC, abstractmethod
 
 from py_opengl import utils
 from py_opengl import maths
@@ -18,20 +15,28 @@ from py_opengl import mouse
 from py_opengl import camera
 from py_opengl import window
 from py_opengl import color
-from py_opengl import mesh
+from py_opengl import model
 from py_opengl import transform
 from py_opengl import geometry
 
 
 # ---
 
-class Cube3D:
 
-    __slots__= ('_mesh', '_shader', '_transform')
+# class ICompute(ABC):
+#     @abstractmethod
+#     def compute(self) -> geometry.AABB3:
+#         """generate an aabb"""
+#         pass
+
+
+class CubeShape:
+
+    __slots__= ('_model', '_shader', '_transform')
 
     def __init__(self):
 
-        self._mesh = mesh.CubeMesh(maths.Vec3.create_from_value(0.5))
+        self._model = model.CubeModel(maths.Vec3.create_from_value(0.5))
 
         self._shader= shader.Shader(
             vshader= 'debug_shader.vert',
@@ -40,43 +45,25 @@ class Cube3D:
 
         self._transform= transform.Transform()
 
-    def aabb(self) -> geometry.AABB3:
-        return self._mesh.compute_aabb(self._transform)
+    def translate(self, v3: maths.Vec3) -> None:
+        self._transform.translated(v3)
+
+    def rotate(self, v3: maths.Vec3) -> None:
+        self._transform.rotated_xyz(v3)
+    
+    def matrix(self)-> maths.Mat4:
+        return self._transform.model_matrix()
+
+    def compute(self) -> geometry.AABB3:
+        return self._model.compute_aabb(self._transform)
 
     def draw(self) -> None:
         self._shader.use()
-        self._mesh.use()
+        self._model.use()
 
     def clean(self) -> None:
         self._shader.clean()
-        self._mesh.clean()
-
-
-class Sphere3D:
-
-    __slots__= ('_mesh', '_shader', '_transform')
-
-    def __init__(self):
-        
-        self._mesh = mesh.SphereMesh()
-
-        self._shader= shader.Shader(
-            vshader= 'debug_shader.vert',
-            fshader= 'debug_shader.frag'
-        )
-
-        self._transform= transform.Transform()
-
-    def aabb(self) -> geometry.AABB3:
-        return self._mesh.compute_aabb(self._transform)
-
-    def draw(self) -> None:
-        self._shader.use()
-        self._mesh.use()
-
-    def clean(self) -> None:
-        self._shader.clean()
-        self._mesh.clean()
+        self._model.clean()
 
 
 # --- CALLBACKS
@@ -136,7 +123,7 @@ def main() -> None:
         first_move: bool= True
         last_mp: maths.Vec3= maths.Vec3.zero()
 
-        shape= Cube3D()
+        shape= CubeShape()
 
         while not glwin.should_close():
             time.update()
@@ -151,12 +138,11 @@ def main() -> None:
 
             # shape
             shape.draw()
-
-            shape._transform.rotated_xyz(maths.Vec3(x= 20.0, y= 10.0) * (1.4 * time.delta))
-
-            shape._shader.set_mat4('m_matrix', shape._transform.model_matrix())
+            shape.rotate(maths.Vec3(x= 20.0, y= 10.0) * (1.4 * time.delta))
+            shape._shader.set_mat4('m_matrix', shape.matrix())
             shape._shader.set_mat4('v_matrix', cam.view_matrix())
             shape._shader.set_mat4('p_matrix', cam.projection_matrix())
+            
 
             # keyboard
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
