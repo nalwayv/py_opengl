@@ -1,6 +1,5 @@
 """Main
 """
-from turtle import shape
 import glfw
 from loguru import logger
 from OpenGL import GL
