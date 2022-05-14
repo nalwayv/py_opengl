@@ -9,11 +9,13 @@ uniform mat4 m_matrix;
 uniform mat4 v_matrix;
 uniform mat4 p_matrix;
 
-
 void main(void)
 {
-    b_col = a_col;
+    vec3 current_pos = vec3(m_matrix * vec4(a_pos, 1.0));
+    mat4 cam_matrix = p_matrix * v_matrix;
 
-    mat4 mvp = p_matrix * v_matrix * m_matrix;
-    gl_Position = mvp * vec4(a_pos, 1.0);
+    gl_Position = cam_matrix * vec4(current_pos, 1.0);
+    
+    // out
+    b_col = a_col;
 }

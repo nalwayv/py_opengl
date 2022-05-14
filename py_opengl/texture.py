@@ -1,6 +1,5 @@
 """Texture
 """
-from dataclasses import dataclass
 from pathlib import Path
 
 from OpenGL import GL
@@ -18,26 +17,29 @@ class TextureError(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class Texture:
-    texture_name: str
-    _id: int= -1
 
-    def __post_init__(self) -> None:
+    __slots__= ('texture', '_id')
+
+    def __init__(self, texture_file_name: str) -> None:
         """
         Raises
         ---
         TextureError
             texture file is not located
         """
-        file: Path= Path(f'py_opengl/images/{self.texture_name}').absolute()
+
+        self.texture: str= texture_file_name
+        self._id= GL.glGenTextures(1)
+
+        file: Path= Path(f'py_opengl/images/{self.texture}').absolute()
 
         if not file.exists():
+            GL.glDeleteTextures(1, self._id)
             raise TextureError('that texture was not found within images folder')
 
         # use pillow to open tetxure image file
         with Image.open(file.as_posix()) as im:
-            self._id= GL.glGenTextures(1)
             width, height= im.size
             border: int= 0
             level: int= 0
@@ -61,13 +63,19 @@ class Texture:
                 im.tobytes()
             )
 
-    def clean(self) -> None:
+    def bind(self) -> None:
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._id)
+
+    def unbind(self) -> None:
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+
+    def delete(self) -> None:
         """Clean up texture from opengl
         """     
         GL.glDeleteTextures(1, self._id)
 
-    def use(self) -> None:
-        """Use texture within opengl based on currently stored texture id
-        """
-        GL.glActiveTexture(GL.GL_TEXTURE0)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, self._id)
+    # def use(self) -> None:
+    #     """Use texture within opengl based on currently stored texture id
+    #     """
+    #     GL.glActiveTexture(GL.GL_TEXTURE0)
+    #     GL.glBindTexture(GL.GL_TEXTURE_2D, self._id)

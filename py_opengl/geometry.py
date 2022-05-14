@@ -371,7 +371,7 @@ class Sphere3:
 
         return dis < r2
 
-    def intersect_plain(self, plain: 'Plain3'):
+    def intersect_plain(self, plain: 'Plane3'):
         close_pt: maths.Vec3= plain.closest_pt(self.center)
         dis: float= (self.center - close_pt).length_sqr()
         r2: float= maths.sqr(self.radius)
@@ -388,7 +388,7 @@ class PlainError(Exception):
 
 
 @dataclass(eq=False, repr=False, slots=True)
-class Plain3:
+class Plane3:
     normal: maths.Vec3= maths.Vec3(x=1.0)
     direction: float= 0.0
     _id: GeometryID= GeometryID.PLAIN
@@ -400,7 +400,7 @@ class Plain3:
         )
         return hash(data)
 
-    def __eq__(self, other: 'Plain3') -> bool:
+    def __eq__(self, other: 'Plane3') -> bool:
         if isinstance(other, self.__class__):
             if(
                 self.normal.is_equil(other.normal) and
@@ -422,14 +422,14 @@ class Plain3:
         n: maths.Vec3= unit_v3.copy()
         d: float= n.dot(pt)
 
-        return Plain3(normal=n, direction=d)
+        return Plane3(normal=n, direction=d)
 
     @staticmethod
     def create_from_points(
         a: maths.Vec3,
         b: maths.Vec3,
         c: maths.Vec3
-    ) -> 'Plain3':
+    ) -> 'Plane3':
         v0: maths.Vec3= b - a
         v1: maths.Vec3= c - a
 
@@ -439,15 +439,15 @@ class Plain3:
 
         d: float= n.dot(a)
 
-        return Plain3(normal= n, direction= d)
+        return Plane3(normal= n, direction= d)
 
     def to_str(self) -> str:
         return f'N(X: {self.normal.x}, Y: {self.normal.y}, Z: {self.normal.z}), D({self.direction})'
 
-    def copy(self) -> 'Plain3':
+    def copy(self) -> 'Plane3':
         """Return a copy of self
         """
-        return Plain3(
+        return Plane3(
             normal= self.normal.copy(),
             direction= self.direction
         )
@@ -475,7 +475,7 @@ class Plain3:
         scale: float= pt.dot(self.normal) - self.direction
         return pt - (self.normal * scale)
 
-    def unit(self) -> 'Plain3':
+    def unit(self) -> 'Plane3':
         """Return a copy of self with unit length
         """
         len_sqr: float= self.normal.length_sqr()
@@ -491,7 +491,7 @@ class Plain3:
             normal= self.normal * inv
             direction= self.direction * inv
 
-        return Plain3(normal, direction)
+        return Plane3(normal, direction)
 
     def to_unit(self) -> None:
         """Convert to unit length
@@ -507,7 +507,7 @@ class Plain3:
         self.normal.z *= inv
         self.direction *= inv
 
-    def intersect_plain(self, other: 'Plain3') -> bool:
+    def intersect_plain(self, other: 'Plane3') -> bool:
         dis: float= (self.normal.cross(other.nomal)).length_sqr()
         return not maths.is_zero(dis)
 
@@ -539,12 +539,12 @@ class Plain3:
 
 @dataclass(eq= False, repr= False, slots= True)
 class Frustum:
-    top: Plain3= Plain3()
-    bottom: Plain3= Plain3()
-    left: Plain3= Plain3()
-    right: Plain3= Plain3()
-    near: Plain3= Plain3()
-    far: Plain3= Plain3()
+    top: Plane3= Plane3()
+    bottom: Plane3= Plane3()
+    left: Plane3= Plane3()
+    right: Plane3= Plane3()
+    near: Plane3= Plane3()
+    far: Plane3= Plane3()
 
     _id = GeometryID.FRUSTUM
 
@@ -695,7 +695,7 @@ class Ray3:
 
         return True, self.get_hit(t)
 
-    def cast_plain(self, pl: Plain3) -> tuple[bool, maths.Vec3]:
+    def cast_plain(self, pl: Plane3) -> tuple[bool, maths.Vec3]:
         nd: float= self.direction.dot(pl.normal)
         pn: float= self.origin.dot(pl.normal)
 

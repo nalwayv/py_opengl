@@ -1,6 +1,5 @@
 """Shader
 """
-from dataclasses import dataclass
 from pathlib import Path
 
 from OpenGL import GL
@@ -17,57 +16,68 @@ class ShaderError(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq= False, repr= False, slots= True)
+
 class Shader:
-    vshader: str
-    fshader: str
-    _id: int= -1
+    
+    __slots__= ('vshader', 'fshader', '_id')
 
-    def __post_init__(self):
+    def __init__(self, vshader: str, fshader: str) -> None:
         """
-
         Raises
         ---
-        ShaderError
-            vertex or fragment shader was not found
+        ShaderError:
+            if vertex or fragment shader file is not found
         """
-        self._id= GL.glCreateProgram()
+        self.vshader: str= vshader
+        self.fshader: str= fshader
+        self._id: int= GL.glCreateProgram()
 
         v_file: Path= Path(f'py_opengl/shaders/{self.vshader}').absolute()
         f_file: Path= Path(f'py_opengl/shaders/{self.fshader}').absolute()
 
         if not v_file.exists():
+            GL.glDeleteProgram(self._id)
             raise ShaderError('vert file was not found within shaders folder')
         
         if not f_file.exists():
+            GL.glDeleteProgram(self._id)
             raise ShaderError('frag file was not found within shaders folder')
 
         with(
             open(v_file.as_posix(), mode= 'r') as v,
             open(f_file.as_posix(), mode= 'r') as f
         ):
+
+            # vs= GL.glCreateShader(GL.GL_VERTEX_SHADER)
+            # GL.glShaderSource(vs, v)
+            # GL.glCompileShader(vs)
+
+            # fs= GL.glCreateShader(GL.GL_FRAGMENT_SHADER)
+            # GL.glShaderSource(fs, f)
+            # GL.glCompileShader(fs)
+
+            # self._id= GL.glCreateProgram()
+            # GL.glAttachShader(self._id, vs)
+            # GL.glAttachShader(self._id, fs)
+            # GL.glLinkProgram(self._id)
+
+            # GL.glDeleteShader(vs)
+            # GL.glDeleteShader(fs)
+
             self._id = compileProgram(
                 compileShader(v, GL.GL_VERTEX_SHADER),
                 compileShader(f, GL.GL_FRAGMENT_SHADER)    
             )
 
-    def clean(self) -> None:
+    def delete(self) -> None:
         """Delete the stored shader id
         """
         GL.glDeleteProgram(self._id)
 
     def use(self) -> None:
-        """Use
+        """Activate this shader
         """
         GL.glUseProgram(self._id)
-
-    # def stop(self) -> None:
-    #     """Stop
-    #     """
-    #     if GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM) == self._id:
-    #         return
-    #     GL.glUseProgram(0)
-    #     pass
 
     def set_vec2(self, variable_name: str, value: maths.Vec2) -> None:
         """Set a global uniform vec2 variable within shader

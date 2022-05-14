@@ -1,4 +1,4 @@
-"""Model
+"""Mesh
 """
 # TODO
 from dataclasses import dataclass
@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from OpenGL import GL
 
 from py_opengl import utils
+from py_opengl import shader
+from py_opengl import camera
 from py_opengl import maths
 from py_opengl import geometry
 from py_opengl import transform
@@ -21,6 +23,7 @@ class Vertex:
     color: maths.Vec3= maths.Vec3()
 
     def to_list(self) -> list[float]:
+        # TODO include normals when needed
         return [
             self.position.x, self.position.y, self.position.z,
             self.color.x, self.color.y, self.color.z,
@@ -30,28 +33,19 @@ class Vertex:
 # ---
 
 
-class Model:
+class VBO:
 
-    __slots__= ('vertices', 'indices', '_vao', '_vbo', '_ebo')
+    __slots__= ('_id',)
 
-    def __init__(self, vertices: list[Vertex], indices: list[int]) -> None:
-        self.vertices: list[Vertex]= vertices
-        self.indices: list[int]= indices
-
-        self._vao= GL.glGenVertexArrays(1)
-        self._vbo= GL.glGenBuffers(1)
-        self._ebo= GL.glGenBuffers(1)
-
-        GL.glBindVertexArray(self._vao)
-
-        # flattern
+    def __init__(self, vertices: list[Vertex]) -> None:
+        self._id= GL.glGenBuffers(1)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._id)
         v_array= [
             value
-            for vertex in self.vertices
+            for vertex in vertices
             for value in vertex.to_list()
         ]
 
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._vbo)
         GL.glBufferData(
             GL.GL_ARRAY_BUFFER,
             len(v_array) * utils.SIZEOF_FLOAT,
@@ -59,23 +53,97 @@ class Model:
             GL.GL_STATIC_DRAW
         )
 
-        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self._ebo)
+
+    def bind(self) -> None:
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._id)
+
+    def unbind(self) -> None:
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
+
+    def delete(self) -> None:
+        GL.glDeleteBuffers(1, self._id)
+
+
+class VAO:
+
+    __slots__= ('_id',)
+
+    def __init__(self) -> None:
+        self._id: int= GL.glGenVertexArrays(1)
+
+    def link(self, vbo: VBO, index:int, components:int, stride: int, offset: int) -> None:
+        vbo.bind()
+        GL.glEnableVertexAttribArray(index)
+        GL.glVertexAttribPointer(
+            index,
+            components,
+            GL.GL_FLOAT,
+            GL.GL_FALSE,
+            stride * utils.SIZEOF_FLOAT,
+            utils.c_cast(offset)
+        )
+        vbo.unbind()
+
+    def bind(self) -> None:
+        GL.glBindVertexArray(self._id)
+
+    def unbind(self) -> None:
+        GL.glBindVertexArray(0)
+
+    def delete(self) -> None:
+        GL.glDeleteVertexArrays(1, self._id)
+
+
+class EBO:
+
+    __slots__= ('_id',)
+
+    def __init__(self, indices: list[int]) -> None:
+        self._id: int= GL.glGenBuffers(1)
+
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self._id)
         GL.glBufferData(
             GL.GL_ELEMENT_ARRAY_BUFFER,
-            len(self.indices) * utils.SIZEOF_UINT,
-            utils.c_arrayU(self.indices),
+            len(indices) * utils.SIZEOF_UINT,
+            utils.c_arrayU(indices),
             GL.GL_STATIC_DRAW
         )
 
-        # pos
-        GL.glEnableVertexAttribArray(0)
-        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 6 * utils.SIZEOF_FLOAT, utils.c_cast(0))
+    def bind(self) -> None:
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self._id)
 
-        # color
-        GL.glEnableVertexAttribArray(1)
-        GL.glVertexAttribPointer(1, 3, GL.GL_FLOAT, GL.GL_FALSE, 6 * utils.SIZEOF_FLOAT, utils.c_cast(3 * utils.SIZEOF_FLOAT))
+    def unbind(self) -> None:
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0)
 
-        GL.glBindVertexArray(0)
+    def delete(self) -> None:
+        GL.glDeleteBuffers(1, self._id)
+
+
+# ---
+
+
+class Mesh:
+
+    __slots__= ('vertices', 'indices', '_vao', '_vbo', '_ebo')
+
+    def __init__(self, vertices: list[Vertex], indices: list[int]) -> None:
+        self.vertices: list[Vertex]= vertices
+        self.indices: list[int]= indices
+
+        self._vao= VAO()
+        self._vao.bind()
+
+        self._vbo= VBO(self.vertices)
+        self._ebo= EBO(self.indices)
+
+        # position:: offset=0
+        self._vao.link(self._vbo, 0, 3, 6, 0) 
+        # color:: offset= 3 * floatsize
+        self._vao.link(self._vbo, 1, 3, 6, 12)
+
+        self._vao.unbind()
+        self._vbo.unbind()
+        self._ebo.unbind()
 
     def compute_aabb(self, transform: transform.Transform) -> geometry.AABB3:
         min_pt= maths.Vec3()
@@ -110,20 +178,19 @@ class Model:
         return [v.normal for v in self.vertices]
 
     def use(self):
-        GL.glBindVertexArray(self._vao)
+        self._vao.bind()
         GL.glDrawElements(GL.GL_TRIANGLES, len(self.indices), GL.GL_UNSIGNED_INT, utils.c_cast(0))
-        GL.glBindVertexArray(0)
 
-    def clean(self) -> None:
-        GL.glDeleteVertexArrays(1, self._vao)
-        GL.glDeleteBuffers(1, self._vbo)
-        GL.glDeleteBuffers(1, self._ebo)
+    def delete(self) -> None:
+        self._vbo.delete()
+        self._vao.delete()
+        self._ebo.delete()
 
 
 # ---
 
 
-class SphereModel(Model):
+class SphereMesh(Mesh):
 
     __slots__= ('radius',)
 
@@ -164,7 +231,7 @@ class SphereModel(Model):
 # ---
 
 
-class CubeModel(Model):
+class CubeMesh(Mesh):
 
     __slots__= ('size',)
     
