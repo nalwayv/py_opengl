@@ -73,9 +73,3 @@ class Texture:
         """Clean up texture from opengl
         """     
         GL.glDeleteTextures(1, self._id)
-
-    # def use(self) -> None:
-    #     """Use texture within opengl based on currently stored texture id
-    #     """
-    #     GL.glActiveTexture(GL.GL_TEXTURE0)
-    #     GL.glBindTexture(GL.GL_TEXTURE_2D, self._id)

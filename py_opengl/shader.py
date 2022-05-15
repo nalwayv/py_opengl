@@ -47,23 +47,6 @@ class Shader:
             open(v_file.as_posix(), mode= 'r') as v,
             open(f_file.as_posix(), mode= 'r') as f
         ):
-
-            # vs= GL.glCreateShader(GL.GL_VERTEX_SHADER)
-            # GL.glShaderSource(vs, v)
-            # GL.glCompileShader(vs)
-
-            # fs= GL.glCreateShader(GL.GL_FRAGMENT_SHADER)
-            # GL.glShaderSource(fs, f)
-            # GL.glCompileShader(fs)
-
-            # self._id= GL.glCreateProgram()
-            # GL.glAttachShader(self._id, vs)
-            # GL.glAttachShader(self._id, fs)
-            # GL.glLinkProgram(self._id)
-
-            # GL.glDeleteShader(vs)
-            # GL.glDeleteShader(fs)
-
             self._id = compileProgram(
                 compileShader(v, GL.GL_VERTEX_SHADER),
                 compileShader(f, GL.GL_FRAGMENT_SHADER)    

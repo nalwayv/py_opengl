@@ -28,7 +28,6 @@ class CubeShape:
 
     def __init__(self):
         self._model = mesh.CubeMesh(maths.Vec3.create_from_value(0.5))
-        # self._shader= shader.Shader('debug_shader.vert', 'debug_shader.frag')
         self._transform= transform.Transform()
 
     def translate(self, v3: maths.Vec3) -> None:
@@ -46,7 +45,6 @@ class CubeShape:
         s.set_mat4('v_matrix', camera.view_matrix())
         s.set_mat4('p_matrix', camera.projection_matrix())
 
-        # model
         self._model.use()
 
     def delete(self) -> None:
