@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from OpenGL import GL
 
 from py_opengl import utils
-from py_opengl import shader
-from py_opengl import camera
 from py_opengl import maths
 from py_opengl import geometry
 from py_opengl import transform
@@ -39,7 +37,9 @@ class VBO:
 
     def __init__(self, vertices: list[Vertex]) -> None:
         self._id= GL.glGenBuffers(1)
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._id)
+
+        self.bind()
+
         v_array= [
             value
             for vertex in vertices
@@ -52,7 +52,6 @@ class VBO:
             utils.c_arrayF(v_array),
             GL.GL_STATIC_DRAW
         )
-
 
     def bind(self) -> None:
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._id)
@@ -73,7 +72,9 @@ class VAO:
 
     def link(self, vbo: VBO, index:int, components:int, stride: int, offset: int) -> None:
         vbo.bind()
-        GL.glEnableVertexAttribArray(index)
+
+        self.enable(index)
+
         GL.glVertexAttribPointer(
             index,
             components,
@@ -82,7 +83,14 @@ class VAO:
             stride * utils.SIZEOF_FLOAT,
             utils.c_cast(offset)
         )
+        
         vbo.unbind()
+
+    def enable(self, index: int) -> None:
+        GL.glEnableVertexAttribArray(index)
+
+    def disable(self, index: int) -> None:
+        GL.glDisableVertexAttribArray(index)
 
     def bind(self) -> None:
         GL.glBindVertexArray(self._id)
@@ -141,9 +149,11 @@ class Mesh:
         # color:: offset= 3 * floatsize
         self._vao.link(self._vbo, 1, 3, 6, 12)
 
-        self._vao.unbind()
         self._vbo.unbind()
+        self._vao.unbind()
         self._ebo.unbind()
+
+        
 
     def compute_aabb(self, transform: transform.Transform) -> geometry.AABB3:
         min_pt= maths.Vec3()
@@ -179,7 +189,15 @@ class Mesh:
 
     def use(self):
         self._vao.bind()
-        GL.glDrawElements(GL.GL_TRIANGLES, len(self.indices), GL.GL_UNSIGNED_INT, utils.c_cast(0))
+
+        GL.glDrawElements(
+            GL.GL_TRIANGLES,
+            len(self.indices),
+            GL.GL_UNSIGNED_INT,
+            utils.c_cast(0)
+        )
+
+        self._vao.unbind()
 
     def delete(self) -> None:
         self._vbo.delete()

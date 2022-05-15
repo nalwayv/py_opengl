@@ -39,12 +39,28 @@ def float_to_bits(val: float) -> int:
 
 def bits_to_float(hex_val: int) -> float:
     """Convert hex bits to float
+    
+    Example
+    ---
+    float_to_bits(42) # 1109917696\n
+    bits_to_float(1109917696) # 42.0
     """
     val_a= ctypes.c_int(hex_val)
     address: int= ctypes.addressof(val_a)
     val_b= ctypes.c_float.from_address(address)
 
     return val_b.value
+
+
+def hash_code(arr: list[float]) -> int:
+    """
+    """
+    result: int= 1
+    tmp: int= 0
+    for num in arr:
+        tmp= float_to_bits(num)
+        result= 31 * result + (tmp ^ (tmp >> 32))
+    return result
 
 
 # --- C HELPERS FUNCTIONS

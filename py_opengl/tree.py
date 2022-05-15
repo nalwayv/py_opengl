@@ -11,24 +11,7 @@ from py_opengl import maths
 # ---
 
 
-# class IAABBCompute(ABC):
-#     @abstractmethod
-#     def compute(self) -> geometry.AABB3:
-#         """generate an aabb"""
-#         pass
-
-
 T= TypeVar('T')
-
-# MARGIN: Final[float]= 4.0
-# AABB_REDUCTION_RATIO: Final[float]= 2.0
-
-
-# ---
-
-
-# COMPUTE_FN: Callable[[Any, geometry.AABB3], None]
-# EXPAND_FN: Callable[[Any, geometry.AABB3], None]
 
 
 # ---
@@ -52,7 +35,6 @@ class Node:
 class AABBTree:
     root: Optional[Node]= None
     leaves: dict[T, Node]= field(default_factory=dict)
-    updateAABB: geometry.AABB3= geometry.AABB3()
 
     def _height(self, node: Node) -> int:
         if node is None:
@@ -348,13 +330,12 @@ class AABBTree:
 
     def _insert_node(self, item: T):
         # TODO updateAABB
-        # TODO t need to have a hash
-        # compute aabb from t, scale and store result withion updateaabb
-        # self.updateAABB.set_from(item.compute().expanded(2.0))
+        # compute aabb from t and scale by margin
+        # aabb= item.compute().expanded(2.0)
 
         node= Node()
         node.item= item
-        # node.aabb.set_from(self.updateAABB)
+        # node.aabb.set_from(aabb))
 
         self.leaves[item]= node
         self._insert(node)

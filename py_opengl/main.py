@@ -28,7 +28,7 @@ class CubeShape:
 
     def __init__(self):
         self._model = mesh.CubeMesh(maths.Vec3.create_from_value(0.5))
-        self._shader= shader.Shader('debug_shader.vert', 'debug_shader.frag')
+        # self._shader= shader.Shader('debug_shader.vert', 'debug_shader.frag')
         self._transform= transform.Transform()
 
     def translate(self, v3: maths.Vec3) -> None:
@@ -40,18 +40,17 @@ class CubeShape:
     def compute(self) -> geometry.AABB3:
         return self._model.compute_aabb(self._transform)
 
-    def draw(self, camera: camera.Camera) -> None:
-        self._shader.use()
+    def draw(self, s: shader.Shader, camera: camera.Camera) -> None:
+        s.use()
+        s.set_mat4('m_matrix', self._transform.model_matrix())
+        s.set_mat4('v_matrix', camera.view_matrix())
+        s.set_mat4('p_matrix', camera.projection_matrix())
 
-        self._shader.set_mat4('m_matrix', self._transform.model_matrix())
-        self._shader.set_mat4('v_matrix', camera.view_matrix())
-        self._shader.set_mat4('p_matrix', camera.projection_matrix())
-
+        # model
         self._model.use()
 
     def delete(self) -> None:
         self._model.delete()
-        self._shader.delete()
 
 
 # --- CALLBACKS
@@ -96,7 +95,7 @@ def main() -> None:
         glwin.center_screen_position()
         glwin.set_window_resize_callback(cb_window_resize)
 
-        bg_col= color.Color.from_rgba(75, 75, 75, 255)
+        bg= color.Color.from_rgba(75, 75, 75, 255)
 
         time= clock.Clock()
 
@@ -111,15 +110,18 @@ def main() -> None:
         first_move: bool= True
         last_mp: maths.Vec3= maths.Vec3.zero()
 
+        dbg_shader= shader.Shader('debug_shader.vert', 'debug_shader.frag')
+
         shape1= CubeShape()
 
-        GL.glEnable(GL.GL_DEPTH_TEST)
-        # GL.glEnable(GL.GL_CULL_FACE)
+        # wireframe
+        # GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
         while not glwin.should_close():
-            GL.glClearColor(*bg_col.get_data_unit())
+            GL.glClearColor(*bg.get_data_unit())
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+            GL.glEnable(GL.GL_DEPTH_TEST)
+            GL.glEnable(GL.GL_CULL_FACE)
 
-            # GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
             # ---
 
             # time
@@ -127,7 +129,7 @@ def main() -> None:
 
             # shape
             shape1.rotate(maths.Vec3(x= 20.0, y= 10.0) * (1.4 * time.delta))
-            shape1.draw(cam)
+            shape1.draw(dbg_shader, cam)
 
             # keyboard
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
@@ -175,6 +177,7 @@ def main() -> None:
     finally:
         logger.debug('CLOSED')
         shape1.delete()
+        dbg_shader.delete()
         glfw.terminate()
 
 
