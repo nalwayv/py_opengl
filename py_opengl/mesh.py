@@ -35,11 +35,10 @@ class VBO:
 
     __slots__= ('_id',)
 
-    def __init__(self, vertices: list[Vertex]) -> None:
+    def __init__(self) -> None:
         self._id= GL.glGenBuffers(1)
-        
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._id)
-
+    
+    def set_data(self, vertices: list[Vertex]) -> None:
         v_array= [
             value
             for vertex in vertices
@@ -52,6 +51,17 @@ class VBO:
             utils.c_arrayF(v_array),
             GL.GL_STATIC_DRAW
         )
+
+    def link(self, index:int, components:int, stride: int, offset: int) -> None:
+        GL.glVertexAttribPointer(
+            index,
+            components,
+            GL.GL_FLOAT,
+            GL.GL_FALSE,
+            stride,
+            utils.c_cast(offset)
+        )
+        GL.glEnableVertexAttribArray(index)
 
     def bind(self) -> None:
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._id)
@@ -70,19 +80,6 @@ class VAO:
     def __init__(self) -> None:
         self._id: int= GL.glGenVertexArrays(1)
 
-    def link(self, vbo: VBO, index:int, components:int, stride: int, offset: int) -> None:
-        vbo.bind()
-        GL.glVertexAttribPointer(
-            index,
-            components,
-            GL.GL_FLOAT,
-            GL.GL_FALSE,
-            stride,
-            utils.c_cast(offset)
-        )
-        GL.glEnableVertexAttribArray(index)
-        vbo.unbind()
-
     def bind(self) -> None:
         GL.glBindVertexArray(self._id)
 
@@ -97,11 +94,10 @@ class EBO:
 
     __slots__= ('_id',)
 
-    def __init__(self, indices: list[int]) -> None:
+    def __init__(self) -> None:
         self._id: int= GL.glGenBuffers(1)
 
-        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self._id)
-
+    def set_data(self, indices: list[int]) -> None:
         GL.glBufferData(
             GL.GL_ELEMENT_ARRAY_BUFFER,
             len(indices) * utils.SIZEOF_UINT,
@@ -133,13 +129,15 @@ class Mesh:
         self._vao= VAO()
         self._vao.bind()
 
-        self._vbo= VBO(self.vertices)
-        self._ebo= EBO(self.indices)
+        self._ebo= EBO()
+        self._ebo.bind()
+        self._ebo.set_data(self.indices)
 
-        # position
-        self._vao.link(self._vbo, 0, 3, 6 * utils.SIZEOF_FLOAT, 0 * utils.SIZEOF_FLOAT) 
-        # color
-        self._vao.link(self._vbo, 1, 3, 6 * utils.SIZEOF_FLOAT, 3 * utils.SIZEOF_FLOAT)
+        self._vbo= VBO()
+        self._vbo.bind()
+        self._vbo.set_data(self.vertices)
+        self._vbo.link(0, 3, 6 * utils.SIZEOF_FLOAT, 0 * utils.SIZEOF_FLOAT) 
+        self._vbo.link(1, 3, 6 * utils.SIZEOF_FLOAT, 3 * utils.SIZEOF_FLOAT)
 
         self._vbo.unbind()
         self._vao.unbind()
@@ -180,9 +178,9 @@ class Mesh:
     def render(self):
         if not len(self.indices):
             return 
-
         self._vao.bind()
         GL.glDrawElements(GL.GL_TRIANGLES, len(self.indices), GL.GL_UNSIGNED_INT, utils.NULL)
+        self._vao.unbind()
 
     def delete(self) -> None:
         self._vbo.delete()

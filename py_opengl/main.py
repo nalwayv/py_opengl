@@ -23,7 +23,7 @@ from py_opengl import geometry
 # ---
 
 
-class ObjectNode(ABC):
+class ModelNode(ABC):
 
     __slots__= ('_id', '_transform', 'visible')
 
@@ -31,6 +31,9 @@ class ObjectNode(ABC):
         self._id: int= obj_id
         self._transform= transform.Transform()
         self.visible: bool= True
+
+    def set_position(self, v3: maths.Vec3) -> None:
+        self._transform.origin.set_from(v3)
 
     def translate(self, v3: maths.Vec3) -> None:
         self._transform.translated(v3)
@@ -45,13 +48,12 @@ class ObjectNode(ABC):
     def compute(self) -> geometry.AABB3:
         pass
 
-class CubeObject(ObjectNode):
+class CubeModel(ModelNode):
 
     __slots__= ('_mesh', '_shader',)
 
     def __init__(self, obj_id: int, scale: float) -> None:
         self._mesh= mesh.CubeMesh(maths.Vec3.create_from_value(scale))
-        # self._shader= shader.Shader('debug_shader.vert', 'debug_shader.frag')
 
         super().__init__(obj_id)
     
@@ -110,6 +112,10 @@ def main() -> None:
         glwin.center_screen_position()
         glwin.set_window_resize_callback(cb_window_resize)
 
+        # GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
+
+        # ---
+
         time= clock.Clock()
 
         cam= camera.Camera(
@@ -124,8 +130,7 @@ def main() -> None:
         last_mp: maths.Vec3= maths.Vec3.zero()
 
         shader1= shader.Shader('debug_shader.vert', 'debug_shader.frag')
-
-        shape1= CubeObject(0, 0.5)
+        shape1= CubeModel(0, 0.5)
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
 
@@ -142,6 +147,7 @@ def main() -> None:
             # shape
             shape1.rotate(maths.Vec3(x= 10.0, y= 10.0) * (1.4 * time.delta))
             shape1.draw(shader1, cam)
+
 
             # keyboard
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
