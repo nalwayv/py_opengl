@@ -26,7 +26,7 @@ class Shader:
         Raises
         ---
         ShaderError:
-            if vertex or fragment shader file is not found
+            if vertex or fragment shader file is not found or failed to compile
         """
         self.vshader: str= vshader
         self.fshader: str= fshader
@@ -47,7 +47,7 @@ class Shader:
             open(v_file.as_posix(), mode= 'r') as v,
             open(f_file.as_posix(), mode= 'r') as f
         ):
-            self._id = compileProgram(
+            self._id= compileProgram(
                 compileShader(v, GL.GL_VERTEX_SHADER),
                 compileShader(f, GL.GL_FRAGMENT_SHADER)    
             )
@@ -62,42 +62,35 @@ class Shader:
         """
         GL.glUseProgram(self._id)
 
+    def disable(self) -> None:
+        """Detach this shader
+        """
+        GL.glUseProgram(0)
+
     def set_vec2(self, variable_name: str, value: maths.Vec2) -> None:
         """Set a global uniform vec2 variable within shader
         """
-        GL.glUniform2f(
-            GL.glGetUniformLocation(self._id, variable_name),
-            value.x,
-            value.y
-        )
+        idx: int= GL.glGetUniformLocation(self._id, variable_name)
+        if idx >= 0:
+            GL.glUniform2f(idx, value.x, value.y)
 
     def set_vec3(self, variable_name: str, value: maths.Vec3) -> None:
         """Set a global uniform vec3 variable within shader
         """
-        GL.glUniform3f(
-            GL.glGetUniformLocation(self._id, variable_name),
-            value.x,
-            value.y,
-            value.z
-        )
+        idx: int= GL.glGetUniformLocation(self._id, variable_name)
+        if idx >= 0:
+            GL.glUniform3f(idx, value.x, value.y, value.z)
 
     def set_vec4(self, variable_name: str, value: maths.Vec4) -> None:
         """Set a global uniform vec4 variable within shader
         """
-        GL.glUniform4f(
-            GL.glGetUniformLocation(self._id, variable_name),
-            value.x,
-            value.y,
-            value.z,
-            value.w
-        )
+        idx: int= GL.glGetUniformLocation(self._id, variable_name)
+        if idx >= 0:
+            GL.glUniform4f(idx, value.x, value.y, value.z, value.w)
 
     def set_mat4(self, variable_name: str, value: maths.Mat4) -> None:
         """Set a global uniform mat4 variable within shader 
         """
-        GL.glUniformMatrix4fv(
-            GL.glGetUniformLocation(self._id, variable_name),
-            1,
-            GL.GL_FALSE,
-            value.multi_array()
-        )
+        idx: int= GL.glGetUniformLocation(self._id, variable_name)
+        if idx >= 0:
+            GL.glUniformMatrix4fv(idx, 1, GL.GL_FALSE, value.array())

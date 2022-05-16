@@ -1,6 +1,5 @@
 """Window
 """
-from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
 import glfw
@@ -9,20 +8,26 @@ import glfw
 # ---
 
 
-class GlWindowError(Exception):
+class GLWindowError(Exception):
     def __init__(self, msg: str):
         super().__init__(msg)
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class GlWindow:
-    window: Optional[Any]= None
-    width: int= 0
-    height: int= 0
-    title: str= "glfw_window"
 
-    def __post_init__(self):
-        self.window = glfw.create_window(
+    __slots__= ('width', 'height', 'title', 'window')
+
+    def __init__(self, width: int, height: int, title: str):
+        """
+        Raises
+        ---
+        GLWindowError
+            failed to init glfw window
+        """
+        self.width: int= width
+        self.height: int= height
+        self.title: str= title
+        self.window: Optional[Any]= glfw.create_window(
             self.width,
             self.height,
             self.title,
@@ -31,7 +36,7 @@ class GlWindow:
         )
 
         if not self.window:
-            raise GlWindowError('failed to init glfw window')
+            raise GLWindowError('failed to init glfw window')
 
     def set_window_resize_callback(self, cbfun: Callable[[Any, float, float], None]) -> None:
         """Set glfw window callback for window resize

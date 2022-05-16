@@ -37,8 +37,8 @@ class VBO:
 
     def __init__(self, vertices: list[Vertex]) -> None:
         self._id= GL.glGenBuffers(1)
-
-        self.bind()
+        
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._id)
 
         v_array= [
             value
@@ -72,25 +72,16 @@ class VAO:
 
     def link(self, vbo: VBO, index:int, components:int, stride: int, offset: int) -> None:
         vbo.bind()
-
-        self.enable(index)
-
         GL.glVertexAttribPointer(
             index,
             components,
             GL.GL_FLOAT,
             GL.GL_FALSE,
-            stride * utils.SIZEOF_FLOAT,
+            stride,
             utils.c_cast(offset)
         )
-        
-        vbo.unbind()
-
-    def enable(self, index: int) -> None:
         GL.glEnableVertexAttribArray(index)
-
-    def disable(self, index: int) -> None:
-        GL.glDisableVertexAttribArray(index)
+        vbo.unbind()
 
     def bind(self) -> None:
         GL.glBindVertexArray(self._id)
@@ -110,6 +101,7 @@ class EBO:
         self._id: int= GL.glGenBuffers(1)
 
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self._id)
+
         GL.glBufferData(
             GL.GL_ELEMENT_ARRAY_BUFFER,
             len(indices) * utils.SIZEOF_UINT,
@@ -144,16 +136,14 @@ class Mesh:
         self._vbo= VBO(self.vertices)
         self._ebo= EBO(self.indices)
 
-        # position:: offset=0
-        self._vao.link(self._vbo, 0, 3, 6, 0) 
-        # color:: offset= 3 * floatsize
-        self._vao.link(self._vbo, 1, 3, 6, 12)
+        # position
+        self._vao.link(self._vbo, 0, 3, 6 * utils.SIZEOF_FLOAT, 0 * utils.SIZEOF_FLOAT) 
+        # color
+        self._vao.link(self._vbo, 1, 3, 6 * utils.SIZEOF_FLOAT, 3 * utils.SIZEOF_FLOAT)
 
         self._vbo.unbind()
         self._vao.unbind()
         self._ebo.unbind()
-
-        
 
     def compute_aabb(self, transform: transform.Transform) -> geometry.AABB3:
         min_pt= maths.Vec3()
@@ -187,17 +177,12 @@ class Mesh:
     def get_normals(self) -> list[maths.Vec3]:
         return [v.normal for v in self.vertices]
 
-    def use(self):
+    def render(self):
+        if not len(self.indices):
+            return 
+
         self._vao.bind()
-
-        GL.glDrawElements(
-            GL.GL_TRIANGLES,
-            len(self.indices),
-            GL.GL_UNSIGNED_INT,
-            utils.c_cast(0)
-        )
-
-        self._vao.unbind()
+        GL.glDrawElements(GL.GL_TRIANGLES, len(self.indices), GL.GL_UNSIGNED_INT, utils.NULL)
 
     def delete(self) -> None:
         self._vbo.delete()

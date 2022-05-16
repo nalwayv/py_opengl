@@ -1,5 +1,7 @@
 """Main
 """
+from abc import ABC, abstractmethod
+
 import glfw
 from loguru import logger
 from OpenGL import GL
@@ -22,13 +24,14 @@ from py_opengl import geometry
 # ---
 
 
-class CubeShape:
+class ObjectNode(ABC):
 
-    __slots__= ('_model', '_shader', '_transform')
+    __slots__= ('_id', '_transform', 'visible')
 
-    def __init__(self):
-        self._model = mesh.CubeMesh(maths.Vec3.create_from_value(0.5))
+    def __init__(self, obj_id: int) -> None:
+        self._id: int= obj_id
         self._transform= transform.Transform()
+        self.visible: bool= True
 
     def translate(self, v3: maths.Vec3) -> None:
         self._transform.translated(v3)
@@ -36,19 +39,36 @@ class CubeShape:
     def rotate(self, v3: maths.Vec3) -> None:
         self._transform.rotated_xyz(v3)
     
+    def position(self) -> maths.Vec3:
+        self._transform.origin
+
+    @abstractmethod
     def compute(self) -> geometry.AABB3:
-        return self._model.compute_aabb(self._transform)
+        pass
 
-    def draw(self, s: shader.Shader, camera: camera.Camera) -> None:
-        s.use()
-        s.set_mat4('m_matrix', self._transform.model_matrix())
-        s.set_mat4('v_matrix', camera.view_matrix())
-        s.set_mat4('p_matrix', camera.projection_matrix())
+class CubeObject(ObjectNode):
 
-        self._model.use()
+    __slots__= ('_mesh', '_shader',)
+
+    def __init__(self, obj_id: int, scale: float) -> None:
+        self._mesh= mesh.CubeMesh(maths.Vec3.create_from_value(scale))
+        # self._shader= shader.Shader('debug_shader.vert', 'debug_shader.frag')
+
+        super().__init__(obj_id)
+    
+    def compute(self) -> geometry.AABB3:
+        return self._mesh.compute_aabb(self._transform)
+
+    def draw(self, _shader: shader.Shader, cam: camera.Camera) -> None:
+        _shader.use()
+        
+        _shader.set_mat4('m_matrix', self._transform.model_matrix())
+        _shader.set_mat4('v_matrix', cam.view_matrix())
+        _shader.set_mat4('p_matrix', cam.projection_matrix())
+        self._mesh.render()
 
     def delete(self) -> None:
-        self._model.delete()
+        self._mesh.delete()
 
 
 # --- CALLBACKS
@@ -79,27 +99,23 @@ def main() -> None:
         return
 
     try:
+        width= utils.SCREEN_WIDTH
+        height= utils.SCREEN_HEIGHT
+        
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
         glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
-
-        glwin= window.GlWindow(
-            width= utils.SCREEN_WIDTH,
-            height= utils.SCREEN_HEIGHT
-        )
-
+        glwin= window.GlWindow(width, height, 'glfw')
         glfw.make_context_current(glwin.window)
         glwin.center_screen_position()
         glwin.set_window_resize_callback(cb_window_resize)
-
-        bg= color.Color.from_rgba(75, 75, 75, 255)
 
         time= clock.Clock()
 
         cam= camera.Camera(
             position= maths.Vec3(z= 3.0),
-            aspect= utils.SCREEN_WIDTH / utils.SCREEN_HEIGHT
+            aspect= float(width / height)
         )
 
         kb: keyboard.Keyboard= keyboard.Keyboard()
@@ -108,26 +124,25 @@ def main() -> None:
         first_move: bool= True
         last_mp: maths.Vec3= maths.Vec3.zero()
 
-        dbg_shader= shader.Shader('debug_shader.vert', 'debug_shader.frag')
+        shader1= shader.Shader('debug_shader.vert', 'debug_shader.frag')
 
-        shape1= CubeShape()
+        shape1= CubeObject(0, 0.5)
 
-        # wireframe
-        # GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
+        bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
+
         while not glwin.should_close():
-            GL.glClearColor(*bg.get_data_unit())
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+            GL.glClearColor(*bgcolor.unit_values())
             GL.glEnable(GL.GL_DEPTH_TEST)
-            GL.glEnable(GL.GL_CULL_FACE)
-
+            
             # ---
-
+            
             # time
             time.update()
 
             # shape
-            shape1.rotate(maths.Vec3(x= 20.0, y= 10.0) * (1.4 * time.delta))
-            shape1.draw(dbg_shader, cam)
+            shape1.rotate(maths.Vec3(x= 10.0, y= 10.0) * (1.4 * time.delta))
+            shape1.draw(shader1, cam)
 
             # keyboard
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
@@ -164,8 +179,9 @@ def main() -> None:
                     cam.rotate_by(camera.CameraRotation.YAW, new_mp.x, 0.2)
                     cam.rotate_by(camera.CameraRotation.PITCH, new_mp.y, 0.2)
 
+            GL.glDisable(GL.GL_DEPTH_TEST)
             # ---
-
+            
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
@@ -175,7 +191,7 @@ def main() -> None:
     finally:
         logger.debug('CLOSED')
         shape1.delete()
-        dbg_shader.delete()
+        shader1.delete()
         glfw.terminate()
 
 

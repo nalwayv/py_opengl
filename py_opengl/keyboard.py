@@ -26,22 +26,22 @@ class KeyState(Enum):
 
 @dataclass(eq= False, repr= False, slots= True)
 class Keyboard:
-    _states: list[int]= field(default_factory=list)
+    states: list[int]= field(default_factory=list)
 
     def __post_init__(self):
-        self._states= [0xFF] * KEYBOARD_SIZE
+        self.states= [0xFF] * KEYBOARD_SIZE
 
     def _set_current_state_at(self, key: int, value: int) -> None:
-        self._states[key]= (self._states[key] & 0xFFFFFF00) | value
+        self.states[key]= (self.states[key] & 0xFFFFFF00) | value
 
     def _set_previous_state_at(self, key: int, value: int) -> None:
-        self._states[key]= (self._states[key] & 0xFFFF00FF) | (value << 8)
+        self.states[key]= (self.states[key] & 0xFFFF00FF) | (value << 8)
 
     def _get_current_state_at(self, key: int) -> int:
-        return 0xFF & self._states[key]
+        return 0xFF & self.states[key]
 
     def _get_previous_state_at(self, key: int) -> int:
-        return 0xFF & (self._states[key] >> 8)
+        return 0xFF & (self.states[key] >> 8)
 
     def get_state(self, glfw_key_state: tuple[int, int]) -> KeyState:
         """Get keyboard keystate

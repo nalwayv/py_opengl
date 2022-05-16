@@ -13,7 +13,7 @@ class Color:
     _rgba: int= 0xFF
 
     @staticmethod
-    def from_rgba(red: int, green: int, blue: int, alpha: int) -> 'Color':
+    def create_from_rgba(red: int, green: int, blue: int, alpha: int) -> 'Color':
         c= Color()
         c.set_red(red)
         c.set_green(green)
@@ -45,7 +45,7 @@ class Color:
     def set_alpha(self, value: int) -> None:
         self._rgba= (self._rgba & 0x00FFFFFF) | (maths.clampi(value, 0, 255) << 24)
 
-    def get_data(self) -> tuple[int, int, int, int]:
+    def values(self) -> tuple[int, int, int, int]:
         return (
             self.get_red(),
             self.get_green(),
@@ -53,7 +53,7 @@ class Color:
             self.get_alpha()
         )
 
-    def get_data_unit(self) -> tuple[float, float, float, float]:
+    def unit_values(self) -> tuple[float, float, float, float]:
         inv= 1.0 / 255.0
         return (
             float(self.get_red()) * inv,

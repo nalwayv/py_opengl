@@ -1,8 +1,8 @@
 """Utils
 """
+
 import ctypes
 from typing import Final
-
 
 # --- GLOBALS
 
@@ -61,6 +61,38 @@ def hash_code(arr: list[float]) -> int:
         tmp= float_to_bits(num)
         result= 31 * result + (tmp ^ (tmp >> 32))
     return result
+
+
+# --- HELPER CLASSES
+
+
+class BitMask:
+
+    __slots__=('_mask',)
+
+    def __init__(self) -> None:
+        self._mask: int= 0
+    
+    def clear(self) -> None:
+        if self._mask == 0:
+            return
+        self._mask ^= self._mask
+
+    def has(self, v: int) -> bool:
+        return (self._mask & v) != 0
+
+    def add(self, v: int) -> None:
+        if self.has(v):
+            return
+        self._mask |= v
+
+    def remove(self, v: int) -> None:
+        if not self.has(v):
+            return
+        self._mask &= ~(v)
+    
+    def toggle(self, v: int) -> None:
+        self._mask ^= v
 
 
 # --- C HELPERS FUNCTIONS

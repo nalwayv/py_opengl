@@ -2247,21 +2247,19 @@ class SphericalCoord:
     @staticmethod
     def from_coords(x: float, y: float, z: float) -> 'SphericalCoord':
         r: float= sqrt(sqr(x) + sqr(y) + sqr(z))
-        t: float= arctan2(y, x)
         p: float= arctan2(sqrt(sqr(x) + sqr(y)), z)
-
-        return SphericalCoord(
-            rho= r,
-            theta= t,
-            phi= p
-        )
+        t: float= arctan2(y, x)
+        return SphericalCoord(r, t, p)
 
     def to_coords(self) -> Vec3:
-        len: float= self.rho * cos(self.phi)
-        x: float= len * cos(self.theta)
-        y: float= len * sin(self.theta)
-        z: float= self.rho * math.sin(self.phi)
+        # x: float= self.rho * sin(self.phi) * cos(self.theta),
+        # y: float= self.rho * sin(self.phi) * sin(self.theta),
+        # z: float= self.rho * cos(self.phi)
+        # return Vec3(x, y, z)
 
+        x: float= self.rho * cos(self.phi) * cos(self.theta)
+        y: float= self.rho * cos(self.phi) * sin(self.theta)
+        z: float= self.rho * sin(self.phi)
         return Vec3(x, y, z)
 
 
