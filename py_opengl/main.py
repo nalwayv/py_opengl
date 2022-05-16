@@ -10,7 +10,6 @@ from py_opengl import utils
 from py_opengl import maths
 from py_opengl import clock
 from py_opengl import shader
-# from py_opengl import texture
 from py_opengl import keyboard
 from py_opengl import mouse
 from py_opengl import camera
