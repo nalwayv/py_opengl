@@ -23,7 +23,7 @@ from py_opengl import geometry
 
 class CubeModel():
 
-    __slots__= ('_mesh', '_shader','_transform')
+    __slots__= ('_mesh', '_transform')
 
     def __init__(self, scale: float) -> None:
         self._mesh= mesh.CubeMesh(maths.Vec3.create_from_value(scale))
