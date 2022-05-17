@@ -1,6 +1,5 @@
 """Geometry
 """
-from dataclasses import dataclass
 from enum import Enum, auto
 
 from py_opengl import maths
@@ -22,7 +21,6 @@ class GeometryID(Enum):
 # --- AABB
 
 
-@dataclass(eq= False, repr= True, slots= True)
 class AABB3:
     """AABB using center and extents
 
@@ -32,10 +30,17 @@ class AABB3:
     get_min == Vec3(-1, -1, -1)\n
     get_max == Vec3(1, 1, 1)
     """
-    center: maths.Vec3= maths.Vec3()
-    extents: maths.Vec3= maths.Vec3()
 
-    _id: GeometryID= GeometryID.AABB3
+    __slots__= ('center', 'extents', 'ID')
+
+    def __init__(
+        self,
+        center: maths.Vec3= maths.Vec3(),
+        extents: maths.Vec3= maths.Vec3(),
+    ) -> None:
+        self.center: maths.Vec3= center
+        self.extents: maths.Vec3= extents
+        self.ID: GeometryID= GeometryID.AABB3
 
     def __hash__(self) -> int:
         data: tuple[float]= (
@@ -49,7 +54,7 @@ class AABB3:
             if(
                 self.center.is_equil(other.center) and
                 self.extents.is_equil(other.extents) and
-                self._id == other._id
+                self.ID == other.ID
             ):
                 return True
         return False
@@ -266,12 +271,18 @@ class AABB3:
 # --- Line
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class Line3:
-    start: maths.Vec3= maths.Vec3()
-    end: maths.Vec3= maths.Vec3()
 
-    _id: GeometryID= GeometryID.LINE
+    __slots__= ('start', 'end', 'ID')
+
+    def __init__(
+        self,
+        start: maths.Vec3= maths.Vec3(),
+        end: maths.Vec3= maths.Vec3()
+    ) -> None:
+        self.start: maths.Vec3= start
+        self.end: maths.Vec3= end
+        self.ID: GeometryID= GeometryID.LINE
 
     def __hash__(self) -> int:
         data: tuple[float]= (
@@ -285,7 +296,7 @@ class Line3:
             if(
             self.start.is_equil(other.start) and
             self.end.is_equil(other.end) and
-            self._id == other._id
+            self.ID == other.ID
             ):
                 return True
         return False
@@ -297,11 +308,18 @@ class Line3:
 # --- SPHERE
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class Sphere3:
-    center: maths.Vec3= maths.Vec3()
-    radius: float= 1.0
-    _id: GeometryID= GeometryID.SPHERE
+
+    __slots__= ('center', 'radius', 'ID')
+
+    def __init__(
+        self,
+        center: maths.Vec3= maths.Vec3(),
+        radius: float= 1.0
+    ) -> None:
+        self.center: maths.Vec3= center
+        self.radius: float= radius
+        self.ID: GeometryID= GeometryID.SPHERE
 
     def __hash__(self) -> int:
         data: tuple[float]= (
@@ -315,7 +333,7 @@ class Sphere3:
             if(
                 self.center.is_equil(other.center) and
                 maths.is_equil(self.radius, other.radius) and
-                self._id == other._id
+                self.ID == other.ID
             ):
                 return True
         return False
@@ -387,11 +405,18 @@ class PlainError(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq=False, repr=False, slots=True)
 class Plane3:
-    normal: maths.Vec3= maths.Vec3(x=1.0)
-    direction: float= 0.0
-    _id: GeometryID= GeometryID.PLAIN
+
+    __slots__= ('normal', 'direction', 'ID')
+
+    def __init__(
+        self,
+        normal: maths.Vec3= maths.Vec3(),
+        direction: float= 0.0
+    ) -> None:
+        self.normal: maths.Vec3= normal
+        self.direction: float= direction
+        self.ID: GeometryID= GeometryID.PLAIN
 
     def __hash__(self) -> int:
         data: tuple[float]= (
@@ -405,7 +430,7 @@ class Plane3:
             if(
                 self.normal.is_equil(other.normal) and
                 maths.is_equil(self.direction, other.direction) and
-                self._id == other._id 
+                self.ID == other.ID 
             ):
                 return True
         return False
@@ -537,16 +562,34 @@ class Plane3:
 # --- FRUSTUM
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class Frustum:
-    top: Plane3= Plane3()
-    bottom: Plane3= Plane3()
-    left: Plane3= Plane3()
-    right: Plane3= Plane3()
-    near: Plane3= Plane3()
-    far: Plane3= Plane3()
 
-    _id = GeometryID.FRUSTUM
+    __slots__=(
+        'top',
+        'bottom',
+        'left',
+        'right',
+        'near',
+        'far',
+        'ID',
+    )
+
+    def __init__(
+        self,
+        top: Plane3= Plane3(),
+        bottom: Plane3= Plane3(),
+        left: Plane3= Plane3(),
+        right: Plane3= Plane3(),
+        near: Plane3= Plane3(),
+        far: Plane3= Plane3()
+    ) -> None:
+        self.top: Plane3= top
+        self.bottom: Plane3= bottom
+        self.left: Plane3= left
+        self.right: Plane3= right
+        self.near: Plane3= near
+        self.far: Plane3= far
+        self.ID = GeometryID.FRUSTUM
 
     def __hash__(self) -> int:
         data: tuple[float]= (
@@ -574,7 +617,7 @@ class Frustum:
                 self.right == other.right and
                 self.near == other.near and
                 self.far == other.far and
-                self._id == other._id
+                self.ID == other.ID
             ):
                 return True
         return False
@@ -582,14 +625,19 @@ class Frustum:
 # --- RAY3D
 
 
-@dataclass(eq=False, repr=False, slots=True)
 class Ray3:
-    origin: maths.Vec3= maths.Vec3()
-    direction: maths.Vec3= maths.Vec3(z=1.0)
-    
-    _id: GeometryID= GeometryID.RAY
 
-    def __post_init__(self):
+    __slots__= ('origin', 'direction', 'ID')
+
+    def __init__(
+        self,
+        origin: maths.Vec3= maths.Vec3(),
+        direction: maths.Vec3= maths.Vec3()
+    ) -> None:
+        self.origin: maths.Vec3= origin
+        self.direction: maths.Vec3= direction
+        self.ID: GeometryID= GeometryID.RAY
+
         if not self.direction.is_unit():
             self.direction.to_unit()
 
@@ -605,7 +653,7 @@ class Ray3:
             if(
                 self.origin.is_equil(other.origin) and
                 self.direction.is_equil(other.direction) and
-                self._id == other._id 
+                self.ID == other.ID 
             ):
                 return True
         return False

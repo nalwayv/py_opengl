@@ -19,7 +19,7 @@ class TextureError(Exception):
 
 class Texture:
 
-    __slots__= ('texture', '_id')
+    __slots__= ('texture', 'ID')
 
     def __init__(self, texture_file_name: str) -> None:
         """
@@ -30,12 +30,12 @@ class Texture:
         """
 
         self.texture: str= texture_file_name
-        self._id= GL.glGenTextures(1)
+        self.ID= GL.glGenTextures(1)
 
         file: Path= Path(f'py_opengl/images/{self.texture}').absolute()
 
         if not file.exists():
-            GL.glDeleteTextures(1, self._id)
+            GL.glDeleteTextures(1, self.ID)
             raise TextureError('that texture was not found within images folder')
 
         # use pillow to open tetxure image file
@@ -44,7 +44,7 @@ class Texture:
             border: int= 0
             level: int= 0
 
-            GL.glBindTexture(GL.GL_TEXTURE_2D, self._id)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, self.ID)
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_REPEAT)
@@ -64,7 +64,7 @@ class Texture:
             )
 
     def bind(self) -> None:
-        GL.glBindTexture(GL.GL_TEXTURE_2D, self._id)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self.ID)
 
     def unbind(self) -> None:
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
@@ -72,4 +72,4 @@ class Texture:
     def delete(self) -> None:
         """Clean up texture from opengl
         """     
-        GL.glDeleteTextures(1, self._id)
+        GL.glDeleteTextures(1, self.ID)

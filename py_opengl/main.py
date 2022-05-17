@@ -1,7 +1,5 @@
 """Main
 """
-from abc import ABC, abstractmethod
-
 import glfw
 from loguru import logger
 from OpenGL import GL
@@ -22,31 +20,6 @@ from py_opengl import geometry
 
 # ---
 
-
-# class ModelNode(ABC):
-
-#     __slots__= ('_id', '_transform', 'visible')
-
-#     def __init__(self, obj_id: int) -> None:
-#         self._id: int= obj_id
-#         self._transform= transform.Transform()
-#         self.visible: bool= True
-
-#     def set_position(self, v3: maths.Vec3) -> None:
-#         self._transform.origin.set_from(v3)
-
-#     def translate(self, v3: maths.Vec3) -> None:
-#         self._transform.translated(v3)
-
-#     def rotate(self, v3: maths.Vec3) -> None:
-#         self._transform.rotated_xyz(v3)
-    
-#     def position(self) -> maths.Vec3:
-#         self._transform.origin
-
-#     @abstractmethod
-#     def compute(self) -> geometry.AABB3:
-#         pass
 
 class CubeModel():
 

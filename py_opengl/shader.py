@@ -17,28 +17,28 @@ class ShaderError(Exception):
 
 class Shader:
     
-    __slots__= ('vshader', 'fshader', '_id')
+    __slots__= ('vshader', 'fshader', 'ID')
 
     def __init__(self, vshader: str, fshader: str) -> None:
         """
         Raises
         ---
         ShaderError:
-            if vertex or fragment shader file is not found or failed to compile
+            if vertex or fragment shader file is not found or failes to compile
         """
         self.vshader: str= vshader
         self.fshader: str= fshader
-        self._id: int= GL.glCreateProgram()
+        self.ID: int= GL.glCreateProgram()
 
         v_file: Path= Path(f'py_opengl/shaders/{self.vshader}').absolute()
         f_file: Path= Path(f'py_opengl/shaders/{self.fshader}').absolute()
 
         if not v_file.exists():
-            GL.glDeleteProgram(self._id)
+            GL.glDeleteProgram(self.ID)
             raise ShaderError('vert file was not found within shaders folder')
         
         if not f_file.exists():
-            GL.glDeleteProgram(self._id)
+            GL.glDeleteProgram(self.ID)
             raise ShaderError('frag file was not found within shaders folder')
 
         with(
@@ -60,33 +60,32 @@ class Shader:
             if not compile_status:
                 raise ShaderError('failed to compile fragment shader')
 
-            self._id= GL.glCreateProgram()
-            GL.glAttachShader(self._id, vs)
-            GL.glAttachShader(self._id, fs)
-            GL.glLinkProgram(self._id)
-            link_status= GL.glGetProgramiv(self._id, GL.GL_LINK_STATUS)
+            self.ID= GL.glCreateProgram()
+            GL.glAttachShader(self.ID, vs)
+            GL.glAttachShader(self.ID, fs)
+            GL.glLinkProgram(self.ID)
+            link_status= GL.glGetProgramiv(self.ID, GL.GL_LINK_STATUS)
             if link_status == GL.GL_FALSE:
                 raise ShaderError('failed to link shader')
 
-            valid_status= GL.glGetProgramiv(self._id, GL.GL_VALIDATE_STATUS)
+            valid_status= GL.glGetProgramiv(self.ID, GL.GL_VALIDATE_STATUS)
             if valid_status == GL.GL_FALSE:
                 raise ShaderError('falied to validate shader')
 
-            GL.glDetachShader(self._id, vs)
-            GL.glDetachShader(self._id, fs)
+            GL.glDetachShader(self.ID, vs)
+            GL.glDetachShader(self.ID, fs)
             GL.glDeleteShader(vs)
             GL.glDeleteShader(fs)
-
 
     def delete(self) -> None:
         """Delete the stored shader id
         """
-        GL.glDeleteProgram(self._id)
+        GL.glDeleteProgram(self.ID)
 
     def use(self) -> None:
         """Activate this shader
         """
-        GL.glUseProgram(self._id)
+        GL.glUseProgram(self.ID)
 
     def disable(self) -> None:
         """Detach this shader
@@ -96,27 +95,27 @@ class Shader:
     def set_vec2(self, variable_name: str, value: maths.Vec2) -> None:
         """Set a global uniform vec2 variable within shader
         """
-        idx: int= GL.glGetUniformLocation(self._id, variable_name)
+        idx: int= GL.glGetUniformLocation(self.ID, variable_name)
         if idx >= 0:
             GL.glUniform2f(idx, value.x, value.y)
 
     def set_vec3(self, variable_name: str, value: maths.Vec3) -> None:
         """Set a global uniform vec3 variable within shader
         """
-        idx: int= GL.glGetUniformLocation(self._id, variable_name)
+        idx: int= GL.glGetUniformLocation(self.ID, variable_name)
         if idx >= 0:
             GL.glUniform3f(idx, value.x, value.y, value.z)
 
     def set_vec4(self, variable_name: str, value: maths.Vec4) -> None:
         """Set a global uniform vec4 variable within shader
         """
-        idx: int= GL.glGetUniformLocation(self._id, variable_name)
+        idx: int= GL.glGetUniformLocation(self.ID, variable_name)
         if idx >= 0:
             GL.glUniform4f(idx, value.x, value.y, value.z, value.w)
 
     def set_mat4(self, variable_name: str, value: maths.Mat4) -> None:
         """Set a global uniform mat4 variable within shader 
         """
-        idx: int= GL.glGetUniformLocation(self._id, variable_name)
+        idx: int= GL.glGetUniformLocation(self.ID, variable_name)
         if idx >= 0:
             GL.glUniformMatrix4fv(idx, 1, GL.GL_FALSE, value.array())

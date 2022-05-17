@@ -1,8 +1,6 @@
 """Mesh
 """
 # TODO
-from dataclasses import dataclass
-
 from OpenGL import GL
 
 from py_opengl import utils
@@ -14,11 +12,18 @@ from py_opengl import transform
 # ---
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class Vertex:
-    position: maths.Vec3= maths.Vec3()
-    normal: maths.Vec3= maths.Vec3()
-    color: maths.Vec3= maths.Vec3()
+
+    __slots__= ('position', 'normal', 'color')
+
+    def __init__(self,
+        pos: maths.Vec3,
+        norm: maths.Vec3,
+        col: maths.Vec3,
+    ) -> None:
+        self.position: maths.Vec3= pos
+        self.normal: maths.Vec3= norm
+        self.color: maths.Vec3= col
 
     def to_list(self) -> list[float]:
         # TODO include normals when needed
@@ -33,10 +38,10 @@ class Vertex:
 
 class VBO:
 
-    __slots__= ('_id',)
+    __slots__= ('ID',)
 
     def __init__(self) -> None:
-        self._id= GL.glGenBuffers(1)
+        self.ID= GL.glGenBuffers(1)
     
     def set_data(self, vertices: list[Vertex]) -> None:
         v_array= [
@@ -64,38 +69,38 @@ class VBO:
         )
 
     def bind(self) -> None:
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._id)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.ID)
 
     def unbind(self) -> None:
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
 
     def delete(self) -> None:
-        GL.glDeleteBuffers(1, self._id)
+        GL.glDeleteBuffers(1, self.ID)
 
 
 class VAO:
 
-    __slots__= ('_id',)
+    __slots__= ('ID',)
 
     def __init__(self) -> None:
-        self._id: int= GL.glGenVertexArrays(1)
+        self.ID: int= GL.glGenVertexArrays(1)
 
     def bind(self) -> None:
-        GL.glBindVertexArray(self._id)
+        GL.glBindVertexArray(self.ID)
 
     def unbind(self) -> None:
         GL.glBindVertexArray(0)
 
     def delete(self) -> None:
-        GL.glDeleteVertexArrays(1, self._id)
+        GL.glDeleteVertexArrays(1, self.ID)
 
 
 class EBO:
 
-    __slots__= ('_id',)
+    __slots__= ('ID',)
 
     def __init__(self) -> None:
-        self._id: int= GL.glGenBuffers(1)
+        self.ID: int= GL.glGenBuffers(1)
 
     def set_data(self, indices: list[int]) -> None:
         GL.glBufferData(
@@ -106,13 +111,13 @@ class EBO:
         )
 
     def bind(self) -> None:
-        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self._id)
+        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.ID)
 
     def unbind(self) -> None:
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0)
 
     def delete(self) -> None:
-        GL.glDeleteBuffers(1, self._id)
+        GL.glDeleteBuffers(1, self.ID)
 
 
 # ---
@@ -381,4 +386,3 @@ class CubeMesh(Mesh):
         ]
 
         super().__init__(vertices, indices)
-

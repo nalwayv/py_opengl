@@ -1,7 +1,6 @@
 """Maths
 """
 import math
-from dataclasses import dataclass
 from typing import Final
 
 
@@ -206,11 +205,13 @@ class Vec2Error(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq=False, repr=False, slots=True)
 class Vec2:
-    x: float= 0.0
-    y: float= 0.0
 
+    __slots__= ('x', 'y')
+
+    def __init__(self, x: float= 0.0, y: float= 0.0) -> None:
+        self.x: float= x
+        self.y: float= y
 
     def __add__(self, other):
         if not isinstance(other, Vec2):
@@ -413,11 +414,14 @@ class Vec3Error(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq= False, repr= True, slots= True)
 class Vec3:
-    x: float= 0.0
-    y: float= 0.0
-    z: float= 0.0
+
+    __slots__= ('x', 'y', 'z')
+    
+    def __init__(self, x: float= 0.0, y: float= 0.0, z: float= 0.0) -> None:
+        self.x: float= x
+        self.y: float= y
+        self.z: float= z
 
     def __add__(self, other):
         if not isinstance(other, Vec3):
@@ -736,13 +740,21 @@ class Vec4Error(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class Vec4:
-    x: float= 0.0
-    y: float= 0.0
-    z: float= 0.0
-    w: float= 0.0
 
+    __slots__= ('x', 'y', 'z', 'w')
+
+    def __init__(
+        self,
+        x: float= 0.0,
+        y: float= 0.0,
+        z: float= 0.0,
+        w: float= 0.0,
+    ) -> None:
+        self.x: float= x
+        self.y: float= y
+        self.z: float= z
+        self.w: float= w
 
     def __add__(self, other):
         if not isinstance(other, Vec4):
@@ -970,11 +982,19 @@ class Mat3Error(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class Mat3:
-    row0: Vec3= Vec3()
-    row1: Vec3= Vec3()
-    row2: Vec3= Vec3()
+
+    __slots__= ('row0', 'row1', 'row2')
+
+    def __init__(
+        self,
+        row0: Vec3= Vec3(),
+        row1: Vec3= Vec3(),
+        row2: Vec3= Vec3(),
+    ) -> None:
+        self.row0: Vec3= row0
+        self.row1: Vec3= row1
+        self.row2: Vec3= row2
 
     def __add__(self, other):
         if not isinstance(other, Mat3):
@@ -1424,12 +1444,26 @@ class Mat4Error(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq= False, repr= True, slots= True)
 class Mat4:
-    row0: Vec4= Vec4()
-    row1: Vec4= Vec4()
-    row2: Vec4= Vec4()
-    row3: Vec4= Vec4()
+
+    __slots__= (
+        'row0',
+        'row1',
+        'row2',
+        'row3',
+    )
+
+    def __init__(
+        self,
+        row0: Vec4= Vec4(),
+        row1: Vec4= Vec4(),
+        row2: Vec4= Vec4(),
+        row3: Vec4= Vec4(),
+    ) -> None:
+        self.row0: Vec4= row0
+        self.row1: Vec4= row1
+        self.row2: Vec4= row2
+        self.row3: Vec4= row3
 
     def __add__(self, other):
         if not isinstance(other, Mat4):
@@ -2217,10 +2251,13 @@ class Mat4:
 # --- COORDS
 
 
-@dataclass(eq= False, repr= True, slots= True)
 class PolarCoord:
-    rho: float= 0.0
-    theta: float= 0.0
+
+    __slots__= ('rho', 'theta')
+
+    def __init__(self, rho: float= 0.0, theta: float= 0.0) -> None:
+        self.rho: float= rho
+        self.theta: float= theta
 
     @staticmethod
     def from_coords(x: float, y: float) -> 'PolarCoord':
@@ -2238,11 +2275,14 @@ class PolarCoord:
         return Vec2(x, y)
 
 
-@dataclass(eq= False, repr= True, slots= True)
 class SphericalCoord:
-    rho: float= 0.0
-    theta: float= 0.0
-    phi: float= 0.0
+
+    __slots__= ('rho', 'theta', 'phi')
+
+    def __init__(self, rho: float= 0.0, theta: float= 0.0, phi: float= 0.0) -> None:
+        self.rho: float= rho
+        self.theta: float= theta
+        self.phi: float= phi
 
     @staticmethod
     def from_coords(x: float, y: float, z: float) -> 'SphericalCoord':
@@ -2271,12 +2311,21 @@ class QuatError(Exception):
         super().__init__(msg)
 
 
-@dataclass(eq= False, repr= True, slots= True)
 class Quaternion:
-    x: float= 0.0
-    y: float= 0.0
-    z: float= 0.0
-    w: float= 0.0
+
+    __slots__= ('x', 'y', 'z', 'w')
+
+    def __init__(
+        self,
+        x: float= 0.0,
+        y: float= 0.0,
+        z: float= 0.0,
+        w: float= 0.0,
+    ) -> None:
+        self.x: float= x
+        self.y: float= y
+        self.z: float= z
+        self.w: float= w
 
     def __add__(self, other):
         if not isinstance(other, Quaternion):
