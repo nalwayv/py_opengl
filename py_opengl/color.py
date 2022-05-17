@@ -1,16 +1,19 @@
 """Color RGBA
 """
 
-from dataclasses import dataclass
 from py_opengl import maths
 
 
 # ---
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class Color:
-    _rgba: int= 0xFF
+
+    __slots__= ('rgba',)
+
+    def __init__(self) -> None:
+        self.rgba: int= 0xFF
+        
 
     @staticmethod
     def create_from_rgba(red: int, green: int, blue: int, alpha: int) -> 'Color':
@@ -22,28 +25,28 @@ class Color:
         return c
 
     def get_red(self) -> int:
-        return 0xFF & (self._rgba)
+        return 0xFF & (self.rgba)
 
     def get_green(self) -> int:
-        return 0xFF & (self._rgba >> 8)
+        return 0xFF & (self.rgba >> 8)
 
     def get_blue(self) -> int:
-        return 0xFF & (self._rgba >> 16)
+        return 0xFF & (self.rgba >> 16)
 
     def get_alpha(self) -> int:
-        return 0xFF & (self._rgba >> 24)
+        return 0xFF & (self.rgba >> 24)
 
     def set_red(self, value: int) -> None: 
-        self._rgba= (self._rgba & 0xFFFFFF00) | (maths.clampi(value, 0, 255))
+        self.rgba= (self.rgba & 0xFFFFFF00) | (maths.clampi(value, 0, 255))
 
     def set_green(self, value: int) -> None:
-        self._rgba= (self._rgba & 0xFFFF00FF) | (maths.clampi(value, 0, 255) << 8)
+        self.rgba= (self.rgba & 0xFFFF00FF) | (maths.clampi(value, 0, 255) << 8)
 
     def set_blue(self, value: int) -> None:
-        self._rgba= (self._rgba & 0xFF00FFFF) | (maths.clampi(value, 0, 255) << 16)
+        self.rgba= (self.rgba & 0xFF00FFFF) | (maths.clampi(value, 0, 255) << 16)
 
     def set_alpha(self, value: int) -> None:
-        self._rgba= (self._rgba & 0x00FFFFFF) | (maths.clampi(value, 0, 255) << 24)
+        self.rgba= (self.rgba & 0x00FFFFFF) | (maths.clampi(value, 0, 255) << 24)
 
     def values(self) -> tuple[int, int, int, int]:
         return (

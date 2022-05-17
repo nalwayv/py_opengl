@@ -2474,10 +2474,10 @@ class Quaternion:
     def set_from(self, other: 'Quaternion') -> None:
         """Set values based on other quaternions values
         """
-        self.w = other.w
-        self.x = other.x
-        self.y = other.y
-        self.z = other.z
+        self.w= other.w
+        self.x= other.x
+        self.y= other.y
+        self.z= other.z
 
     def conjugate(self) -> 'Quaternion':
         """Return the conjugate of self

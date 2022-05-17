@@ -3,8 +3,6 @@
 from pathlib import Path
 
 from OpenGL import GL
-from OpenGL.GL.shaders import compileShader, compileProgram
-
 from py_opengl import maths
 
 
@@ -47,10 +45,38 @@ class Shader:
             open(v_file.as_posix(), mode= 'r') as v,
             open(f_file.as_posix(), mode= 'r') as f
         ):
-            self._id= compileProgram(
-                compileShader(v, GL.GL_VERTEX_SHADER),
-                compileShader(f, GL.GL_FRAGMENT_SHADER)    
-            )
+
+            vs= GL.glCreateShader(GL.GL_VERTEX_SHADER)
+            GL.glShaderSource(vs, v)
+            GL.glCompileShader(vs)
+            compile_status= GL.glGetShaderiv(vs, GL.GL_COMPILE_STATUS)
+            if not compile_status:
+                raise ShaderError('failed to compile vertex shader')
+
+            fs= GL.glCreateShader(GL.GL_FRAGMENT_SHADER)
+            GL.glShaderSource(fs, f)
+            GL.glCompileShader(fs)
+            compile_status= GL.glGetShaderiv(fs, GL.GL_COMPILE_STATUS)
+            if not compile_status:
+                raise ShaderError('failed to compile fragment shader')
+
+            self._id= GL.glCreateProgram()
+            GL.glAttachShader(self._id, vs)
+            GL.glAttachShader(self._id, fs)
+            GL.glLinkProgram(self._id)
+            link_status= GL.glGetProgramiv(self._id, GL.GL_LINK_STATUS)
+            if link_status == GL.GL_FALSE:
+                raise ShaderError('failed to link shader')
+
+            valid_status= GL.glGetProgramiv(self._id, GL.GL_VALIDATE_STATUS)
+            if valid_status == GL.GL_FALSE:
+                raise ShaderError('falied to validate shader')
+
+            GL.glDetachShader(self._id, vs)
+            GL.glDetachShader(self._id, fs)
+            GL.glDeleteShader(vs)
+            GL.glDeleteShader(fs)
+
 
     def delete(self) -> None:
         """Delete the stored shader id

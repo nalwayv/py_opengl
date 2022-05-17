@@ -53,6 +53,7 @@ class VBO:
         )
 
     def link(self, index:int, components:int, stride: int, offset: int) -> None:
+        GL.glEnableVertexAttribArray(index)
         GL.glVertexAttribPointer(
             index,
             components,
@@ -61,7 +62,6 @@ class VBO:
             stride,
             utils.c_cast(offset)
         )
-        GL.glEnableVertexAttribArray(index)
 
     def bind(self) -> None:
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._id)
@@ -127,21 +127,23 @@ class Mesh:
         self.indices: list[int]= indices
 
         self._vao= VAO()
-        self._vao.bind()
-
+        self._vbo= VBO()
         self._ebo= EBO()
+
+        self._vao.bind()
+        self._vbo.bind()
+
+        self._vbo.set_data(self.vertices)
+
         self._ebo.bind()
         self._ebo.set_data(self.indices)
 
-        self._vbo= VBO()
-        self._vbo.bind()
-        self._vbo.set_data(self.vertices)
         self._vbo.link(0, 3, 6 * utils.SIZEOF_FLOAT, 0 * utils.SIZEOF_FLOAT) 
         self._vbo.link(1, 3, 6 * utils.SIZEOF_FLOAT, 3 * utils.SIZEOF_FLOAT)
 
-        self._vbo.unbind()
+        # self._vbo.unbind()
         self._vao.unbind()
-        self._ebo.unbind()
+        # self._ebo.unbind()
 
     def compute_aabb(self, transform: transform.Transform) -> geometry.AABB3:
         min_pt= maths.Vec3()
@@ -176,10 +178,11 @@ class Mesh:
         return [v.normal for v in self.vertices]
 
     def render(self):
-        if not len(self.indices):
-            return 
+        count: int=len(self.indices)
+        if count == 0:
+            return
         self._vao.bind()
-        GL.glDrawElements(GL.GL_TRIANGLES, len(self.indices), GL.GL_UNSIGNED_INT, utils.NULL)
+        GL.glDrawElements(GL.GL_TRIANGLES, count, GL.GL_UNSIGNED_INT, utils.c_cast(0))
         self._vao.unbind()
 
     def delete(self) -> None:

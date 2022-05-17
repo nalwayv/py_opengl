@@ -1,16 +1,18 @@
 """Transform
 """
-from dataclasses import dataclass
 from py_opengl import maths
 
 
 # ---
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class Transform:
-    origin: maths.Vec3= maths.Vec3()
-    rotation: maths.Quaternion= maths.Quaternion(w=1)
+
+    __slots__= ('origin', 'rotation')
+
+    def __init__(self) -> None:
+        self.origin: maths.Vec3= maths.Vec3.zero()
+        self.rotation: maths.Quaternion= maths.Quaternion(w=1)
 
     def rotated(self, angle_deg: float, unit_axis: maths.Vec3) -> None:
         """Rotate based on axis rotation

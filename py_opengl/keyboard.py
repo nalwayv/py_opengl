@@ -1,6 +1,5 @@
 """Keyboard
 """
-from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Final
 
@@ -24,12 +23,12 @@ class KeyState(Enum):
 # ---
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class Keyboard:
-    states: list[int]= field(default_factory=list)
 
-    def __post_init__(self):
-        self.states= [0xFF] * KEYBOARD_SIZE
+    __slots__= ('states')
+    
+    def __init__(self) -> None:
+        self.states: list[int]= [0xFF] * KEYBOARD_SIZE
 
     def _set_current_state_at(self, key: int, value: int) -> None:
         self.states[key]= (self.states[key] & 0xFFFFFF00) | value

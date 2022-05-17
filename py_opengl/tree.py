@@ -1,6 +1,5 @@
 """AABB3 Tree
 """
-from dataclasses import dataclass, field
 from typing import Optional, TypeVar
 
 from py_opengl import geometry
@@ -31,10 +30,13 @@ class Node:
         return self.left is None
 
 
-@dataclass(eq= False, repr= False, slots= True)
 class AABBTree:
-    root: Optional[Node]= None
-    leaves: dict[T, Node]= field(default_factory=dict)
+
+    __slots__= ('root', 'leaves')
+
+    def __init__(self) -> None:
+        self.root: Optional[Node]= None
+        self.leaves: dict[T, Node]= {}
 
     def _height(self, node: Node) -> int:
         if node is None:

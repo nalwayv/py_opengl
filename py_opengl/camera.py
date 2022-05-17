@@ -1,6 +1,5 @@
 """Camera
 """
-from dataclasses import dataclass
 from enum import Enum, auto
 
 from py_opengl import maths
@@ -40,18 +39,33 @@ class CameraZoom(Enum):
     DEFAULT= auto()
 
 
-@dataclass(eq= False, repr= False, slots= True)
+
 class Camera:
-    position: maths.Vec3= maths.Vec3()
-    front: maths.Vec3= maths.Vec3(z=-1.0)
-    up: maths.Vec3= maths.Vec3(y=1.0)
-    right: maths.Vec3= maths.Vec3(x=1.0)
-    aspect: float= 1.0
-    fovy: float= maths.PHI
-    yaw: float= -maths.PHI
-    pitch: float= 0.0
-    znear: float= 0.01
-    zfar: float= 1000.0
+    
+    __slots__= (
+        'position',
+        'front',
+        'up',
+        'right',
+        'aspect',
+        'fovy',
+        'yaw',
+        'pitch',
+        'znear',
+        'zfar',
+    )
+
+    def __init__(self, pos: maths.Vec3, aspect: float= 1.0) -> None:
+        self.position: maths.Vec3= pos
+        self.front: maths.Vec3= maths.Vec3(z=-1.0)
+        self.up: maths.Vec3= maths.Vec3(y=1.0)
+        self.right: maths.Vec3= maths.Vec3(x=1.0)
+        self.aspect: float= aspect
+        self.fovy: float= maths.PHI
+        self.yaw: float= -maths.PHI
+        self.pitch: float= 0.0
+        self.znear: float= 0.01
+        self.zfar: float= 1000.0
 
     def move_by(self, dir: CameraDirection, sensativity: float, dt: float) -> None:
         """Move camera
