@@ -141,9 +141,9 @@ class Mesh:
         self._vbo.link(0, 3, 6 * utils.SIZEOF_FLOAT, 0 * utils.SIZEOF_FLOAT) 
         self._vbo.link(1, 3, 6 * utils.SIZEOF_FLOAT, 3 * utils.SIZEOF_FLOAT)
 
-        # self._vbo.unbind()
+        self._vbo.unbind()
         self._vao.unbind()
-        # self._ebo.unbind()
+        self._ebo.unbind()
 
     def compute_aabb(self, transform: transform.Transform) -> geometry.AABB3:
         min_pt= maths.Vec3()
