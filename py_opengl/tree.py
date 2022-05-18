@@ -17,7 +17,9 @@ T= TypeVar('T')
 
 
 class Node:
+
     __slots__= ('left', 'right', 'parent', 'height', 'aabb', 'item')
+    
     def __init__(self) -> None:
         self.left: Optional['Node']= None
         self.right: Optional['Node']= None

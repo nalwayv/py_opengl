@@ -14,6 +14,11 @@ class Transform:
         self.origin: maths.Vec3= maths.Vec3.zero()
         self.rotation: maths.Quaternion= maths.Quaternion(w=1)
 
+    def set_position(self, v3: maths.Vec3) -> None:
+        """Set position
+        """
+        self.origin.set_from(v3)
+
     def rotated(self, angle_deg: float, unit_axis: maths.Vec3) -> None:
         """Rotate based on axis rotation
         """

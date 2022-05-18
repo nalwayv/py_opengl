@@ -9,7 +9,7 @@ from py_opengl import transform
 # --- IDs
 
 
-class GeometryID(Enum):
+class GeometryType(Enum):
     LINE= auto()
     AABB3= auto()
     SPHERE= auto()
@@ -31,7 +31,7 @@ class AABB3:
     get_max == Vec3(1, 1, 1)
     """
 
-    __slots__= ('center', 'extents', 'ID')
+    __slots__= ('center', 'extents', 'TYPE')
 
     def __init__(
         self,
@@ -40,7 +40,7 @@ class AABB3:
     ) -> None:
         self.center: maths.Vec3= center
         self.extents: maths.Vec3= extents
-        self.ID: GeometryID= GeometryID.AABB3
+        self.TYPE: GeometryType= GeometryType.AABB3
 
     def __hash__(self) -> int:
         data: tuple[float]= (
@@ -54,7 +54,7 @@ class AABB3:
             if(
                 self.center.is_equil(other.center) and
                 self.extents.is_equil(other.extents) and
-                self.ID == other.ID
+                self.TYPE == other.TYPE
             ):
                 return True
         return False
@@ -273,7 +273,7 @@ class AABB3:
 
 class Line3:
 
-    __slots__= ('start', 'end', 'ID')
+    __slots__= ('start', 'end', 'TYPE')
 
     def __init__(
         self,
@@ -282,7 +282,7 @@ class Line3:
     ) -> None:
         self.start: maths.Vec3= start
         self.end: maths.Vec3= end
-        self.ID: GeometryID= GeometryID.LINE
+        self.TYPE: GeometryType= GeometryType.LINE
 
     def __hash__(self) -> int:
         data: tuple[float]= (
@@ -296,7 +296,7 @@ class Line3:
             if(
             self.start.is_equil(other.start) and
             self.end.is_equil(other.end) and
-            self.ID == other.ID
+            self.TYPE == other.TYPE
             ):
                 return True
         return False
@@ -310,7 +310,7 @@ class Line3:
 
 class Sphere3:
 
-    __slots__= ('center', 'radius', 'ID')
+    __slots__= ('center', 'radius', 'TYPE')
 
     def __init__(
         self,
@@ -319,7 +319,7 @@ class Sphere3:
     ) -> None:
         self.center: maths.Vec3= center
         self.radius: float= radius
-        self.ID: GeometryID= GeometryID.SPHERE
+        self.TYPE: GeometryType= GeometryType.SPHERE
 
     def __hash__(self) -> int:
         data: tuple[float]= (
@@ -333,7 +333,7 @@ class Sphere3:
             if(
                 self.center.is_equil(other.center) and
                 maths.is_equil(self.radius, other.radius) and
-                self.ID == other.ID
+                self.TYPE == other.TYPE
             ):
                 return True
         return False
@@ -407,7 +407,7 @@ class PlainError(Exception):
 
 class Plane3:
 
-    __slots__= ('normal', 'direction', 'ID')
+    __slots__= ('normal', 'direction', 'TYPE')
 
     def __init__(
         self,
@@ -416,7 +416,7 @@ class Plane3:
     ) -> None:
         self.normal: maths.Vec3= normal
         self.direction: float= direction
-        self.ID: GeometryID= GeometryID.PLAIN
+        self.TYPE: GeometryType= GeometryType.PLAIN
 
     def __hash__(self) -> int:
         data: tuple[float]= (
@@ -430,7 +430,7 @@ class Plane3:
             if(
                 self.normal.is_equil(other.normal) and
                 maths.is_equil(self.direction, other.direction) and
-                self.ID == other.ID 
+                self.TYPE == other.TYPE 
             ):
                 return True
         return False
@@ -571,7 +571,7 @@ class Frustum:
         'right',
         'near',
         'far',
-        'ID',
+        'TYPE',
     )
 
     def __init__(
@@ -589,7 +589,7 @@ class Frustum:
         self.right: Plane3= right
         self.near: Plane3= near
         self.far: Plane3= far
-        self.ID = GeometryID.FRUSTUM
+        self.TYPE = GeometryType.FRUSTUM
 
     def __hash__(self) -> int:
         data: tuple[float]= (
@@ -617,7 +617,7 @@ class Frustum:
                 self.right == other.right and
                 self.near == other.near and
                 self.far == other.far and
-                self.ID == other.ID
+                self.TYPE == other.TYPE
             ):
                 return True
         return False
@@ -627,7 +627,7 @@ class Frustum:
 
 class Ray3:
 
-    __slots__= ('origin', 'direction', 'ID')
+    __slots__= ('origin', 'direction', 'TYPE')
 
     def __init__(
         self,
@@ -636,7 +636,7 @@ class Ray3:
     ) -> None:
         self.origin: maths.Vec3= origin
         self.direction: maths.Vec3= direction
-        self.ID: GeometryID= GeometryID.RAY
+        self.TYPE: GeometryType= GeometryType.RAY
 
         if not self.direction.is_unit():
             self.direction.to_unit()
@@ -653,7 +653,7 @@ class Ray3:
             if(
                 self.origin.is_equil(other.origin) and
                 self.direction.is_equil(other.direction) and
-                self.ID == other.ID 
+                self.TYPE == other.TYPE 
             ):
                 return True
         return False
