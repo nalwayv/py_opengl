@@ -60,9 +60,9 @@ class AABB3:
         return False
 
     def __str__(self) -> str:
-        p0= self.get_min()
-        p1= self.get_max()
-        return f'MIN ({p0.x}, {p0.y}, {p0.z})\nMAX ({p1.x}, {p1.y}, {p1.z})'
+        pmin= self.get_min()
+        pmax= self.get_max()
+        return f'MIN ({pmin.x}, {pmin.y}, {pmin.z})\nMAX ({pmax.x}, {pmax.y}, {pmax.z})'
 
     @staticmethod
     def create_from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'AABB3':
@@ -157,19 +157,19 @@ class AABB3:
         self.extents.set_from(expand.extents)
 
     def get_size_x(self) -> float:
-        p0= self.get_min()
-        p1= self.get_max()
-        return p1.x - p0.x
+        pmin= self.get_min()
+        pmax= self.get_max()
+        return pmax.x - pmin.x
 
     def get_size_y(self) -> float:
-        p0= self.get_min()
-        p1= self.get_max()
-        return p1.y - p0.y
+        pmin= self.get_min()
+        pmax= self.get_max()
+        return pmax.y - pmin.y
 
     def get_size_z(self) -> float:
-        p0= self.get_min()
-        p1= self.get_max()
-        return p1.z - p0.z
+        pmin= self.get_min()
+        pmax= self.get_max()
+        return pmax.z - pmin.z
 
     def copy(self) -> 'AABB3':
         """Return a copy of self
@@ -184,31 +184,29 @@ class AABB3:
         self.extents.set_from(other.extents)
 
     def perimeter(self) -> float:
-        p0: maths.Vec3= self.get_min()
-        p1: maths.Vec3= self.get_max()
+        pmin: maths.Vec3= self.get_min()
+        pmax: maths.Vec3= self.get_max()
 
-        p2: maths.Vec3= p1 - p0
-
-        return 4.0 * p2.sum()
+        return 4.0 * (pmax - pmin).sum()
 
     def get_area(self) -> float:
-        p0= self.get_min()
-        p1= self.get_max()
+        pmin= self.get_min()
+        pmax= self.get_max()
 
-        return(p1 - p0).sum()
+        return(pmax - pmin).sum()
 
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
-        p0: maths.Vec3= self.get_min()
-        p1: maths.Vec3= self.get_max()
-        p2: maths.Vec3= maths.Vec3.zero()
+        pmin: maths.Vec3= self.get_min()
+        pmax: maths.Vec3= self.get_max()
+        pt: maths.Vec3= maths.Vec3.zero()
 
         for i in range(3):
             val: float= pt.get_at(i)
-            val= maths.minf(val, p0.get_at(i))
-            val= maths.maxf(val, p1.get_at(i))
-            p2.set_at(i, val)
+            val= maths.minf(val, pmin.get_at(i))
+            val= maths.maxf(val, pmax.get_at(i))
+            pt.set_at(i, val)
 
-        return p2
+        return pt
 
     def get_min(self) -> maths.Vec3:
         p0: maths.Vec3= self.center + self.extents
@@ -227,12 +225,12 @@ class AABB3:
 
         check if its min points equil its max points
         """
-        amin= self.get_min()
-        bmax= self.get_max()
+        pmin= self.get_min()
+        pmax= self.get_max()
 
-        check_x= maths.is_equil(amin.x, bmax.x)
-        check_y= maths.is_equil(amin.y, bmax.y)
-        check_z= maths.is_equil(amin.z, bmax.z)
+        check_x= maths.is_equil(pmin.x, pmax.x)
+        check_y= maths.is_equil(pmin.y, pmax.y)
+        check_z= maths.is_equil(pmin.z, pmax.z)
 
         return check_x and check_y and check_z
 
@@ -242,11 +240,18 @@ class AABB3:
         bmin: maths.Vec3= other.get_min()
         bmax: maths.Vec3= other.get_max()
 
-        if not (amin.x <= bmin.x and amax.x >= bmax.x):
+        if not (
+            amin.x <= bmin.x and
+            amin.y <= bmin.y and
+            amin.z <= bmin.z
+        ):
             return False
-        if not (amin.y <= bmin.y and amax.y >= bmax.y):
-            return False
-        if not (amin.z <= bmin.z and amax.z >= bmax.z):
+
+        if not (
+            amax.x >= bmax.x and
+            amax.y >= bmax.y and
+            amax.z >= bmax.z
+        ):
             return False
 
         return True
@@ -257,23 +262,22 @@ class AABB3:
         bmin: maths.Vec3= other.get_min()
         bmax: maths.Vec3= other.get_max()
 
-        if amax.x < bmin.x or amin.x > bmax.x:
+        if amax.x < bmin.x or amax.y < bmin.y or amax.z < bmin.z:
             return False
-        if amax.y < bmin.y or amin.y > bmax.y:
-            return False
-        if amax.z < bmin.z or amin.z > bmax.z:
+
+        if amin.x > bmax.x or amin.y > bmax.y or amin.z > bmax.z:
             return False
 
         return True
 
     def intersect_pt(self, pt: maths.Vec3) -> bool:
-        amin: maths.Vec3= self.get_min()
-        amax: maths.Vec3= self.get_max()
+        pmin: maths.Vec3= self.get_min()
+        pmax: maths.Vec3= self.get_max()
 
-        if pt.x < amin.x or pt.y < amin.y or pt.z < amin.z:
+        if pt.x < pmin.x or pt.y < pmin.y or pt.z < pmin.z:
             return False
 
-        if pt.x > amax.x or pt.y > amax.y or pt.z > amax.z:
+        if pt.x > pmax.x or pt.y > pmax.y or pt.z > pmax.z:
             return False
 
         return True
@@ -704,23 +708,23 @@ class Ray3:
         return self.origin + (self.direction * t)
 
     def cast_aabb(self, aabb: AABB3) -> tuple[bool, maths.Vec3]:
-        amin: maths.Vec3= aabb.get_min()
-        amax: maths.Vec3= aabb.get_max()
+        pmin: maths.Vec3= aabb.get_min()
+        pmax: maths.Vec3= aabb.get_max()
         tmin: float= maths.MIN_FLOAT
         tmax: float= maths.MAX_FLOAT
 
         for idx in range(3):
             if maths.is_zero(self.direction.get_at(idx)):
                 if(
-                    self.origin.get_at(idx) < amin.get_at(idx) or 
-                    self.origin.get_at(idx) > amax.get_at(idx)
+                    self.origin.get_at(idx) < pmin.get_at(idx) or 
+                    self.origin.get_at(idx) > pmax.get_at(idx)
                 ):
                     return False, maths.Vec3.zero()
             else:
                 inv: float= 1.0 / self.direction.get_at(idx)
 
-                t1: float= (amin.get_at(idx) - self.origin.get_at(idx)) * inv
-                t2: float= (amax.get_at(idx) - self.origin.get_at(idx)) * inv
+                t1: float= (pmin.get_at(idx) - self.origin.get_at(idx)) * inv
+                t2: float= (pmax.get_at(idx) - self.origin.get_at(idx)) * inv
 
                 if t1 > t2:
                     t1, t2= t2, t1

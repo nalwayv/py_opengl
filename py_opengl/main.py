@@ -96,9 +96,6 @@ def main() -> None:
             shape2.rotate(maths.Vec3(y= 10.0, z= 5.0) * (4.2 * time.delta))
             shape2.draw(shader1, cam)
 
-            # if shape1.compute().intersect_aabb(shape2.compute()):
-            #     print('ok')
-
             # --
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):

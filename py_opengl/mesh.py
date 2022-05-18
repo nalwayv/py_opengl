@@ -151,28 +151,28 @@ class Mesh:
         self._ebo.unbind()
 
     def compute_aabb(self, transform: transform.Transform) -> geometry.AABB3:
-        p0: maths.Vec3= maths.Vec3.create_from_value(maths.MAX_FLOAT)
-        p1: maths.Vec3= maths.Vec3.create_from_value(-maths.MAX_FLOAT)
+        pmin: maths.Vec3= maths.Vec3.create_from_value(maths.MAX_FLOAT)
+        pmax: maths.Vec3= maths.Vec3.create_from_value(maths.MIN_FLOAT)
 
         for vert in self.vertices:
             pt= transform.get_transformed(vert.position)
 
-            if pt.x < p0.x:
-                p0.x = pt.x
-            elif pt.x > p1.x:
-                p1.x = pt.x
+            if pt.x < pmin.x:
+                pmin.x = pt.x
+            elif pt.x > pmax.x:
+                pmax.x = pt.x
 
-            if pt.y < p0.y:
-                p0.y = pt.y
-            elif pt.y > p1.y:
-                p1.y = pt.y
+            if pt.y < pmin.y:
+                pmin.y = pt.y
+            elif pt.y > pmax.y:
+                pmax.y = pt.y
 
-            if pt.z < p0.z:
-                p0.z = pt.z
-            elif pt.z > p1.z:
-                p1.z = pt.z
+            if pt.z < pmin.z:
+                pmin.z = pt.z
+            elif pt.z > pmax.z:
+                pmax.z = pt.z
 
-        return geometry.AABB3.create_from_min_max(p0, p1)
+        return geometry.AABB3.create_from_min_max(pmin, pmax)
 
     def get_positions(self) -> list[maths.Vec3]:
         """Return a list of position verts only
