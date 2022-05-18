@@ -75,7 +75,7 @@ def main() -> None:
 
         shape1= model.CubeModel(0.5)
         shape2= model.CubeModel(0.3)
-        shape2.set_position(maths.Vec3(x=1.0, y=1.0))
+        shape2.set_position(maths.Vec3(x=1.0, y=1.5))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
 
@@ -84,30 +84,38 @@ def main() -> None:
             GL.glClearColor(*bgcolor.unit_values())
             GL.glEnable(GL.GL_DEPTH_TEST)
 
-            # ---
+            # --
 
-            # time
             time.update()
 
-            # shape
+            # --
+
             shape1.rotate(maths.Vec3(x= 10.0, y= 10.0) * (1.4 * time.delta))
             shape1.draw(shader1, cam)
 
             shape2.rotate(maths.Vec3(y= 10.0, z= 5.0) * (4.2 * time.delta))
             shape2.draw(shader1, cam)
 
-            # keyboard
+            # if shape1.compute().intersect_aabb(shape2.compute()):
+            #     print('ok')
+
+            # --
+
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
-                cam.move_by(camera.CameraDirection.IN, 1.4, time.delta)
+                #cam.move_by(camera.CameraDirection.IN, 1.4, time.delta)
+                shape2.translate(maths.Vec3(y=1.5) * (1.4 * time.delta))
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_S)):
-                cam.move_by(camera.CameraDirection.OUT, 1.4, time.delta)
+                #cam.move_by(camera.CameraDirection.OUT, 1.4, time.delta)
+                shape2.translate(maths.Vec3(y=-1.5) * (1.4 * time.delta))
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_A)):
-                cam.move_by(camera.CameraDirection.LEFT, 1.4, time.delta)
+                #cam.move_by(camera.CameraDirection.LEFT, 1.4, time.delta)
+                shape2.translate(maths.Vec3(x=-1.5) * (1.4 * time.delta))
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_D)):
-                cam.move_by(camera.CameraDirection.RIGHT, 1.4, time.delta)
+                #cam.move_by(camera.CameraDirection.RIGHT, 1.4, time.delta)
+                shape2.translate(maths.Vec3(x=1.5) * (1.4 * time.delta))
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_E)):
                 cam.move_by(camera.CameraDirection.UP, 1.4, time.delta)
@@ -115,7 +123,6 @@ def main() -> None:
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_Q)):
                 cam.move_by(camera.CameraDirection.DOWN, 1.4, time.delta)
 
-            # mouse
             if ms.is_button_held(
                 glwin.get_mouse_state(glfw.MOUSE_BUTTON_LEFT)
             ):
@@ -135,7 +142,7 @@ def main() -> None:
 
             GL.glDisable(GL.GL_DEPTH_TEST)
 
-            # ---
+            # --
 
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()

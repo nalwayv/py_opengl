@@ -59,6 +59,11 @@ class AABB3:
                 return True
         return False
 
+    def __str__(self) -> str:
+        p0= self.get_min()
+        p1= self.get_max()
+        return f'MIN ({p0.x}, {p0.y}, {p0.z})\nMAX ({p1.x}, {p1.y}, {p1.z})'
+
     @staticmethod
     def create_from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'AABB3':
         return AABB3(
@@ -237,11 +242,14 @@ class AABB3:
         bmin: maths.Vec3= other.get_min()
         bmax: maths.Vec3= other.get_max()
 
-        check_x: bool= amin.x <= bmin.x and amax.x >= bmax.x
-        check_y: bool= amin.y <= bmin.y and amax.y >= bmax.y
-        check_z: bool= amin.z <= bmin.z and amax.z >= bmax.z
+        if not (amin.x <= bmin.x and amax.x >= bmax.x):
+            return False
+        if not (amin.y <= bmin.y and amax.y >= bmax.y):
+            return False
+        if not (amin.z <= bmin.z and amax.z >= bmax.z):
+            return False
 
-        return check_x and check_y and check_z
+        return True
 
     def intersect_aabb(self, other: 'AABB3') -> bool:
         amin: maths.Vec3= self.get_min()
@@ -249,11 +257,14 @@ class AABB3:
         bmin: maths.Vec3= other.get_min()
         bmax: maths.Vec3= other.get_max()
 
-        check_x: bool= amin.x <= bmax.x and amax.x >= bmin.x
-        check_y: bool= amin.y <= bmax.y and amax.y >= bmin.y
-        check_z: bool= amin.z <= bmax.z and amax.z >= bmin.z
+        if amax.x < bmin.x or amin.x > bmax.x:
+            return False
+        if amax.y < bmin.y or amin.y > bmax.y:
+            return False
+        if amax.z < bmin.z or amin.z > bmax.z:
+            return False
 
-        return check_x and check_y and check_z
+        return True
 
     def intersect_pt(self, pt: maths.Vec3) -> bool:
         amin: maths.Vec3= self.get_min()
