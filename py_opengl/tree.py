@@ -1,16 +1,17 @@
 """AABB3 Tree
 """
+from optparse import Option
 from typing import Optional, TypeVar
 
 from py_opengl import geometry
 from py_opengl import maths
-
+from py_opengl import model
 
 # TODO
 # ---
 
 
-T= TypeVar('T')
+T= TypeVar('T', bound= model.Model)
 
 
 # ---
@@ -24,12 +25,23 @@ class Node:
         self.left: Optional['Node']= None
         self.right: Optional['Node']= None
         self.parent: Optional['Node']= None
+
         self.height: int= 0
+
         self.aabb: geometry.AABB3= geometry.AABB3()
-        self.item: T= T
+
+        self.item: Optional[T]= None
 
     def is_leaf(self) -> bool:
         return self.left is None
+
+    # for sorting
+    def __lt__(self, other: 'Node') -> bool:
+        if other is None:
+            return False
+        p0= self.aabb.perimeter()
+        p1= other.aabb.perimeter()
+        return p0 < p1
 
 
 class AABBTree:
@@ -47,6 +59,14 @@ class AABBTree:
         a= self._height(node.left)
         b= self._height(node.right)
         return 1 + maths.maxi(a, b)
+
+    def _peramiter_ratio(self, node: Node) -> float:
+        if node is None:
+            return 0
+        total: float= node.aabb.perimeter()
+        total += self._peramiter(node.left)
+        rotal += self._peramiter(node.right)
+        return total
 
     def _insert(self, node: Node) -> None:
         if self.root is None:
@@ -118,7 +138,7 @@ class AABBTree:
 
         new_parent= Node()
         new_parent.parent= old_parent
-        new_parent.aabb= geometry.AABB3.create_combined_from(leaf_aabb, sibling.aabb)
+        new_parent.aabb= geometry.AABB3.create_combined_from(sibling.aabb, leaf_aabb)
         new_parent.height= current.height + 1
 
         if old_parent is not None:
@@ -138,7 +158,7 @@ class AABBTree:
             node.parent= new_parent
             self.root= new_parent
 
-        current: Optional[Node]= node.parent
+        current= node.parent
         while current is not None:
             current= self._balance(current)
 
@@ -146,10 +166,7 @@ class AABBTree:
             right: Optional[Node]= current.right
 
             current.height = 1 + maths.maxi(left.height, right.height)
-            current.aabb.combined_from(
-                left.aabb,
-                right.aabb
-            )
+            current.aabb.combined_from(left.aabb, right.aabb)
             current= current.parent
 
     def _remove(self, node: Node) -> None:
@@ -333,20 +350,29 @@ class AABBTree:
         return check_left and check_right
 
     def _insert_node(self, item: T):
-        # TODO updateAABB
-        # compute aabb from t and scale by margin
-        # aabb= item.compute().expanded(2.0)
+        item_aabb= item.compute_aabb().expand(2.0)
 
         node= Node()
         node.item= item
-        # node.aabb.set_from(aabb))
+        node.aabb.set_from(item_aabb)
 
         self.leaves[item]= node
         self._insert(node)
 
     def clear(self):
         self.leaves.clear()
-        self.root= None
+        self.root= None 
+
+    def height(self) -> int:
+        if self.root is None:
+            return 0
+
+        return self._height(self.root)
+
+    def perimeter_ratio(self) -> float:
+        if self.root is None:
+            return 0
+        return self._peramiter_ratio(self.root)
 
     def insert(self, t: T):
         node: Optional[Node]= self.leaves.get(t, None)
@@ -361,5 +387,26 @@ class AABBTree:
     def is_valid(self):
         return self._is_valid(self.root)
 
-    def height(self):
-        return self._height(self.root)
+    def foo(self):
+        if self.root is None:
+            return
+        values= list(self.leaves.values())
+
+        # def sort_by(a: Node, b: Node):
+        #     p0= a.aabb.perimeter()
+        #     p1= b.aabb.perimeter()
+        #     diff= p1 - p0
+        #     if diff < 0:
+        #         return -1
+        #     if diff > 0:
+        #         return 1
+        #     return 0
+        
+        values.sort()
+
+        for node in values:
+            node.height= 0
+            node.left= None
+            node.right= None
+            node.paren= None
+            self._insert(node)

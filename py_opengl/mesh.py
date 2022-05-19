@@ -220,9 +220,9 @@ class SphereMesh(Mesh):
                 z: float= maths.sin(maths.to_rad(j * 360.0 / prec)) * maths.absf(maths.cos(maths.arcsin(y)))
 
                 vertices[i * (prec + 1) + j]= Vertex(
-                    position= maths.Vec3(x, y, z) * self.radius,
-                    normal= maths.Vec3(x, y, z),
-                    color= maths.Vec3(x, y, z)
+                    maths.Vec3(x, y, z) * self.radius,
+                    maths.Vec3(x, y, z),
+                    maths.Vec3(x, y, z)
                 )
 
         for i in range(prec):
