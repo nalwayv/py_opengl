@@ -1,7 +1,5 @@
 """Model
 """
-# from abc import ABC, abstractmethod
-# from typing import TypeVar
 from uuid import uuid4
 
 from py_opengl import maths
@@ -10,15 +8,6 @@ from py_opengl import mesh
 from py_opengl import transform
 from py_opengl import camera
 from py_opengl import shader
-
-
-# ---
-
-
-# class IComputeAABB(ABC):
-#     @abstractmethod
-#     def compute_aabb(self) -> geometry.AABB3:
-#         pass
 
 
 # ---
@@ -50,7 +39,7 @@ class Model:
     def get_position(self) -> maths.Vec3:
         """Return current position
         """
-        self._transform.origin
+        return self._transform.origin
 
     def translate(self, v3: maths.Vec3) -> None:
         """Translate model by 'xyz'

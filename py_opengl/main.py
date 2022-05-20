@@ -74,8 +74,8 @@ def main() -> None:
         shader1= shader.Shader('debug_shader.vert', 'debug_shader.frag')
 
         shape1= model.CubeModel(0.5)
-        shape2= model.SphereModel(0.3)
-        shape2.set_position(maths.Vec3(x=1.0, y=1.5))
+        shape2= model.CubeModel(0.3)
+        shape2.set_position(maths.Vec3(x=1.0, y=1.0))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
 

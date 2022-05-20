@@ -1,7 +1,6 @@
 """AABB3 Tree
 """
-from optparse import Option
-from typing import Optional, TypeVar
+from typing import Final, Optional, TypeVar
 
 from py_opengl import geometry
 from py_opengl import maths
@@ -10,9 +9,11 @@ from py_opengl import model
 # TODO
 # ---
 
+# model type
+MT= TypeVar('MT', bound= model.Model)
 
-T= TypeVar('T', bound= model.Model)
-
+EXPAND_RATIO: Final[float]= 1.0
+REDUX_RATIO: Final[float]= 2.0
 
 # ---
 
@@ -20,7 +21,7 @@ T= TypeVar('T', bound= model.Model)
 class Node:
 
     __slots__= ('left', 'right', 'parent', 'height', 'aabb', 'item')
-    
+
     def __init__(self) -> None:
         self.left: Optional['Node']= None
         self.right: Optional['Node']= None
@@ -30,7 +31,7 @@ class Node:
 
         self.aabb: geometry.AABB3= geometry.AABB3()
 
-        self.item: Optional[T]= None
+        self.item: Optional[MT]= None
 
     def is_leaf(self) -> bool:
         return self.left is None
@@ -39,8 +40,8 @@ class Node:
     def __lt__(self, other: 'Node') -> bool:
         if other is None:
             return False
-        p0= self.aabb.perimeter()
-        p1= other.aabb.perimeter()
+        p0: float= self.aabb.perimeter()
+        p1: float= other.aabb.perimeter()
         return p0 < p1
 
 
@@ -50,12 +51,12 @@ class AABBTree:
 
     def __init__(self) -> None:
         self.root: Optional[Node]= None
-        self.leaves: dict[T, Node]= {}
+        self.leaves: dict[MT, Node]= {}
 
     def _height(self, node: Node) -> int:
         if node is None:
             return 0
-        
+
         a= self._height(node.left)
         b= self._height(node.right)
         return 1 + maths.maxi(a, b)
@@ -64,8 +65,8 @@ class AABBTree:
         if node is None:
             return 0
         total: float= node.aabb.perimeter()
-        total += self._peramiter(node.left)
-        rotal += self._peramiter(node.right)
+        total += self._peramiter_ratio(node.left)
+        total += self._peramiter_ratio(node.right)
         return total
 
     def _insert(self, node: Node) -> None:
@@ -311,7 +312,7 @@ class AABBTree:
         if node is self.root:
             if node.parent is not None:
                 return False
-        
+
         left: Optional[Node]= node.left
         right: Optional[Node]= node.right
 
@@ -349,8 +350,8 @@ class AABBTree:
         check_right= self._is_valid(right)
         return check_left and check_right
 
-    def _insert_node(self, item: T):
-        item_aabb= item.compute_aabb().expand(2.0)
+    def _insert_node(self, item: MT) -> None:
+        item_aabb= item.compute_aabb().expand(EXPAND_RATIO)
 
         node= Node()
         node.item= item
@@ -359,9 +360,42 @@ class AABBTree:
         self.leaves[item]= node
         self._insert(node)
 
+    def _sort(self) -> None:
+        if self.root is None:
+            return
+        values= list(self.leaves.values())
+
+        values.sort()
+
+        for node in values:
+            node.height= 0
+            node.left= None
+            node.right= None
+            node.paren= None
+            self._insert(node)
+
+    def _update(self, node: Node, item: MT) -> None:
+        item_aabb= item.compute_aabb()
+        check= node.aabb.contains_aabb(item_aabb)
+        item_aabb.expanded(EXPAND_RATIO)
+
+        if check:
+            print('con')
+            p0= node.aabb.perimeter()
+            p1= item_aabb.perimeter()
+            if ((p0 / p1) <= REDUX_RATIO):
+
+                return
+        
+        self._remove(node)
+        node.aabb.set_from(item_aabb)
+        self._insert(node)
+
+        print('ok')
+
     def clear(self):
         self.leaves.clear()
-        self.root= None 
+        self.root= None
 
     def height(self) -> int:
         if self.root is None:
@@ -374,39 +408,21 @@ class AABBTree:
             return 0
         return self._peramiter_ratio(self.root)
 
-    def insert(self, t: T):
+    def insert(self, t: MT):
         node: Optional[Node]= self.leaves.get(t, None)
         if node is None:
             self._insert_node(t)
 
-    def remove(self, t: T):
+    def remove(self, t: MT):
         node: Optional[Node]= self.leaves.get(t, None)
         if node is not None:
             self._remove(node)
 
+    def update(self, t: MT):
+        node: Optional[Node]= self.leaves.get(t, None)
+        if node is not None:
+            self._update(node, t)
+
     def is_valid(self):
         return self._is_valid(self.root)
 
-    def foo(self):
-        if self.root is None:
-            return
-        values= list(self.leaves.values())
-
-        # def sort_by(a: Node, b: Node):
-        #     p0= a.aabb.perimeter()
-        #     p1= b.aabb.perimeter()
-        #     diff= p1 - p0
-        #     if diff < 0:
-        #         return -1
-        #     if diff > 0:
-        #         return 1
-        #     return 0
-        
-        values.sort()
-
-        for node in values:
-            node.height= 0
-            node.left= None
-            node.right= None
-            node.paren= None
-            self._insert(node)

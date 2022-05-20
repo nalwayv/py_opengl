@@ -159,17 +159,20 @@ class Mesh:
 
             if pt.x < pmin.x:
                 pmin.x = pt.x
-            elif pt.x > pmax.x:
+
+            if pt.x > pmax.x:
                 pmax.x = pt.x
 
             if pt.y < pmin.y:
                 pmin.y = pt.y
-            elif pt.y > pmax.y:
+
+            if pt.y > pmax.y:
                 pmax.y = pt.y
 
             if pt.z < pmin.z:
                 pmin.z = pt.z
-            elif pt.z > pmax.z:
+                
+            if pt.z > pmax.z:
                 pmax.z = pt.z
 
         return geometry.AABB3.create_from_min_max(pmin, pmax)

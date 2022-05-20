@@ -239,6 +239,9 @@ class Vec2:
         y: float= self.y * other
         return Vec2(x, y)
 
+    def __str__(self) -> str:
+        return f'V2({self.x}, {self.y})'
+
     @staticmethod
     def one() -> 'Vec2':
         return Vec2(1.0, 1.0)
@@ -452,6 +455,9 @@ class Vec3:
         z: float= self.z * other
 
         return Vec3(x, y, z)
+
+    def __str__(self) -> str:
+        return f'V3({self.x}, {self.y}, {self.z})'
 
     @staticmethod
     def one() -> 'Vec3':
@@ -788,6 +794,9 @@ class Vec4:
             self.z * other,
             self.w * other
         )
+
+    def __str__(self) -> str:
+        return f'V4({self.x}, {self.y}, {self.z}, {self.w})'
 
     @staticmethod
     def one() -> 'Vec4':
@@ -2375,6 +2384,9 @@ class Quaternion:
             z1 * w2 + z2 * w1 + cz,
             w1 * w2 - dt
         )
+
+    def __str__(self) -> str:
+        return f'Q({self.x}, {self.y}, {self.z}, {self.w})'
 
     @staticmethod
     def create_from_vec4(v4: Vec4) -> 'Quaternion':

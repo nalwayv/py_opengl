@@ -62,7 +62,7 @@ class AABB3:
     def __str__(self) -> str:
         pmin= self.get_min()
         pmax= self.get_max()
-        return f'MIN ({pmin.x}, {pmin.y}, {pmin.z})\nMAX ({pmax.x}, {pmax.y}, {pmax.z})'
+        return f'AABB\n\tMIN_V3({pmin.x}, {pmin.y}, {pmin.z})\n\tMAX_V3({pmax.x}, {pmax.y}, {pmax.z})'
 
     @staticmethod
     def create_from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'AABB3':
@@ -106,70 +106,10 @@ class AABB3:
 
         return AABB3.create_from_min_max(p0, p1)
 
-    def expand_to(self, v3: maths.Vec3) -> 'AABB3':
-        """Expand by vec3"""
-        begin: maths.Vec3= self.copy()
-        end: maths.Vec3= self.center + self.extents
-
-        if v3.x < begin.x:
-            begin.x= v3.x
-        if v3.y < begin.y:
-            begin.y= v3.y
-        if v3.z < begin.z:
-            begin.z= v3.z
-
-        if v3.x > end.x:
-            end.x= v3.x
-        if v3.y > end.y:
-            end.y= v3.y
-        if v3.z > end.z:
-            end.z= v3.z
-
-        return AABB3(
-            center= begin,
-            extents= end - begin
-        )
-
-    def expanded_to(self, v3: maths.Vec3) -> None:
-        begin: maths.Vec3= self.copy()
-        end: maths.Vec3= self.center + self.extents
-
-        if v3.x < begin.x:
-            begin.x= v3.x
-        if v3.y < begin.y:
-            begin.y= v3.y
-        if v3.z < begin.z:
-            begin.z= v3.z
-
-        if v3.x > end.x:
-            end.x= v3.x
-        if v3.y > end.y:
-            end.y= v3.y
-        if v3.z > end.z:
-            end.z= v3.z
-
-        self.center.set_from(begin)
-        self.extents.set_from(end - begin)
-
     def expanded(self, by: float) -> None:
         expand= self.expand(by)
         self.center.set_from(expand.center)
         self.extents.set_from(expand.extents)
-
-    def get_size_x(self) -> float:
-        pmin= self.get_min()
-        pmax= self.get_max()
-        return pmax.x - pmin.x
-
-    def get_size_y(self) -> float:
-        pmin= self.get_min()
-        pmax= self.get_max()
-        return pmax.y - pmin.y
-
-    def get_size_z(self) -> float:
-        pmin= self.get_min()
-        pmax= self.get_max()
-        return pmax.z - pmin.z
 
     def copy(self) -> 'AABB3':
         """Return a copy of self
@@ -234,38 +174,50 @@ class AABB3:
 
         return check_x and check_y and check_z
 
+    def get_corners(self) -> list[maths.Vec3]:
+        ptmin: maths.Vec3= self.get_min()
+        ptmax: maths.Vec3= self.get_max()
+
+        corners: list[maths.Vec3]= [
+            maths.Vec3(ptmin.x, ptmin.y, ptmin.z),
+            maths.Vec3(ptmax.x, ptmin.y, ptmin.z),
+            maths.Vec3(ptmax.x, ptmax.y, ptmin.z),
+            maths.Vec3(ptmin.x, ptmax.y, ptmin.z),
+            maths.Vec3(ptmax.x, ptmin.y, ptmax.z),
+            maths.Vec3(ptmax.x, ptmin.y, ptmax.z),
+            maths.Vec3(ptmax.x, ptmax.y, ptmax.z),
+            maths.Vec3(ptmin.x, ptmax.y, ptmax.z)
+        ]
+        return corners
+
     def contains_aabb(self, other: 'AABB3') -> bool:
         amin: maths.Vec3= self.get_min()
         amax: maths.Vec3= self.get_max()
         bmin: maths.Vec3= other.get_min()
         bmax: maths.Vec3= other.get_max()
 
-        if not (
+        return (
             amin.x <= bmin.x and
+            amax.x >= bmax.x and 
+
             amin.y <= bmin.y and
-            amin.z <= bmin.z
-        ):
-            return False
+            amax.y >= bmax.y and 
 
-        if not (
-            amax.x >= bmax.x and
-            amax.y >= bmax.y and
+            amin.z <= bmin.z and
             amax.z >= bmax.z
-        ):
-            return False
-
-        return True
+        )
 
     def intersect_aabb(self, other: 'AABB3') -> bool:
         amin: maths.Vec3= self.get_min()
         amax: maths.Vec3= self.get_max()
         bmin: maths.Vec3= other.get_min()
         bmax: maths.Vec3= other.get_max()
-
-        if amax.x < bmin.x or amax.y < bmin.y or amax.z < bmin.z:
+        
+        if amax.x < bmin.x or amin.x > bmax.x:
             return False
-
-        if amin.x > bmax.x or amin.y > bmax.y or amin.z > bmax.z:
+        if amax.y < bmin.y or amin.y > bmax.y:
+            return False
+        if amax.z < bmin.z or amin.z > bmax.z:
             return False
 
         return True
