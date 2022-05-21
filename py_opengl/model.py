@@ -51,6 +51,9 @@ class Model:
         """
         self._transform.rotated_xyz(v3)
 
+    def get_furthest_pt(self, dir: maths.Vec3) -> maths.Vec3:
+        return self._mesh.get_furthest_pt(dir)
+
     def compute_aabb(self) -> geometry.AABB3:
         """Compute AABB3
         """

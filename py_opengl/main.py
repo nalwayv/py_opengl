@@ -57,8 +57,6 @@ def main() -> None:
         glwin.center_screen_position()
         glwin.set_window_resize_callback(cb_window_resize)
 
-        # GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
-
         # ---
 
         time= clock.Clock()
@@ -71,48 +69,61 @@ def main() -> None:
         first_move: bool= True
         last_mp: maths.Vec3= maths.Vec3.zero()
 
-        shader1= shader.Shader('debug_shader.vert', 'debug_shader.frag')
+        shader0= shader.Shader('debug_shader.vert', 'debug_shader.frag')
 
-        shape1= model.CubeModel(0.5)
-        shape2= model.CubeModel(0.3)
-        shape2.set_position(maths.Vec3(x=1.0, y=1.0))
+        shape0= model.CubeModel(0.5)
+        shape1= model.CubeModel(0.3)
+        # shape1.set_position(maths.Vec3(x=1.0, y=1.0))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
             GL.glClearColor(*bgcolor.unit_values())
+            GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
             GL.glEnable(GL.GL_DEPTH_TEST)
-
+            GL.glEnable(GL.GL_CULL_FACE)
+        
             # --
 
             time.update()
 
             # --
 
-            shape1.rotate(maths.Vec3(x= 10.0, y= 10.0) * (1.4 * time.delta))
-            shape1.draw(shader1, cam)
+            # shape0.rotate(maths.Vec3(x= 10.0, y= 10.0) * (1.4 * time.delta))
+            shape0.draw(shader0, cam)
 
-            shape2.rotate(maths.Vec3(y= 10.0, z= 5.0) * (4.2 * time.delta))
-            shape2.draw(shader1, cam)
+            # shape1.rotate(maths.Vec3(y= 10.0, z= 5.0) * (-4.2 * time.delta))
+            shape1.draw(shader0, cam)
+
+            if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_P)):
+
+                a0= shape0.compute_aabb()
+                a1= shape1.compute_aabb()
+                
+                if a0.intersect_aabb(a1):
+                    print(a0)
+                    print(a1)
+                else:
+                    print('N')
 
             # --
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
                 #cam.move_by(camera.CameraDirection.IN, 1.4, time.delta)
-                shape2.translate(maths.Vec3(y=1.5) * (1.4 * time.delta))
+                shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_S)):
                 #cam.move_by(camera.CameraDirection.OUT, 1.4, time.delta)
-                shape2.translate(maths.Vec3(y=-1.5) * (1.4 * time.delta))
+                shape1.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_A)):
                 #cam.move_by(camera.CameraDirection.LEFT, 1.4, time.delta)
-                shape2.translate(maths.Vec3(x=-1.5) * (1.4 * time.delta))
+                shape1.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_D)):
                 #cam.move_by(camera.CameraDirection.RIGHT, 1.4, time.delta)
-                shape2.translate(maths.Vec3(x=1.5) * (1.4 * time.delta))
+                shape1.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_E)):
                 cam.move_by(camera.CameraDirection.UP, 1.4, time.delta)
@@ -137,8 +148,6 @@ def main() -> None:
                     cam.rotate_by(camera.CameraRotation.YAW, new_mp.x, 0.2)
                     cam.rotate_by(camera.CameraRotation.PITCH, new_mp.y, 0.2)
 
-            GL.glDisable(GL.GL_DEPTH_TEST)
-
             # --
 
             glfw.swap_buffers(glwin.window)
@@ -149,9 +158,9 @@ def main() -> None:
 
     finally:
         logger.debug('CLOSED')
+        shape0.delete()
         shape1.delete()
-        shape2.delete()
-        shader1.delete()
+        shader0.delete()
         glfw.terminate()
 
 

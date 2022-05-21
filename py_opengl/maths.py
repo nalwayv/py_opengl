@@ -315,6 +315,12 @@ class Vec2:
 
         return self * inv_sqrt(lsq)
 
+    def scaled(self, by: float) -> None:
+        """Scale self by
+        """
+        self.x *= by
+        self.y *= by
+        
     def copy(self) -> 'Vec2':
         """Return a copy of the self
         """
@@ -853,6 +859,14 @@ class Vec4:
         """Return 'xyz' components
         """
         return Vec3(self.x, self.y, self.z)
+
+    def scaled(self, by: float) -> None:
+        """Scale self by
+        """
+        self.x *= by
+        self.y *= by
+        self.z *= by
+        self.w *= by
 
     def lerp(self, to: 'Vec4', weight: float) -> 'Vec4':
         """Return lerped vec4 between self and to

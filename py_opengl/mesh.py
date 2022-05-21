@@ -149,13 +149,14 @@ class Mesh:
         self._vbo.unbind()
         self._vao.unbind()
         self._ebo.unbind()
-
+    
+    # TODO
     def compute_aabb(self, transform: transform.Transform) -> geometry.AABB3:
         pmin: maths.Vec3= maths.Vec3.create_from_value(maths.MAX_FLOAT)
         pmax: maths.Vec3= maths.Vec3.create_from_value(maths.MIN_FLOAT)
 
         for vert in self.vertices:
-            pt= transform.get_transformed(vert.position)
+            pt= vert.position
 
             if pt.x < pmin.x:
                 pmin.x = pt.x
@@ -175,7 +176,23 @@ class Mesh:
             if pt.z > pmax.z:
                 pmax.z = pt.z
 
-        return geometry.AABB3.create_from_min_max(pmin, pmax)
+        result= geometry.AABB3.create_from_min_max(pmin, pmax)
+        result.center.set_from(result.center + transform.origin)
+        result.expanded(0.1)
+
+        return result
+
+    def get_furthest_pt(self, dir: maths.Vec3) -> maths.Vec3:
+        max_pt: maths.Vec3= maths.Vec3.zero()
+        max_dis: float= maths.MAX_FLOAT
+
+        for vert in self.vertices:
+            dis: float= vert.position.dot(dir)
+            if dis > max_dis:
+                max_dis= dis
+                max_pt.set_from(vert.position)
+
+        return max_pt
 
     def get_positions(self) -> list[maths.Vec3]:
         """Return a list of position verts only

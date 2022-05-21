@@ -68,7 +68,7 @@ class AABB3:
     def create_from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'AABB3':
         return AABB3(
             center= (min_pt + max_pt) * 0.5,
-            extents= ((min_pt - max_pt) * 0.5).abs()
+            extents= (min_pt - max_pt) * 0.5
         )
 
     @staticmethod
@@ -197,14 +197,9 @@ class AABB3:
         bmax: maths.Vec3= other.get_max()
 
         return (
-            amin.x <= bmin.x and
-            amax.x >= bmax.x and 
-
-            amin.y <= bmin.y and
-            amax.y >= bmax.y and 
-
-            amin.z <= bmin.z and
-            amax.z >= bmax.z
+            (amin.x <= bmin.x and amax.x >= bmax.x) and 
+            (amin.y <= bmin.y and amax.y >= bmax.y) and 
+            (amin.z <= bmin.z and amax.z >= bmax.z)
         )
 
     def intersect_aabb(self, other: 'AABB3') -> bool:
@@ -213,14 +208,11 @@ class AABB3:
         bmin: maths.Vec3= other.get_min()
         bmax: maths.Vec3= other.get_max()
         
-        if amax.x < bmin.x or amin.x > bmax.x:
-            return False
-        if amax.y < bmin.y or amin.y > bmax.y:
-            return False
-        if amax.z < bmin.z or amin.z > bmax.z:
-            return False
-
-        return True
+        return (
+            (amin.x <= bmax.x and amax.x >= bmin.x) and
+            (amin.y <= bmax.y and amax.y >= bmin.y) and
+            (amin.z <= bmax.z and amax.z >= bmin.z)
+        )
 
     def intersect_pt(self, pt: maths.Vec3) -> bool:
         pmin: maths.Vec3= self.get_min()
