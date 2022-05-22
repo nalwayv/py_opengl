@@ -73,7 +73,6 @@ def main() -> None:
 
         shape0= model.CubeModel(0.5)
         shape1= model.CubeModel(0.3)
-        # shape1.set_position(maths.Vec3(x=1.0, y=1.0))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
 

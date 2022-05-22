@@ -1,4 +1,4 @@
-"""AABB3 Tree
+"""AABB Tree
 """
 from typing import Final, Optional, TypeVar
 
@@ -9,11 +9,13 @@ from py_opengl import model
 # TODO
 # ---
 
+
 # model type
 MT= TypeVar('MT', bound= model.Model)
 
 EXPAND_RATIO: Final[float]= 1.0
 REDUX_RATIO: Final[float]= 2.0
+
 
 # ---
 
@@ -43,6 +45,9 @@ class Node:
         p0: float= self.aabb.perimeter()
         p1: float= other.aabb.perimeter()
         return p0 < p1
+
+
+# ---
 
 
 class AABBTree:
@@ -92,7 +97,7 @@ class AABBTree:
             left: Optional[Node]= current.left
             right: Optional[Node]= current.right
 
-            # LEFT
+            # left
             cost_left: float= 0.0
             if left.is_leaf():
                 aabb_0= geometry.AABB3.create_combined_from(
@@ -109,7 +114,7 @@ class AABBTree:
                 new_area: float= aabb_0.perimeter()
                 cost_left= (new_area - old_area) + d_cost
 
-            # RIGHT
+            # right
             cost_right: float= 0.0
             if right.is_leaf():
                 aabb_1= geometry.AABB3.create_combined_from(
