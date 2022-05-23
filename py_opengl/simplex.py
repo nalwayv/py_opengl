@@ -2,7 +2,7 @@
 """
 # TODO
 
-from typing import TypeVar, Optional
+from typing import TypeVar, Optional, Final
 from py_opengl import maths
 from py_opengl import model
 
@@ -11,7 +11,7 @@ from py_opengl import model
 
 
 MT= TypeVar('MT', bound= model.Model)
-
+OPTIMAL: Final[float]= 1e-3
 
 # ---
 
@@ -26,27 +26,34 @@ class Simplex:
     __slots__= ('_pts', '_count')
 
     def __init__(self) -> None:
-        self._pts: list[maths.Vec3]= [maths.Vec3.zero()]*4
+        self._pts: list[maths.Vec3]= []
         self._count: int= 0
 
-    def _line(self, dir: maths.Vec3) -> bool:
-        a: maths.Vec3= self.get_at(0)
-        b: maths.Vec3= self.get_at(1)
+    def _solve2(self, dir: maths.Vec3) -> bool:
+        if self.length() < 2:
+            return False
+    
+        a: maths.Vec3= self.get_at(1)
+        b: maths.Vec3= self.get_at(0)
 
         ab: maths.Vec3= b - a
         ao: maths.Vec3= a * -1.0
 
-        if ab.dot(ao) > 0.0:
+        if ab.dot(ao)> 0.0:
             dir.set_from(ab.cross(ao).cross(ab))
         else:
-            self.simplex.set(a)
+            self._pts= [a]
+            dir.set_from(ao)
 
         return False
 
-    def _triangle(self, dir: maths.Vec3) -> bool:
-        a: maths.Vec3= self.get_at(0)
+    def _solve3(self, dir: maths.Vec3) -> bool:
+        if self.length() < 3:
+            return False
+    
+        a: maths.Vec3= self.get_at(2)
         b: maths.Vec3= self.get_at(1)
-        c: maths.Vec3= self.get_at(2)
+        c: maths.Vec3= self.get_at(0)
 
         ab: maths.Vec3= b - a
         ac: maths.Vec3= c - a
@@ -54,30 +61,37 @@ class Simplex:
 
         abc: maths.Vec3= ab.cross(ac)
 
-        if abc.cross(ac).dot(ao) > 0.0:
+        t0 = abc.cross(ac)
+        t1= ab.cross(abc)
+
+        if t0.dot(ao) > 0.0:
             if ac.dot(ao) > 0.0:
-                self.set_pts(a, c)
+                self.remove_at(1)
                 dir.set_from(ac.cross(ao).cross(ac))
             else:
-                self.set_pts(a, b)
-                return self._line(dir)
+                self.remove_at(0)
+                return self._solve2(dir)
         else:
-            if ab.cross(abc).dot(ao) > 0.0:
-                self.set_pts(a, b)
-                return self._line(dir)
+            if t1.dot(ao) > 0.0:
+                self.remove_at(0)
+                return self._solve2(dir)
             else:
-                if abc.dot(ao) > 0.0:
+                if abc.dot(ao):
                     dir.set_from(abc)
                 else:
-                    self.set_pts(a, c, b)
+                    self._pts= [b, c, a]
                     dir.set_from(abc * -1.0)
+    
         return False
 
-    def _tetrahedron(self, dir: maths.Vec3) -> bool:
-        a: maths.Vec3= self.get_at(0)
-        b: maths.Vec3= self.get_at(1)
-        c: maths.Vec3= self.get_at(2)
-        d: maths.Vec3= self.get_at(3)
+    def _solve4(self, dir: maths.Vec3) -> bool:
+        if self.length() < 4:
+            return False
+
+        a: maths.Vec3= self.get_at(3)
+        b: maths.Vec3= self.get_at(2)
+        c: maths.Vec3= self.get_at(1)
+        d: maths.Vec3= self.get_at(0)
 
         ab: maths.Vec3= b - a
         ac: maths.Vec3= c - a
@@ -89,77 +103,49 @@ class Simplex:
         adb= ad.cross(ab)
 
         if abc.dot(ao) > 0.0:
-            self.set_pts(a, b, c)
-            return self._triangle(dir)
+            self._pts= [c, b, a]
+            return self._solve3(dir)
 
         if acd.dot(ao) > 0.0:
-            self.set_pts(a, c, d)
-            return self._triangle(dir)
+            self._pts= [d, c, a]
+            return self._solve3(dir)
 
         if adb.dot(ao) > 0.0:
-            self.set_pts(a, d, b)
-            return self._triangle(dir)
+            self._pts= [b, d, a]
+            return self._solve3(dir)
 
         return True
 
-    def next_simplex(self, dir: maths.Vec3) -> bool:
-        match self.simplex.size():
+    def check_next(self, dir: maths.Vec3) -> bool:
+        match self.length():
             case 2:
-                return self._line(dir)
+                return self._solve2(dir)
             case 3:
-                return self._triangle(dir)
+                return self._solve3(dir)
             case 4:
-                return self._tetrahedron(dir)
+                return self._solve4(dir)
         return False
 
-    def size(self) -> int:
-        return self._count
-
-    def set_pts(self, *pts: tuple[maths.Vec3]) -> None:
-        n: int= len(pts)
-        if n > 4:
-            return
-
-        self._count= n
-        for idx, pt in enumerate(pts):
-            self._pts[idx].set_from(pt)
-
-    def clear(self) -> None:
-        self._count= 0
-        self.set_at(0, maths.Vec3.zero())
-        self.set_at(1, maths.Vec3.zero())
-        self.set_at(2, maths.Vec3.zero())
-        self.set_at(3, maths.Vec3.zero())
+    def length(self) -> int:
+        return len(self._pts)
 
     def get_at(self, idx: int) -> maths.Vec3:
-        match idx:
-            case 0:
-                return self._pts[0]
-            case 1:
-                return self._pts[1]
-            case 2:
-                return self._pts[2]
-            case 3:
-                return self._pts[3]
+        if idx < 0 or idx >= self.length():
+            raise SimplexError('out of range')
+        return self._pts[idx]
 
-        raise SimplexError('out of range')
+    def remove_at(self, idx: int) -> None:
+        if idx < 0 or idx >= self.length():
+            return
+        self._pts.pop(idx)
 
-    def set_at(self, idx: int, val: maths.Vec3) -> None:
-        match idx:
-            case 0:
-                self._pts[0].set_from(val)
-            case 1:
-                self._pts[1].set_from(val)
-            case 2:
-                self._pts[2].set_from(val)
-            case 3:
-                self._pts[3].set_from(val)
-
-    def push_pt(self, pt: maths.Vec3):
-        self.set_at(3, self.get_at(2))
-        self.set_at(2, self.get_at(1))
-        self.set_at(1, self.get_at(0))
-        self.set_at(0, pt)
+    def push(self, pt: maths.Vec3):
+        self._pts.append(pt)
+    
+    def clear(self) -> None:
+        """Clear current pts
+        """
+        self._pts.clear()
 
 
 # ---
@@ -192,10 +178,7 @@ class Minkowskisum:
 
         p0: maths.Vec3= self.m0.get_position()
         p1: maths.Vec3= self.m1.get_position()
-        dir: maths.Vec3= p1 - p0
-
-        if not dir.is_unit():
-            dir.to_unit()
+        dir: maths.Vec3= p0 - p1
 
         return dir
 
@@ -205,29 +188,44 @@ class Minkowskisum:
 
 class GJK:
 
-    __slots__= ('simplex',)
+    __slots__= ('simplex', 'iterations')
 
     def __init__(self) -> None:
-        self.simplex= Simplex()
+        self.iterations: int= 30
 
+    # def _check_is_optimal(self, next_pt: maths.Vec3, dir: maths.Vec3):
+    #     """
+    #     """
+    #     d0: float= next_pt.dot(dir)
 
-    def detect(self, ms: Minkowskisum, dir: maths.Vec3= maths.Vec3()) -> bool:
+    #     for i in range(self.simplex.length()):
+    #         d1: float= self.simplex.get_at(i).dot(dir)
+    #         if (d0 - d1) > OPTIMAL:
+    #             return False
+    #     return True
+
+    def detect(self, mksum: Minkowskisum, dir: maths.Vec3= maths.Vec3()) -> bool:
+        """
+        """
+
         if dir.is_zero():
-            dir.set_from(ms.get_dir())
+            dir.set_from(mksum.get_dir())
 
-        self.simplex.push_pt(ms.get_support(dir))
-
-        if self.simplex.get_at(0).dot(dir) <= 0.0:
-            return False
+        simp= Simplex()
+        npt: maths.Vec3= mksum.get_support(dir)
+        simp.push(npt)
         
-        dir.set_from(dir * -1.0)
+        dir.set_from(npt * -1.0)
 
-        while True:
-            sp: maths.Vec3= ms.get_support(dir)
-            self.simplex.push_pt(sp)
+        for _ in range(self.iterations):
+            npt= mksum.get_support(dir)
 
-            if sp.dot(dir) <= 0.0:
+            if npt.dot(dir) <= 0.0:
                 return False
-            else:
-                if self.simplex.next_simplex(dir):
-                    return True
+
+            simp.push(npt)
+
+            if simp.check_next(dir):
+                return True
+
+        # return False

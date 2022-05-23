@@ -650,13 +650,6 @@ class Vec3:
             (self.x * other.y) - (self.y * other.x)
         )
 
-    def triple_cross(self, a: 'Vec3', b: 'Vec3') -> 'Vec3':
-        """Return triple cross between self a and b
-        """
-        cross0: Vec3= self.cross(a)
-        cross1: Vec3= cross0.cross(b)
-        return cross1
-
     def project(self, other: 'Vec3') -> 'Vec3':
         """Return the projection between self and other vec3
         """
@@ -703,6 +696,12 @@ class Vec3:
             self.dot(m2),
             self.dot(m3)
         )
+
+    def transform(self, m4: 'Mat4') -> 'Vec3':
+        x= self.dot(m4.col0().xyz())
+        y= self.dot(m4.col1().xyz())
+        z= self.dot(m4.col2().xyz())
+        return Vec3(x, y, z)
 
     def sum_total(self) -> float:
         """Return sum total of components
@@ -2041,7 +2040,7 @@ class Mat4:
             self.row3 * inv,
         )
 
-    def get_transform(self) -> Vec3:
+    def get_translation(self) -> Vec3:
         """Return the transformed values from matrix
         """
         return self.row3.xyz()

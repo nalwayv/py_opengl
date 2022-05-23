@@ -1,3 +1,4 @@
 py_opengl/__pycache__
 *.ini
 *.txt
+*.vscode

@@ -111,6 +111,11 @@ class AABB3:
         self.center.set_from(expand.center)
         self.extents.set_from(expand.extents)
 
+    def translated(self, v3: maths.Vec3) -> None:
+        """Translate by
+        """
+        self.center.set_from(self.center + v3)
+
     def copy(self) -> 'AABB3':
         """Return a copy of self
         """
@@ -298,7 +303,7 @@ class Sphere3:
         return False
 
     def compute_aabb(self, t: transform.Transform) -> AABB3:
-        center= t.get_transformed(self.center)
+        center= t.transformed(self.center)
 
         p0: maths.Vec3= center + maths.Vec3.create_from_value(self.radius)
         p1: maths.Vec3= center - maths.Vec3.create_from_value(self.radius)

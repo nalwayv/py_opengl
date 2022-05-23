@@ -6,7 +6,6 @@ from OpenGL import GL
 from py_opengl import utils
 from py_opengl import maths
 from py_opengl import geometry
-from py_opengl import transform
 
 
 # ---
@@ -151,7 +150,7 @@ class Mesh:
         self._ebo.unbind()
     
     # TODO
-    def compute_aabb(self, transform: transform.Transform) -> geometry.AABB3:
+    def compute_aabb(self) -> geometry.AABB3:
         pmin: maths.Vec3= maths.Vec3.create_from_value(maths.MAX_FLOAT)
         pmax: maths.Vec3= maths.Vec3.create_from_value(maths.MIN_FLOAT)
 
@@ -176,22 +175,26 @@ class Mesh:
             if pt.z > pmax.z:
                 pmax.z = pt.z
 
-        result= geometry.AABB3.create_from_min_max(pmin, pmax)
-        result.center.set_from(result.center + transform.origin)
-        result.expanded(0.1)
+        return geometry.AABB3.create_from_min_max(pmin, pmax)
 
-        return result
+    def _get_furthest_pt(self, v0: maths.Vec3, v1: maths.Vec3, dir: maths.Vec3) -> maths.Vec3:
+        d0= dir.dot(v0)
+        d1= dir.dot(v1)
+
+        if d0 >= d1:
+            return v0
+        return v1
 
     def get_furthest_pt(self, dir: maths.Vec3) -> maths.Vec3:
+        if not dir.is_unit():
+            dir.to_unit()
+    
         max_pt: maths.Vec3= maths.Vec3.zero()
-        max_dis: float= maths.MAX_FLOAT
 
         for vert in self.vertices:
-            dis: float= vert.position.dot(dir)
-            if dis > max_dis:
-                max_dis= dis
-                max_pt.set_from(vert.position)
-
+            max_pt.set_from(
+                self._get_furthest_pt(max_pt, vert.position, dir)
+            )
         return max_pt
 
     def get_positions(self) -> list[maths.Vec3]:

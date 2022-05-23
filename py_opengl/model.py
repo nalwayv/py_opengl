@@ -1,5 +1,6 @@
 """Model
 """
+from cgitb import reset
 from uuid import uuid4
 
 from py_opengl import maths
@@ -52,20 +53,26 @@ class Model:
         self._transform.rotated_xyz(v3)
 
     def get_furthest_pt(self, dir: maths.Vec3) -> maths.Vec3:
-        return self._mesh.get_furthest_pt(dir)
-
+        """Return furthest pt
+        """
+        result= self._mesh.get_furthest_pt(dir)
+        result.set_from(result + self._transform.origin)
+        return result
+        
     def compute_aabb(self) -> geometry.AABB3:
         """Compute AABB3
         """
-        return self._mesh.compute_aabb(self._transform)
+        result= self._mesh.compute_aabb()
+        result.translated(self._transform.origin)
+        return result
 
     def draw(self, _shader: shader.Shader, cam: camera.Camera) -> None:
         """Draw
         """
         _shader.use()
-        _shader.set_mat4('m_matrix', self._transform.model_matrix())
-        _shader.set_mat4('v_matrix', cam.view_matrix())
-        _shader.set_mat4('p_matrix', cam.projection_matrix())
+        _shader.set_mat4('m_matrix', self._transform.get_transform_matrix())
+        _shader.set_mat4('v_matrix', cam.get_view_matrix())
+        _shader.set_mat4('p_matrix', cam.get_projection_matrix())
         self._mesh.render()
 
     def delete(self) -> None:

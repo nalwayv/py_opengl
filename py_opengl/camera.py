@@ -171,19 +171,19 @@ class Camera:
         
         self.up= self.right.cross(self.front)
 
-    def projection_matrix(self) -> maths.Mat4:
+    def get_projection_matrix(self) -> maths.Mat4:
         """Return projection matrix
         """
         return maths.Mat4.create_perspective(self.fovy, self.aspect, self.znear, self.zfar)
 
-    def view_matrix(self) -> maths.Mat4:
+    def get_view_matrix(self) -> maths.Mat4:
         """Return view matrix
         """
         return maths.Mat4.create_look_at(self.position, self.position + self.front, self.up)
 
-    def frustum(self) -> geometry.Frustum:
+    def get_frustum(self) -> geometry.Frustum:
         result: geometry.Frustum= geometry.Frustum()
-        vp: maths.Mat4= self.view_matrix() * self.projection_matrix()
+        vp: maths.Mat4= self.get_view_matrix() * self.get_projection_matrix()
 
         result.left.normal.set_from(vp.col3().xyz() + vp.col0().xyz())
         result.right.normal.set_from(vp.col3().xyz() - vp.col0().xyz())

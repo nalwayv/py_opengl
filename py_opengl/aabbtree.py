@@ -385,18 +385,15 @@ class AABBTree:
         item_aabb.expanded(EXPAND_RATIO)
 
         if check:
-            print('con')
             p0= node.aabb.perimeter()
             p1= item_aabb.perimeter()
-            if ((p0 / p1) <= REDUX_RATIO):
 
+            if ((p0 / p1) <= REDUX_RATIO):
                 return
         
         self._remove(node)
         node.aabb.set_from(item_aabb)
         self._insert(node)
-
-        print('ok')
 
     def clear(self):
         self.leaves.clear()
