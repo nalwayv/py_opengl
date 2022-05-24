@@ -2,16 +2,14 @@
 """
 # TODO
 
-from typing import TypeVar, Optional, Final
+from typing import TypeVar, Optional
 from py_opengl import maths
 from py_opengl import model
 
 
 # ---
 
-
 MT= TypeVar('MT', bound= model.Model)
-OPTIMAL: Final[float]= 1e-3
 
 # ---
 
