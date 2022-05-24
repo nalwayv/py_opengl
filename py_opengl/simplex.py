@@ -37,13 +37,13 @@ class Simplex:
         b: maths.Vec3= self.get_at(0)
 
         ab: maths.Vec3= b - a
-        ao: maths.Vec3= a * -1.0
+        a0: maths.Vec3= a * -1.0
 
-        if ab.dot(ao)> 0.0:
-            dir.set_from(ab.cross(ao).cross(ab))
+        if ab.dot(a0)> 0.0:
+            dir.set_from(ab.cross(a0).cross(ab))
         else:
             self._pts= [a]
-            dir.set_from(ao)
+            dir.set_from(a0)
 
         return False
 
@@ -57,29 +57,29 @@ class Simplex:
 
         ab: maths.Vec3= b - a
         ac: maths.Vec3= c - a
-        ao: maths.Vec3= a * -1.0
+        a0: maths.Vec3= a * -1.0
 
         abc: maths.Vec3= ab.cross(ac)
 
         t0 = abc.cross(ac)
         t1= ab.cross(abc)
 
-        if t0.dot(ao) > 0.0:
-            if ac.dot(ao) > 0.0:
-                self.remove_at(1)
-                dir.set_from(ac.cross(ao).cross(ac))
+        if t0.dot(a0) > 0.0:
+            if ac.dot(a0) > 0.0:
+                self._pts= [a, c]
+                dir.set_from(ac.cross(a0).cross(ac))
             else:
-                self.remove_at(0)
+                self._pts= [a, b]
                 return self._solve2(dir)
         else:
-            if t1.dot(ao) > 0.0:
-                self.remove_at(0)
+            if t1.dot(a0) > 0.0:
+                self._pts= [a, b]
                 return self._solve2(dir)
             else:
-                if abc.dot(ao):
+                if abc.dot(a0) > 0.0:
                     dir.set_from(abc)
                 else:
-                    self._pts= [b, c, a]
+                    self._pts= [a, c, b]
                     dir.set_from(abc * -1.0)
     
         return False
@@ -96,25 +96,62 @@ class Simplex:
         ab: maths.Vec3= b - a
         ac: maths.Vec3= c - a
         ad: maths.Vec3= d - a
-        ao: maths.Vec3= a * -1.0
+        a0: maths.Vec3= a * -1.0
 
-        abc= ab.cross(ac)
-        acd= ac.cross(ad)
-        adb= ad.cross(ab)
 
-        if abc.dot(ao) > 0.0:
-            self._pts= [c, b, a]
-            return self._solve3(dir)
+        acb= ac.cross(ab)
+        v_acb: float= acb.dot(a0)
 
-        if acd.dot(ao) > 0.0:
-            self._pts= [d, c, a]
-            return self._solve3(dir)
+        abd = ab.cross(ad)
+        v_abd: float= abd.dot(a0)
 
-        if adb.dot(ao) > 0.0:
-            self._pts= [b, d, a]
-            return self._solve3(dir)
+        adc = ad.cross(ac)
+        v_adc: float= adc.dot(a0)
 
-        return True
+        neg: int= 0
+        pos: int= 0
+
+
+        if v_adc > 0:
+            pos += 1
+        else:
+            neg += 1
+
+        if v_abd > 0:
+            pos += 1
+        else:
+            neg += 1
+
+        if v_acb > 0:
+            pos += 1
+        else:
+            neg += 1
+
+        if pos == 3 or neg == 3:
+            return True
+
+        if neg == 2 and pos == 1:
+            if v_adc > 0.0:
+                self._pts= [a, b, c]
+                dir.set_from(adc)
+            elif v_abd > 0:
+                self._pts= [a, b, d]
+                dir.set_from(abd)
+            else:
+                self._pts= [a, c, d]
+                dir.set_from(acb)
+        elif neg == 1 and pos == 2:
+            if v_adc < 0:
+                self._pts= [a, b, c]
+                dir.set_from(adc * -1.0)
+            elif v_abd < 0:
+                self._pts= [a, b, d]
+                dir.set_from(abd * -1.0)
+            else:
+                self._pts= [a, c, d]                
+                dir.set_from(acb * -1.0)
+
+        return self._solve3(dir)
 
     def check_next(self, dir: maths.Vec3) -> bool:
         match self.length():
@@ -134,10 +171,10 @@ class Simplex:
             raise SimplexError('out of range')
         return self._pts[idx]
 
-    def remove_at(self, idx: int) -> None:
-        if idx < 0 or idx >= self.length():
-            return
-        self._pts.pop(idx)
+    # def remove_at(self, idx: int) -> None:
+    #     if idx < 0 or idx >= self.length():
+    #         return
+    #     self._pts.pop(idx)
 
     def push(self, pt: maths.Vec3):
         self._pts.append(pt)
@@ -180,6 +217,8 @@ class Minkowskisum:
         p1: maths.Vec3= self.m1.get_position()
         dir: maths.Vec3= p0 - p1
 
+        if not dir.is_unit():
+            dir.to_unit()
         return dir
 
 

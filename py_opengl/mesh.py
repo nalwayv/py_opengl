@@ -177,24 +177,19 @@ class Mesh:
 
         return geometry.AABB3.create_from_min_max(pmin, pmax)
 
-    def _get_furthest_pt(self, v0: maths.Vec3, v1: maths.Vec3, dir: maths.Vec3) -> maths.Vec3:
-        d0= dir.dot(v0)
-        d1= dir.dot(v1)
-
-        if d0 >= d1:
-            return v0
-        return v1
-
     def get_furthest_pt(self, dir: maths.Vec3) -> maths.Vec3:
         if not dir.is_unit():
             dir.to_unit()
     
         max_pt: maths.Vec3= maths.Vec3.zero()
+        max_dis: float= maths.MIN_FLOAT
 
         for vert in self.vertices:
-            max_pt.set_from(
-                self._get_furthest_pt(max_pt, vert.position, dir)
-            )
+            dis: float= vert.position.dot(dir)
+            if dis > max_dis:
+                max_dis= dis
+                max_pt.set_from(vert.position)
+
         return max_pt
 
     def get_positions(self) -> list[maths.Vec3]:

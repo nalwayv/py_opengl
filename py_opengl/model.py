@@ -47,7 +47,7 @@ class Model:
         """
         self._transform.translated(v3)
 
-    def rotate(self, v3: maths.Vec3) -> None:
+    def rotate_euler(self, v3: maths.Vec3) -> None:
         """Rotate model by 'xyz'
         """
         self._transform.rotated_xyz(v3)

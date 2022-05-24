@@ -107,13 +107,10 @@ def main() -> None:
 
             if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_G)):
                 mksum= simplex.Minkowskisum(shape0, shape1)
-                dir= maths.Vec3(x=1.0)
-                print(shape0.get_furthest_pt(dir))
-                print(shape1.get_furthest_pt(dir))
-                # spt= mksum.get_support(dir)
-                # spt.to_unit()
-                # print(spt)
-
+                gjk= simplex.GJK()
+                check= gjk.detect(mksum, maths.Vec3(x=1))
+                if check:
+                    print('Y')
             # --
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
