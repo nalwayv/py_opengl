@@ -27,14 +27,13 @@ class Simplex:
 
     def __init__(self) -> None:
         self._pts: list[maths.Vec3]= []
-        self._count: int= 0
 
     def _solve2(self, dir: maths.Vec3) -> bool:
         if self.length() < 2:
             return False
     
-        a: maths.Vec3= self.get_at(1)
-        b: maths.Vec3= self.get_at(0)
+        a: maths.Vec3= self._pts[1]
+        b: maths.Vec3= self._pts[0]
 
         ab: maths.Vec3= b - a
         a0: maths.Vec3= a * -1.0
@@ -51,9 +50,9 @@ class Simplex:
         if self.length() < 3:
             return False
     
-        a: maths.Vec3= self.get_at(2)
-        b: maths.Vec3= self.get_at(1)
-        c: maths.Vec3= self.get_at(0)
+        a: maths.Vec3= self._pts[2]
+        b: maths.Vec3= self._pts[1]
+        c: maths.Vec3= self._pts[0]
 
         ab: maths.Vec3= b - a
         ac: maths.Vec3= c - a
@@ -88,41 +87,40 @@ class Simplex:
         if self.length() < 4:
             return False
 
-        a: maths.Vec3= self.get_at(3)
-        b: maths.Vec3= self.get_at(2)
-        c: maths.Vec3= self.get_at(1)
-        d: maths.Vec3= self.get_at(0)
+        a: maths.Vec3= self._pts[3]
+        b: maths.Vec3= self._pts[2]
+        c: maths.Vec3= self._pts[1]
+        d: maths.Vec3= self._pts[0]
 
         ab: maths.Vec3= b - a
         ac: maths.Vec3= c - a
         ad: maths.Vec3= d - a
         a0: maths.Vec3= a * -1.0
 
-
         acb= ac.cross(ab)
-        v_acb: float= acb.dot(a0)
+        d_acb: float= acb.dot(a0)
 
         abd = ab.cross(ad)
-        v_abd: float= abd.dot(a0)
+        d_abd: float= abd.dot(a0)
 
         adc = ad.cross(ac)
-        v_adc: float= adc.dot(a0)
+        d_adc: float= adc.dot(a0)
 
         neg: int= 0
         pos: int= 0
 
 
-        if v_adc > 0:
+        if d_adc > 0:
             pos += 1
         else:
             neg += 1
 
-        if v_abd > 0:
+        if d_abd > 0:
             pos += 1
         else:
             neg += 1
 
-        if v_acb > 0:
+        if d_acb > 0:
             pos += 1
         else:
             neg += 1
@@ -131,20 +129,20 @@ class Simplex:
             return True
 
         if neg == 2 and pos == 1:
-            if v_adc > 0.0:
+            if d_adc > 0.0:
                 self._pts= [a, b, c]
                 dir.set_from(adc)
-            elif v_abd > 0:
+            elif d_abd > 0:
                 self._pts= [a, b, d]
                 dir.set_from(abd)
             else:
                 self._pts= [a, c, d]
                 dir.set_from(acb)
         elif neg == 1 and pos == 2:
-            if v_adc < 0:
+            if d_adc < 0:
                 self._pts= [a, b, c]
                 dir.set_from(adc * -1.0)
-            elif v_abd < 0:
+            elif d_abd < 0:
                 self._pts= [a, b, d]
                 dir.set_from(abd * -1.0)
             else:
@@ -165,16 +163,6 @@ class Simplex:
 
     def length(self) -> int:
         return len(self._pts)
-
-    def get_at(self, idx: int) -> maths.Vec3:
-        if idx < 0 or idx >= self.length():
-            raise SimplexError('out of range')
-        return self._pts[idx]
-
-    # def remove_at(self, idx: int) -> None:
-    #     if idx < 0 or idx >= self.length():
-    #         return
-    #     self._pts.pop(idx)
 
     def push(self, pt: maths.Vec3):
         self._pts.append(pt)
@@ -232,17 +220,6 @@ class GJK:
     def __init__(self) -> None:
         self.iterations: int= 30
 
-    # def _check_is_optimal(self, next_pt: maths.Vec3, dir: maths.Vec3):
-    #     """
-    #     """
-    #     d0: float= next_pt.dot(dir)
-
-    #     for i in range(self.simplex.length()):
-    #         d1: float= self.simplex.get_at(i).dot(dir)
-    #         if (d0 - d1) > OPTIMAL:
-    #             return False
-    #     return True
-
     def detect(self, mksum: Minkowskisum, dir: maths.Vec3= maths.Vec3()) -> bool:
         """
         """
@@ -251,20 +228,20 @@ class GJK:
             dir.set_from(mksum.get_dir())
 
         simp= Simplex()
-        npt: maths.Vec3= mksum.get_support(dir)
-        simp.push(npt)
+        spt: maths.Vec3= mksum.get_support(dir)
+        simp.push(spt)
         
-        dir.set_from(npt * -1.0)
+        dir.set_from(spt * -1.0)
 
         for _ in range(self.iterations):
-            npt= mksum.get_support(dir)
+            spt= mksum.get_support(dir)
 
-            if npt.dot(dir) <= 0.0:
+            if spt.dot(dir) <= 0.0:
                 return False
 
-            simp.push(npt)
+            simp.push(spt)
 
             if simp.check_next(dir):
                 return True
 
-        # return False
+        return False

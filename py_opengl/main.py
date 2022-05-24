@@ -15,7 +15,7 @@ from py_opengl import camera
 from py_opengl import window
 from py_opengl import color
 from py_opengl import model
-from py_opengl import simplex
+from py_opengl import gjk
 
 # --- CALLBACKS
 
@@ -101,16 +101,19 @@ def main() -> None:
                 a1= shape1.compute_aabb()
                 
                 if a0.intersect_aabb(a1):
-                    print('Y')
+                    print('AABB= True')
                 else:
-                    print(' ')
+                    print('AABB= False')
 
             if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_G)):
-                mksum= simplex.Minkowskisum(shape0, shape1)
-                gjk= simplex.GJK()
-                check= gjk.detect(mksum, maths.Vec3(x=1))
+                mksum= gjk.Minkowskisum(shape0, shape1)
+                gjk_check= gjk.GJK()
+                check= gjk_check.detect(mksum)
                 if check:
-                    print('Y')
+                    print('GJK= True')
+                else:
+                    print('GJK= False')
+
             # --
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
