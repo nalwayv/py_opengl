@@ -72,7 +72,7 @@ def main() -> None:
         shader0= shader.Shader('debug_shader.vert', 'debug_shader.frag')
 
         shape0= model.CubeModel(0.5)
-        shape1= model.CubeModel(0.3)
+        shape1= model.PyramidModel(0.3)
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
 
@@ -89,21 +89,20 @@ def main() -> None:
 
             # --
 
-            # shape0.rotate(maths.Vec3(x= 10.0, y= 10.0) * (1.4 * time.delta))
+            shape0.rotate_euler(maths.Vec3(x= 10.0, y= 10.0) * (1.4 * time.delta))
             shape0.draw(shader0, cam)
 
-            # shape1.rotate(maths.Vec3(y= 10.0, z= 5.0) * (-4.2 * time.delta))
+            shape1.rotate_euler(maths.Vec3(y= 10.0, z= 5.0) * (-4.2 * time.delta))
             shape1.draw(shader0, cam)
 
             if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_P)):
-
                 a0= shape0.compute_aabb()
                 a1= shape1.compute_aabb()
                 
                 if a0.intersect_aabb(a1):
                     print('AABB= True')
                 else:
-                    print('AABB= False')
+                    print(' ')
 
             if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_G)):
                 mksum= gjk.Minkowskisum(shape0, shape1)
@@ -112,31 +111,47 @@ def main() -> None:
                 if check:
                     print('GJK= True')
                 else:
-                    print('GJK= False')
+                    print(' ')
 
             # --
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
-                #cam.move_by(camera.CameraDirection.IN, 1.4, time.delta)
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_I)):
                 shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
-
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_S)):
-                #cam.move_by(camera.CameraDirection.OUT, 1.4, time.delta)
+        
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_K)):
                 shape1.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_A)):
-                #cam.move_by(camera.CameraDirection.LEFT, 1.4, time.delta)
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_J)):
                 shape1.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_D)):
-                #cam.move_by(camera.CameraDirection.RIGHT, 1.4, time.delta)
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_L)):
                 shape1.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
+
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_O)):
+                shape1.translate(maths.Vec3(z= 1.5) * (1.4 * time.delta))
+
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_U)):
+                shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
+
+
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
+                cam.move_by(camera.CameraDirection.IN, 1.4, time.delta)
+
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_S)):
+                cam.move_by(camera.CameraDirection.OUT, 1.4, time.delta)
+
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_A)):
+                cam.move_by(camera.CameraDirection.LEFT, 1.4, time.delta)
+
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_D)):
+                cam.move_by(camera.CameraDirection.RIGHT, 1.4, time.delta)
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_E)):
                 cam.move_by(camera.CameraDirection.UP, 1.4, time.delta)
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_Q)):
                 cam.move_by(camera.CameraDirection.DOWN, 1.4, time.delta)
+
 
             if ms.is_button_held(
                 glwin.get_mouse_state(glfw.MOUSE_BUTTON_LEFT)

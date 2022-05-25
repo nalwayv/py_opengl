@@ -98,6 +98,20 @@ class CubeModel(Model):
 
 # ---
 
+class PyramidModel(Model):
+
+    __slots__= ('scale',)
+
+    def __init__(self, scale) -> None:
+        self.scale: float= scale
+
+        super().__init__(
+            mesh.PyramidMesh(scale)
+        )
+
+
+# ---
+
 
 class SphereModel(Model):
 

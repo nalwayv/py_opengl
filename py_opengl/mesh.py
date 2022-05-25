@@ -228,7 +228,7 @@ class SphereMesh(Mesh):
         vnum: int= (prec + 1) * (prec + 1)
         inum: int= prec * prec * 6
 
-        vertices: list[Vertex]= [Vertex] * vnum
+        vertices: list[Vertex]= [Vertex()] * vnum
         indices: list[int]= [0] * inum
 
         for i in range(prec + 1):
@@ -251,6 +251,55 @@ class SphereMesh(Mesh):
                 indices[6 * (i * prec + j) + 3]= i * (prec + 1) + j + 1
                 indices[6 * (i * prec + j) + 4]= (i + 1) * (prec + 1) + j + 1
                 indices[6 * (i * prec + j) + 5]= (i + 1) * (prec + 1) + j
+
+        super().__init__(vertices, indices)
+
+
+# ---
+
+
+class PyramidMesh(Mesh):
+
+    __slots__=('scale',)
+
+    def __init__(self, scale: float= 1.0) -> None:
+        self.scale: float= scale
+
+        vertices: list[Vertex]= [
+            Vertex(
+                maths.Vec3(self.scale, -self.scale, self.scale),
+                maths.Vec3(0, 0, 0),
+                maths.Vec3(1, 0, 0)
+            ),
+            Vertex(
+                maths.Vec3(self.scale, -self.scale, -self.scale),
+                maths.Vec3(0, 0, 0),
+                maths.Vec3(1, 0, 0)
+            ),
+            Vertex(
+                maths.Vec3(-self.scale, -self.scale, -self.scale),
+                maths.Vec3(0, 0, 0),
+                maths.Vec3(0, 0, 1)
+            ),
+            Vertex(
+                maths.Vec3(-self.scale, -self.scale, self.scale),
+                maths.Vec3(0, 0, 0),
+                maths.Vec3(0, 0, 1)
+            ),
+            Vertex(
+                maths.Vec3(0, self.scale, 0),
+                maths.Vec3(0, 0, 0),
+                maths.Vec3(0, 1, 0)
+            ),
+        ]
+
+        indices: list[int]= [
+            1, 0, 3, 3, 2, 1,
+            1, 4, 0,
+            0, 4, 3,
+            3, 4, 2,
+            2, 4, 1
+        ]
 
         super().__init__(vertices, indices)
 

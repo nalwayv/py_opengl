@@ -67,19 +67,17 @@ class Simplex:
                 dir.set_from(ac.cross(a0).cross(ac))
             else:
                 self._pts= [a, b]
-                return self._solve2(dir)
         else:
             if t1.dot(a0) > 0.0:
                 self._pts= [a, b]
-                return self._solve2(dir)
             else:
                 if abc.dot(a0) > 0.0:
                     dir.set_from(abc)
                 else:
                     self._pts= [a, c, b]
                     dir.set_from(abc * -1.0)
-    
-        return False
+
+        return self._solve2(dir)
 
     def _solve4(self, dir: maths.Vec3) -> bool:
         if self.length() < 4:
@@ -106,7 +104,6 @@ class Simplex:
 
         neg: int= 0
         pos: int= 0
-
 
         if d_adc > 0:
             pos += 1
@@ -149,7 +146,7 @@ class Simplex:
 
         return self._solve3(dir)
 
-    def check_next(self, dir: maths.Vec3) -> bool:
+    def check_simplex(self, dir: maths.Vec3) -> bool:
         match self.length():
             case 2:
                 return self._solve2(dir)
@@ -180,13 +177,15 @@ class Minkowskisum:
 
     def __init__(
         self,
-        m0: Optional[MT]= None,
-        m1: Optional[MT]= None
+        mt0: Optional[MT]= None,
+        mt1: Optional[MT]= None
     ) -> None:
-        self.m0: Optional[MT]= m0
-        self.m1: Optional[MT]= m1
+        self.m0: Optional[MT]= mt0
+        self.m1: Optional[MT]= mt1
 
     def get_support(self, dir: maths.Vec3) -> maths.Vec3:
+        """Return support between model types based on direction
+        """
         if (self.m0 is None) or (self.m1 is None):
             return maths.Vec3.zero()
 
@@ -196,6 +195,10 @@ class Minkowskisum:
         return p0 - p1
 
     def get_dir(self) -> maths.Vec3:
+        """ Return direction between model types
+
+        if model types are none then return unit x vec3
+        """
         if (self.m0 is None) or (self.m1 is None):
             return maths.Vec3(x= 1.0)
 
@@ -205,6 +208,7 @@ class Minkowskisum:
 
         if not dir.is_unit():
             dir.to_unit()
+
         return dir
 
 
@@ -219,7 +223,9 @@ class GJK:
         self.iterations: int= 30
 
     def detect(self, mksum: Minkowskisum, dir: maths.Vec3= maths.Vec3()) -> bool:
-        """
+        """ Detect for collision
+
+        if direction is zero will use mksum.get_dir()
         """
 
         if dir.is_zero():
@@ -239,7 +245,7 @@ class GJK:
 
             simp.push(spt)
 
-            if simp.check_next(dir):
+            if simp.check_simplex(dir):
                 return True
 
         return False
