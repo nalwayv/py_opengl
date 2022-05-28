@@ -149,7 +149,6 @@ class Mesh:
         self._vao.unbind()
         self._ebo.unbind()
     
-    # TODO
     def compute_aabb(self) -> geometry.AABB3:
         pmin: maths.Vec3= maths.Vec3.create_from_value(maths.MAX_FLOAT)
         pmax: maths.Vec3= maths.Vec3.create_from_value(maths.MIN_FLOAT)
@@ -228,7 +227,7 @@ class SphereMesh(Mesh):
         vnum: int= (prec + 1) * (prec + 1)
         inum: int= prec * prec * 6
 
-        vertices: list[Vertex]= [Vertex()] * vnum
+        vertices: list[Vertex]= [Vertex(maths.Vec3(), maths.Vec3(), maths.Vec3())] * vnum
         indices: list[int]= [0] * inum
 
         for i in range(prec + 1):
@@ -317,33 +316,33 @@ class CubeMesh(Mesh):
         vertices: list[Vertex]= [
             # front
             Vertex(
-                maths.Vec3(self.size.x,  self.size.y,  self.size.z),
+                maths.Vec3(self.size.x, self.size.y, self.size.z),
                 maths.Vec3(0.0, 0.0, 1.0),
                 maths.Vec3(1.0, 0.5, 0.5)
             ),
             Vertex(
-                maths.Vec3(-self.size.x,  self.size.y,  self.size.z),
+                maths.Vec3(-self.size.x, self.size.y, self.size.z),
                 maths.Vec3(0.0, 0.0, 1.0),
                 maths.Vec3(1.0, 0.5, 0.5)
             ),
             Vertex(
-                maths.Vec3(-self.size.x, -self.size.y,  self.size.z),
+                maths.Vec3(-self.size.x, -self.size.y, self.size.z),
                 maths.Vec3(0.0, 0.0, 1.0),
                 maths.Vec3(1.0, 0.5, 0.5)
             ),
             Vertex(
-                maths.Vec3(self.size.x, -self.size.y,  self.size.z),
+                maths.Vec3(self.size.x, -self.size.y, self.size.z),
                 maths.Vec3(0.0, 0.0, 1.0),
                 maths.Vec3(1.0, 0.5, 0.5)
             ),
             # right
             Vertex(
-                maths.Vec3(self.size.x,  self.size.y,  self.size.z),
+                maths.Vec3(self.size.x, self.size.y, self.size.z),
                 maths.Vec3(1.0, 0.0, 0.0),
                 maths.Vec3(0.5, 0.0, 0.0)
             ),
             Vertex(
-                maths.Vec3(self.size.x, -self.size.y,  self.size.z),
+                maths.Vec3(self.size.x, -self.size.y, self.size.z),
                 maths.Vec3(1.0, 0.0, 0.0),
                 maths.Vec3(0.5, 0.0, 0.0)
             ),
@@ -353,39 +352,39 @@ class CubeMesh(Mesh):
                 maths.Vec3(0.5, 0.0, 0.0)
             ),
             Vertex(
-                maths.Vec3(self.size.x,  self.size.y, -self.size.z),
+                maths.Vec3(self.size.x, self.size.y, -self.size.z),
                 maths.Vec3(1.0, 0.0, 0.0),
                 maths.Vec3(0.5, 0.0, 0.0)
             ),
             # top
             Vertex(
-                maths.Vec3(self.size.x,  self.size.y,  self.size.z),
+                maths.Vec3(self.size.x, self.size.y, self.size.z),
                 maths.Vec3(0.0, 1.0, 0.0),
                 maths.Vec3(0.5, 1.0, 0.5)
             ),
             Vertex(
-                maths.Vec3(self.size.x,  self.size.y, -self.size.z),
+                maths.Vec3(self.size.x, self.size.y, -self.size.z),
                 maths.Vec3(0.0, 1.0, 0.0),
                 maths.Vec3(0.5, 1.0, 0.5)
             ),
             Vertex(
-                maths.Vec3(-self.size.x,  self.size.y, -self.size.z),
+                maths.Vec3(-self.size.x, self.size.y, -self.size.z),
                 maths.Vec3(0.0, 1.0, 0.0),
                 maths.Vec3(0.5, 1.0, 0.5)
             ),
             Vertex(
-                maths.Vec3(-self.size.x,  self.size.y,  self.size.z),
+                maths.Vec3(-self.size.x, self.size.y, self.size.z),
                 maths.Vec3(0.0, 1.0, 0.0),
                 maths.Vec3(0.5, 1.0, 0.5)
             ),
             # left
             Vertex(
-                maths.Vec3(-self.size.x,  self.size.y,  self.size.z),
+                maths.Vec3(-self.size.x, self.size.y, self.size.z),
                 maths.Vec3(-1.0, 0.0, 0.0),
                 maths.Vec3(0.0, 0.5, 0.0)
             ),
             Vertex(
-                maths.Vec3(-self.size.x,  self.size.y, -self.size.z),
+                maths.Vec3(-self.size.x, self.size.y, -self.size.z),
                 maths.Vec3(-1.0, 0.0, 0.0),
                 maths.Vec3(0.0, 0.5, 0.0)
             ),
@@ -395,7 +394,7 @@ class CubeMesh(Mesh):
                 maths.Vec3(0.0, 0.5, 0.0)
             ),
             Vertex(
-                maths.Vec3(-self.size.x, -self.size.y,  self.size.z),
+                maths.Vec3(-self.size.x, -self.size.y, self.size.z),
                 maths.Vec3(-1.0, 0.0, 0.0),
                 maths.Vec3(0.0, 0.5, 0.0)
             ),
@@ -406,23 +405,23 @@ class CubeMesh(Mesh):
                 maths.Vec3(0.5, 0.5, 1.0)
             ),
             Vertex(
-                maths.Vec3( self.size.x, -self.size.y, -self.size.z),
+                maths.Vec3(self.size.x, -self.size.y, -self.size.z),
                 maths.Vec3(0.0, -1.0, 0.0),
                 maths.Vec3(0.5, 0.5, 1.0)
             ),
             Vertex(
-                maths.Vec3( self.size.x, -self.size.y,  self.size.z),
+                maths.Vec3(self.size.x, -self.size.y, self.size.z),
                 maths.Vec3(0.0, -1.0, 0.0),
                 maths.Vec3(0.5, 0.5, 1.0)
             ),
             Vertex(
-                maths.Vec3(-self.size.x, -self.size.y,  self.size.z),
+                maths.Vec3(-self.size.x, -self.size.y, self.size.z),
                 maths.Vec3(0.0, -1.0, 0.0),
                 maths.Vec3(0.5, 0.5, 1.0)
             ),
             # back
             Vertex(
-                maths.Vec3( self.size.x, -self.size.y, -self.size.z),
+                maths.Vec3(self.size.x, -self.size.y, -self.size.z),
                 maths.Vec3(0.0, 0.0, -1.0),
                 maths.Vec3(0.0, 0.0, 0.5)
             ),
@@ -432,12 +431,166 @@ class CubeMesh(Mesh):
                 maths.Vec3(0.0, 0.0, 0.5)
             ),
             Vertex(
-                maths.Vec3(-self.size.x,  self.size.y, -self.size.z),
+                maths.Vec3(-self.size.x, self.size.y, -self.size.z),
                 maths.Vec3(0.0, 0.0, -1.0),
                 maths.Vec3(0.0, 0.0, 0.5)
             ),
             Vertex(
-                maths.Vec3( self.size.x,  self.size.y, -self.size.z),
+                maths.Vec3(self.size.x, self.size.y, -self.size.z),
+                maths.Vec3(0.0, 0.0, -1.0),
+                maths.Vec3(0.0, 0.0, 0.5)
+            )
+        ]
+
+        indices: list[int]= [
+             0,  1,  2,  2,  3,  0,
+             4,  5,  6,  6,  7,  4,
+             8,  9, 10, 10, 11,  8,
+            12, 13, 14, 14, 15, 12,
+            16, 17, 18, 18, 19, 16,
+            20, 21, 22, 22, 23, 20
+        ]
+
+        super().__init__(vertices, indices)
+
+
+
+
+
+class CubeMeshAABB(Mesh):
+
+    __slots__= ('bounds',)
+    
+    def __init__(self, bounds: geometry.AABB3) -> None:
+        self.bounds: geometry.AABB3= bounds
+
+        minpt= self.bounds.get_min()
+        maxpt= self.bounds.get_max()
+
+        vertices: list[Vertex]= [
+            # front
+            Vertex(
+                maxpt,
+                maths.Vec3(0.0, 0.0, 1.0),
+                maths.Vec3(1.0, 0.5, 0.5)
+            ),
+            Vertex(
+                maths.Vec3(minpt.x,  maxpt.y,  maxpt.z),
+                maths.Vec3(0.0, 0.0, 1.0),
+                maths.Vec3(1.0, 0.5, 0.5)
+            ),
+            Vertex(
+                maths.Vec3(minpt.x, minpt.y, maxpt.z),
+                maths.Vec3(0.0, 0.0, 1.0),
+                maths.Vec3(1.0, 0.5, 0.5)
+            ),
+            Vertex(
+                maths.Vec3(maxpt.x, minpt.y, maxpt.z),
+                maths.Vec3(0.0, 0.0, 1.0),
+                maths.Vec3(1.0, 0.5, 0.5)
+            ),
+            # right
+            Vertex(
+                maxpt,
+                maths.Vec3(1.0, 0.0, 0.0),
+                maths.Vec3(0.5, 0.0, 0.0)
+            ),
+            Vertex(
+                maths.Vec3(maxpt.x, minpt.y, maxpt.z),
+                maths.Vec3(1.0, 0.0, 0.0),
+                maths.Vec3(0.5, 0.0, 0.0)
+            ),
+            Vertex(
+                maths.Vec3(maxpt.x, minpt.y, minpt.z),
+                maths.Vec3(1.0, 0.0, 0.0),
+                maths.Vec3(0.5, 0.0, 0.0)
+            ),
+            Vertex(
+                maths.Vec3(maxpt.x, maxpt.y, minpt.z),
+                maths.Vec3(1.0, 0.0, 0.0),
+                maths.Vec3(0.5, 0.0, 0.0)
+            ),
+            # top
+            Vertex(
+                maxpt,
+                maths.Vec3(0.0, 1.0, 0.0),
+                maths.Vec3(0.5, 1.0, 0.5)
+            ),
+            Vertex(
+                maths.Vec3(maxpt.x, maxpt.y, minpt.z),
+                maths.Vec3(0.0, 1.0, 0.0),
+                maths.Vec3(0.5, 1.0, 0.5)
+            ),
+            Vertex(
+                maths.Vec3(minpt.x, maxpt.y, minpt.z),
+                maths.Vec3(0.0, 1.0, 0.0),
+                maths.Vec3(0.5, 1.0, 0.5)
+            ),
+            Vertex(
+                maths.Vec3(minpt.x, maxpt.y, maxpt.z),
+                maths.Vec3(0.0, 1.0, 0.0),
+                maths.Vec3(0.5, 1.0, 0.5)
+            ),
+            # left
+            Vertex(
+                maths.Vec3(minpt.x, maxpt.y, maxpt.z),
+                maths.Vec3(-1.0, 0.0, 0.0),
+                maths.Vec3(0.0, 0.5, 0.0)
+            ),
+            Vertex(
+                maths.Vec3(minpt.x, maxpt.y, minpt.z),
+                maths.Vec3(-1.0, 0.0, 0.0),
+                maths.Vec3(0.0, 0.5, 0.0)
+            ),
+            Vertex(
+                minpt,
+                maths.Vec3(-1.0, 0.0, 0.0),
+                maths.Vec3(0.0, 0.5, 0.0)
+            ),
+            Vertex(
+                maths.Vec3(minpt.x, minpt.y, maxpt.z),
+                maths.Vec3(-1.0, 0.0, 0.0),
+                maths.Vec3(0.0, 0.5, 0.0)
+            ),
+            # bottom
+            Vertex(
+                minpt,
+                maths.Vec3(0.0, -1.0, 0.0),
+                maths.Vec3(0.5, 0.5, 1.0)
+            ),
+            Vertex(
+                maths.Vec3(maxpt.x, minpt.y, minpt.z),
+                maths.Vec3(0.0, -1.0, 0.0),
+                maths.Vec3(0.5, 0.5, 1.0)
+            ),
+            Vertex(
+                maths.Vec3(maxpt.x, minpt.y, maxpt.z),
+                maths.Vec3(0.0, -1.0, 0.0),
+                maths.Vec3(0.5, 0.5, 1.0)
+            ),
+            Vertex(
+                maths.Vec3(minpt.x, minpt.y, maxpt.z),
+                maths.Vec3(0.0, -1.0, 0.0),
+                maths.Vec3(0.5, 0.5, 1.0)
+            ),
+            # back
+            Vertex(
+                maths.Vec3(maxpt.x, minpt.y, minpt.z),
+                maths.Vec3(0.0, 0.0, -1.0),
+                maths.Vec3(0.0, 0.0, 0.5)
+            ),
+            Vertex(
+                minpt,
+                maths.Vec3(0.0, 0.0, -1.0),
+                maths.Vec3(0.0, 0.0, 0.5)
+            ),
+            Vertex(
+                maths.Vec3(minpt.x, maxpt.y, minpt.z),
+                maths.Vec3(0.0, 0.0, -1.0),
+                maths.Vec3(0.0, 0.0, 0.5)
+            ),
+            Vertex(
+                maths.Vec3(maxpt.x, maxpt.y, minpt.z),
                 maths.Vec3(0.0, 0.0, -1.0),
                 maths.Vec3(0.0, 0.0, 0.5)
             )

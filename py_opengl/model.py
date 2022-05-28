@@ -86,15 +86,25 @@ class Model:
 
 class CubeModel(Model):
 
-    __slots__= ('scale',)
+    __slots__= ('size',)
 
-    def __init__(self, scale: float= 1.0) -> None:
-        self.scale: float= scale
+    def __init__(self, size: maths.Vec3) -> None:
+        self.size: float= size
 
         super().__init__(
-            mesh.CubeMesh(maths.Vec3.create_from_value(scale))
+            mesh.CubeMesh(self.size)
         )
 
+class CubeModelAABB(Model):
+
+    __slots__= ('bounds',)
+
+    def __init__(self, bounds: geometry.AABB3) -> None:
+        self.bounds: geometry.AABB3= bounds
+
+        super().__init__(
+            mesh.CubeMeshAABB(self.bounds)
+        )
 
 # ---
 
@@ -106,7 +116,7 @@ class PyramidModel(Model):
         self.scale: float= scale
 
         super().__init__(
-            mesh.PyramidMesh(scale)
+            mesh.PyramidMesh(self.scale)
         )
 
 
@@ -121,5 +131,5 @@ class SphereModel(Model):
         self.radius: float= radius
 
         super().__init__(
-            mesh.SphereMesh(radius)
+            mesh.SphereMesh(self.radius)
         )

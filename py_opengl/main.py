@@ -16,6 +16,7 @@ from py_opengl import window
 from py_opengl import color
 from py_opengl import model
 from py_opengl import gjk
+from py_opengl import geometry
 
 # --- CALLBACKS
 
@@ -71,15 +72,22 @@ def main() -> None:
 
         shader0= shader.Shader('debug_shader.vert', 'debug_shader.frag')
 
-        shape0= model.CubeModel(0.5)
+        shape0= model.CubeModel(maths.Vec3(0.5, 0.5, 0.5))
         shape1= model.PyramidModel(0.3)
 
+        shape1.translate(maths.Vec3(1.5, 1.5, 0.0))
+
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
+      
+        shape2= model.CubeModelAABB(
+            shape0.compute_aabb().combine_with(shape1.compute_aabb())
+        )
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
             GL.glClearColor(*bgcolor.unit_values())
-            GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
+            # GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
+            GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
             GL.glEnable(GL.GL_DEPTH_TEST)
             GL.glEnable(GL.GL_CULL_FACE)
         
@@ -94,7 +102,8 @@ def main() -> None:
 
             shape1.rotate_euler(maths.Vec3(y= 10.0, z= 5.0) * (-4.2 * time.delta))
             shape1.draw(shader0, cam)
-
+            shape2.draw(shader0, cam)
+            
             if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_P)):
                 a0= shape0.compute_aabb()
                 a1= shape1.compute_aabb()
@@ -182,6 +191,8 @@ def main() -> None:
         logger.debug('CLOSED')
         shape0.delete()
         shape1.delete()
+        shape2.delete()
+
         shader0.delete()
         glfw.terminate()
 

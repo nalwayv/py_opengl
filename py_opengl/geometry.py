@@ -87,6 +87,13 @@ class AABB3:
         self.center.set_from(aabb.center)
         self.extents.set_from(aabb.extents)
 
+    def combine_with(self, a: 'AABB3') -> 'AABB3':
+        """Set self to the union of self and a"""
+        return AABB3.create_from_min_max(
+            maths.Vec3.create_from_min(self.get_min(), a.get_min()),
+            maths.Vec3.create_from_max(self.get_max(), a.get_max())
+        )
+
     def combined_from(self, a: 'AABB3', b: 'AABB3') -> None:
         """Set self to the union of a and b"""
         aabb= AABB3.create_from_min_max(
@@ -656,7 +663,7 @@ class Ray3:
         """
         return self.origin + (self.direction * t)
 
-    def cast_aabb(self, aabb: AABB3) -> tuple[bool, maths.Vec3]:
+    def cast_aabb(self, aabb: AABB3) -> tuple[bool, float]:
         pmin: maths.Vec3= aabb.get_min()
         pmax: maths.Vec3= aabb.get_max()
         tmin: float= maths.MIN_FLOAT
@@ -668,7 +675,7 @@ class Ray3:
                     self.origin.get_at(idx) < pmin.get_at(idx) or 
                     self.origin.get_at(idx) > pmax.get_at(idx)
                 ):
-                    return False, maths.Vec3.zero()
+                    return False, 0.0
             else:
                 inv: float= 1.0 / self.direction.get_at(idx)
 
@@ -685,38 +692,38 @@ class Ray3:
                     tmax= t2
 
                 if tmin > tmax:
-                    return False, maths.Vec3.zero()
+                    return False, 0.0
 
-        return True, self.get_hit(tmin)
+        return True, tmin
 
-    def cast_sphere(self, sph: Sphere3) -> tuple[bool, maths.Vec3]:
+    def cast_sphere(self, sph: Sphere3) -> tuple[bool, float]:
         a: maths.Vec3= sph.center - self.origin
         b: float= a.dot(self.direction)
         c: float= a.length_sqr() - maths.sqr(sph.radius)
 
         if c > 0.0 and b > 0.0:
-            return False, maths.Vec3.zero()
+            return False, 0.0
 
         d: float= maths.sqr(b) - c
         if d < 0.0:
-            return False, maths.Vec3.zero()
+            return False, 0.0
 
         t: float= -b - maths.sqrt(d)
         if t < 0.0:
             t= 0.0
 
-        return True, self.get_hit(t)
+        return True, t
 
-    def cast_plain(self, pl: Plane3) -> tuple[bool, maths.Vec3]:
+    def cast_plain(self, pl: Plane3) -> tuple[bool, float]:
         nd: float= self.direction.dot(pl.normal)
         pn: float= self.origin.dot(pl.normal)
 
         if nd >= 0.0:
-            return False, maths.Vec3.zero()
+            return False, 0.0
 
         t: float= (pl.direction - pn) / nd
 
         if t >= 0.0:
-            return False, maths.Vec3.zero()
+            return False, 0.0
 
-        return True, self.get_hit(t)
+        return True, t
