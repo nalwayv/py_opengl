@@ -74,14 +74,14 @@ class Keyboard:
     def is_key_held(self, key_state: tuple[int, int]) -> bool:
         """Helper function for key held down state
         """
-        return self.get_state(key_state) is KeyState.HELD
+        return self.get_state(key_state) == KeyState.HELD
 
     def is_key_pressed(self, key_state: tuple[int, int]) -> bool:
         """Helper function for key pressed state
         """
-        return self.get_state(key_state) is KeyState.PRESSED
+        return self.get_state(key_state) == KeyState.PRESSED
 
     def is_key_released(self, key_state: tuple[int, int]) -> bool:
         """Helper function for key released state
         """
-        return self.get_state(key_state) is KeyState.RELEASED
+        return self.get_state(key_state) == KeyState.RELEASED

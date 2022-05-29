@@ -16,7 +16,8 @@ from py_opengl import window
 from py_opengl import color
 from py_opengl import model
 from py_opengl import gjk
-from py_opengl import geometry
+from py_opengl import tmp
+# from py_opengl import geometry
 
 # --- CALLBACKS
 
@@ -73,21 +74,24 @@ def main() -> None:
         shader0= shader.Shader('debug_shader.vert', 'debug_shader.frag')
 
         shape0= model.CubeModel(maths.Vec3(0.5, 0.5, 0.5))
+        
         shape1= model.PyramidModel(0.3)
-
         shape1.translate(maths.Vec3(1.5, 1.5, 0.0))
 
+        shape2= model.CubeModel(maths.Vec3(0.2, 0.5, 0.2))
+        shape2.translate(maths.Vec3(-1.5, -1.0, -1))
+
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
-      
-        shape2= model.CubeModelAABB(
-            shape0.compute_aabb().combine_with(shape1.compute_aabb())
-        )
+
+        tr= tmp.Tree()
+        tr.add(shape0)
+        tr.add(shape1)
+        tr.add(shape2)
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
             GL.glClearColor(*bgcolor.unit_values())
-            # GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
-            GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
+            GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
             GL.glEnable(GL.GL_DEPTH_TEST)
             GL.glEnable(GL.GL_CULL_FACE)
         
@@ -102,16 +106,19 @@ def main() -> None:
 
             shape1.rotate_euler(maths.Vec3(y= 10.0, z= 5.0) * (-4.2 * time.delta))
             shape1.draw(shader0, cam)
+
             shape2.draw(shader0, cam)
-            
-            if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_P)):
-                a0= shape0.compute_aabb()
-                a1= shape1.compute_aabb()
-                
-                if a0.intersect_aabb(a1):
-                    print('AABB= True')
-                else:
-                    print(' ')
+
+            tr.debug(shader0, cam)
+
+            # if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_P)):
+            #     a0= shape0.compute_aabb()
+            #     a1= shape1.compute_aabb()
+
+            #     if a0.intersect_aabb(a1):
+            #         print('AABB= True')
+            #     else:
+            #         print(' ')
 
             if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_G)):
                 mksum= gjk.Minkowskisum(shape0, shape1)
@@ -192,7 +199,6 @@ def main() -> None:
         shape0.delete()
         shape1.delete()
         shape2.delete()
-
         shader0.delete()
         glfw.terminate()
 

@@ -10,8 +10,9 @@ from py_opengl import transform
 
 
 class GeometryType(Enum):
-    LINE= auto()
     AABB3= auto()
+    LINE= auto()
+    TRIANGLE= auto()
     SPHERE= auto()
     PLAIN= auto()
     FRUSTUM= auto()
@@ -131,9 +132,14 @@ class AABB3:
             extents= self.extents.copy()
         )
 
-    def set_from(self, other: 'AABB3') -> None:
-        self.center.set_from(other.center)
-        self.extents.set_from(other.extents)
+    # def set_from(self, other: 'AABB3') -> None:
+    #     self.center.x= other.center.x
+    #     self.center.y= other.center.y
+    #     self.center.z= other.center.z
+
+    #     self.extents.x= other.extents.x
+    #     self.extents.y= other.extents.y
+    #     self.extents.z= other.extents.z
 
     def perimeter(self) -> float:
         pmin: maths.Vec3= self.get_min()
@@ -173,7 +179,7 @@ class AABB3:
         return maths.Vec3.create_from_max(p0, p1)
 
     def is_degenerate(self) -> bool:
-        """Return true is self aabb is degenerate
+        """Return true if self aabb is degenerate
 
         check if its min points equil its max points
         """
@@ -274,6 +280,60 @@ class Line3:
 
     def edge(self) -> maths.Vec3:
         return (self.end - self.start)
+
+
+# --- Triangle
+
+
+class Triangle3:
+
+    __slots__= ('p0', 'p1', 'p2', 'TYPE')
+
+    def __init__(
+        self,
+        p0: maths.Vec3,
+        p1: maths.Vec3,
+        p2: maths.Vec3
+    ) -> None:
+        self.p0= p0.copy()
+        self.p1= p1.copy()
+        self.p2= p2.copy()
+        self.TYPE: GeometryType= GeometryType.TRIANGLE
+
+    def __hash__(self) -> int:
+        data: tuple[float]= (
+            self.p0.x, self.p0.y, self.p0.z,
+            self.p1.x, self.p1.y, self.p1.z,
+            self.p2.x, self.p2.y, self.p2.z
+        )
+        return hash(data)
+
+    def __eq__(self, other: 'Triangle3') -> bool:
+        if isinstance(other, self.__class__):
+            if(
+                self.p0.is_equil(other.p0) and
+                self.p1.is_equil(other.p1) and
+                self.p2.is_equil(other.p2) and
+                self.TYPE == other.TYPE
+            ):
+                return True
+        return False
+
+    def intersect_pt(self, pt: maths.Vec3):
+        bc= maths.Vec3.barycentric(
+            self.p0,
+            self.p1,
+            self.p2,
+            pt
+        )
+        # u: float= bc.x
+        v: float= bc.y
+        w: float= bc.z
+        return (
+            v >= 0.0 and
+            w >= 0.0 and
+            (v+w) <= 1.0
+        )
 
 
 # --- SPHERE

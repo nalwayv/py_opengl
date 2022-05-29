@@ -2,7 +2,7 @@
 """
 # TODO
 
-from typing import TypeVar, Optional
+from typing import TypeVar
 from py_opengl import maths
 from py_opengl import model
 
@@ -177,16 +177,16 @@ class Minkowskisum:
 
     def __init__(
         self,
-        mt0: Optional[MT]= None,
-        mt1: Optional[MT]= None
+        mt0: MT|None= None,
+        mt1: MT|None= None
     ) -> None:
-        self.m0: Optional[MT]= mt0
-        self.m1: Optional[MT]= mt1
+        self.m0: MT|None= mt0
+        self.m1: MT|None= mt1
 
     def get_support(self, dir: maths.Vec3) -> maths.Vec3:
         """Return support between model types based on direction
         """
-        if (self.m0 is None) or (self.m1 is None):
+        if (self.m0 == None) or (self.m1 == None):
             return maths.Vec3.zero()
 
         p0: maths.Vec3= self.m0.get_furthest_pt(dir)
@@ -199,7 +199,7 @@ class Minkowskisum:
 
         if model types are none then return unit x vec3
         """
-        if (self.m0 is None) or (self.m1 is None):
+        if (self.m0 == None) or (self.m1 == None):
             return maths.Vec3(x= 1.0)
 
         p0: maths.Vec3= self.m0.get_position()

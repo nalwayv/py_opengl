@@ -1,6 +1,5 @@
 """Model
 """
-from cgitb import reset
 from uuid import uuid4
 
 from py_opengl import maths
@@ -66,14 +65,14 @@ class Model:
         result.translated(self._transform.origin)
         return result
 
-    def draw(self, _shader: shader.Shader, cam: camera.Camera) -> None:
+    def draw(self, _shader: shader.Shader, cam: camera.Camera, debug:bool=False) -> None:
         """Draw
         """
         _shader.use()
         _shader.set_mat4('m_matrix', self._transform.get_transform_matrix())
         _shader.set_mat4('v_matrix', cam.get_view_matrix())
         _shader.set_mat4('p_matrix', cam.get_projection_matrix())
-        self._mesh.render()
+        self._mesh.render(debug)
 
     def delete(self) -> None:
         """Delete
@@ -95,6 +94,7 @@ class CubeModel(Model):
             mesh.CubeMesh(self.size)
         )
 
+
 class CubeModelAABB(Model):
 
     __slots__= ('bounds',)
@@ -106,7 +106,22 @@ class CubeModelAABB(Model):
             mesh.CubeMeshAABB(self.bounds)
         )
 
+
 # ---
+
+
+class TriModel(Model):
+    __slots__= ('tri')
+    def __init__(self, tri= geometry.Triangle3) -> None:
+        self.tri= tri
+
+        super().__init__(
+            mesh.Traingle(self.tri)
+        )
+
+
+# ---
+
 
 class PyramidModel(Model):
 

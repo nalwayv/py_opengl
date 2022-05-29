@@ -1,12 +1,19 @@
 """Mesh
 """
 # TODO
+from enum import Enum, auto
 from OpenGL import GL
 
 from py_opengl import utils
 from py_opengl import maths
 from py_opengl import geometry
 
+
+# ---
+
+class RenderMode(Enum):
+    DEBUG= auto()
+    TRIANGLES= auto()
 
 # ---
 
@@ -199,12 +206,17 @@ class Mesh:
     def get_normals(self) -> list[maths.Vec3]:
         return [v.normal for v in self.vertices]
 
-    def render(self):
+    def render(self, debug: bool):
         count: int=len(self.indices)
         if count == 0:
             return
         self._vao.bind()
-        GL.glDrawElements(GL.GL_TRIANGLES, count, GL.GL_UNSIGNED_INT, utils.c_cast(0))
+
+        if debug:
+            GL.glDrawElements(GL.GL_LINE_LOOP, count, GL.GL_UNSIGNED_INT, utils.c_cast(0))
+        else:
+            GL.glDrawElements(GL.GL_TRIANGLES, count, GL.GL_UNSIGNED_INT, utils.c_cast(0))
+
         self._vao.unbind()
 
     def delete(self) -> None:
@@ -299,6 +311,37 @@ class PyramidMesh(Mesh):
             3, 4, 2,
             2, 4, 1
         ]
+
+        super().__init__(vertices, indices)
+
+
+# ---
+
+
+class Traingle(Mesh):
+    def __init__(self, tri: geometry.Triangle3) -> None:
+        vertices: list[Vertex]=[
+            Vertex(
+                tri.p0,
+                maths.Vec3(0,0,0),
+                maths.Vec3(1,0,0)
+            ),
+
+            Vertex(
+                tri.p1,
+                maths.Vec3(0,0,0),
+                maths.Vec3(0,1,0)
+            ),
+
+            Vertex(
+                tri.p2,
+                maths.Vec3(0,0,0),
+                maths.Vec3(0,0,1)
+            ),
+
+        ]
+        
+        indices: list[int]= [0, 1, 2]
 
         super().__init__(vertices, indices)
 
@@ -452,8 +495,6 @@ class CubeMesh(Mesh):
         ]
 
         super().__init__(vertices, indices)
-
-
 
 
 

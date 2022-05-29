@@ -1,6 +1,6 @@
 """Window
 """
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import glfw
 
@@ -27,7 +27,7 @@ class GlWindow:
         self.width: int= width
         self.height: int= height
         self.title: str= title
-        self.window: Optional[Any]= glfw.create_window(
+        self.window: Any|None= glfw.create_window(
             self.width,
             self.height,
             self.title,
