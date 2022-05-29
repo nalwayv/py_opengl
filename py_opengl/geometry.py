@@ -723,7 +723,7 @@ class Ray3:
         """
         return self.origin + (self.direction * t)
 
-    def cast_aabb(self, aabb: AABB3) -> tuple[bool, float]:
+    def cast_aabb(self, aabb: AABB3) -> float:
         pmin: maths.Vec3= aabb.get_min()
         pmax: maths.Vec3= aabb.get_max()
         tmin: float= maths.MIN_FLOAT
@@ -735,7 +735,7 @@ class Ray3:
                     self.origin.get_at(idx) < pmin.get_at(idx) or 
                     self.origin.get_at(idx) > pmax.get_at(idx)
                 ):
-                    return False, 0.0
+                    return -1.0
             else:
                 inv: float= 1.0 / self.direction.get_at(idx)
 
@@ -752,38 +752,38 @@ class Ray3:
                     tmax= t2
 
                 if tmin > tmax:
-                    return False, 0.0
+                    return -1.0
 
-        return True, tmin
+        return tmin
 
-    def cast_sphere(self, sph: Sphere3) -> tuple[bool, float]:
+    def cast_sphere(self, sph: Sphere3) -> float:
         a: maths.Vec3= sph.center - self.origin
         b: float= a.dot(self.direction)
         c: float= a.length_sqr() - maths.sqr(sph.radius)
 
         if c > 0.0 and b > 0.0:
-            return False, 0.0
+            return -1.0
 
         d: float= maths.sqr(b) - c
         if d < 0.0:
-            return False, 0.0
+            return -1.0
 
         t: float= -b - maths.sqrt(d)
         if t < 0.0:
             t= 0.0
 
-        return True, t
+        return t
 
-    def cast_plain(self, pl: Plane3) -> tuple[bool, float]:
+    def cast_plain(self, pl: Plane3) -> float:
         nd: float= self.direction.dot(pl.normal)
         pn: float= self.origin.dot(pl.normal)
 
         if nd >= 0.0:
-            return False, 0.0
+            return -1.0
 
         t: float= (pl.direction - pn) / nd
 
         if t >= 0.0:
-            return False, 0.0
+            return t
 
-        return True, t
+        return -1.0

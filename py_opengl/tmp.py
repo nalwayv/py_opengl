@@ -299,6 +299,8 @@ class Tree:
 
     def _update_node(self, obj: T, node: Node) -> None:
         obj_bounds= obj.compute_aabb()
+        obj_bounds.expanded(0.1)
+
         check= node.aabb.contains_aabb(obj_bounds)
 
         if check:
@@ -312,8 +314,54 @@ class Tree:
         node.aabb= obj_bounds
         self._insert_leaf(node)
 
-    def debug(self, s: shader.Shader, c: camera.Camera):
+    def _is_valid(self, node: Node) -> bool:
+        if node == None:
+            return True
 
+        if node is self.root:
+            if node.parent != None:
+                return False
+
+
+        l= node.left
+        r= node.right
+
+        if node.is_leaf():
+            if l != None:
+                return False
+            if r != None:
+                return False
+            if node.height != 0:
+                return False
+            return True
+
+        h0= l.height
+        h1= r.height
+        h= 1 + maths.maxi(h0, h1)
+        if node.height != h:
+            return False
+        
+        aabb= geometry.AABB3.create_combined_from(
+            l.aabb,
+            r.aabb
+        )
+        if not aabb.get_min().is_equil(node.aabb.get_min()):
+            return False
+
+        if not aabb.get_max().is_equil(node.aabb.get_max()):
+            return False
+        
+        if not (l.parent is node):
+            return False
+        if not (r.parent is node):
+            return False
+
+        cl= self._is_valid(l)
+        cr= self._is_valid(r)
+
+        return cl and cr
+
+    def debug(self, s: shader.Shader, c: camera.Camera):
         for leaf in self.leaves.values():
             m= model.CubeModelAABB(leaf.aabb)
             m.draw(s, c, True)
@@ -338,3 +386,5 @@ class Tree:
         else:
             self._add_node(obj)
 
+    def is_valid(self):
+        return self._is_valid(self.root)

@@ -74,12 +74,13 @@ def main() -> None:
         shader0= shader.Shader('debug_shader.vert', 'debug_shader.frag')
 
         shape0= model.CubeModel(maths.Vec3(0.5, 0.5, 0.5))
-        
         shape1= model.PyramidModel(0.3)
-        shape1.translate(maths.Vec3(1.5, 1.5, 0.0))
-
         shape2= model.CubeModel(maths.Vec3(0.2, 0.5, 0.2))
-        shape2.translate(maths.Vec3(-1.5, -1.0, -1))
+        shape3= model.PyramidModel(0.5)
+
+        shape1.translate(maths.Vec3(1.5, 1.5, 0.0))
+        shape2.translate(maths.Vec3(0.5, -1.0, 0.3))
+        shape3.translate(maths.Vec3(0.0, 1.5, -0.3))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
 
@@ -87,7 +88,9 @@ def main() -> None:
         tr.add(shape0)
         tr.add(shape1)
         tr.add(shape2)
-
+        tr.add(shape3)
+        print(tr.is_valid())
+        
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
             GL.glClearColor(*bgcolor.unit_values())
@@ -108,6 +111,7 @@ def main() -> None:
             shape1.draw(shader0, cam)
 
             shape2.draw(shader0, cam)
+            shape3.draw(shader0, cam)
 
             tr.debug(shader0, cam)
 
@@ -149,6 +153,7 @@ def main() -> None:
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_U)):
                 shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
 
+            tr.update(shape1)
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
                 cam.move_by(camera.CameraDirection.IN, 1.4, time.delta)
@@ -199,6 +204,7 @@ def main() -> None:
         shape0.delete()
         shape1.delete()
         shape2.delete()
+        shape3.delete()
         shader0.delete()
         glfw.terminate()
 
