@@ -59,6 +59,14 @@ def gcd(x: int, y: int) -> int:
     return math.gcd(x, y)
 
 
+def swapf(x: float, y: float) -> tuple[float, float]:
+    return (float(y), float(x))
+
+
+def swapi(x: int, y: int) -> tuple[int, int]:
+    return (int(y), int(x))
+
+
 def is_zero(val: float) -> bool:
     return absf(val) <= EPSILON
 
@@ -92,6 +100,8 @@ def to_deg(radians: float) -> float:
 def sqr(val: float) -> float:
     return val * val
 
+def cube(val: float) -> float:
+    return val * val * val
 
 def sqrt(val: float) -> float:
     return math.sqrt(val)
@@ -514,6 +524,26 @@ class Vec3:
         """Create from single value
         """
         return Vec3(value, value, value)
+
+    @staticmethod
+    def catmullrom(a: 'Vec3', b: 'Vec3', c: 'Vec3', d: 'Vec3', dt: float) -> 'Vec3':
+        result: Vec3= Vec3(0.0, 0.0, 0.0)
+        if dt <= 0.0: 
+            result.set_from(b)
+        elif dt >= 1.0:
+            result.set_from(c)
+        else:
+            t2: float= sqr(dt)
+            t3: float= cube(dt)
+
+            v0: Vec3= a * (-0.5 * t3 + t2 - 0.5 * dt)
+            v1: Vec3= b * (1.5 * t3 + -2.5 * t2 + 1.0)
+            v2: Vec3= c * (-1.5 * t3 + 2.0 * t2 + 0.5 * dt)
+            v3: Vec3= d * (0.5 * t3 - 0.5 * t2)
+
+            result.setfrom(v0 + v1 + v2 + v3)
+
+        return result
 
     @staticmethod
     def barycentric(a: 'Vec3', b: 'Vec3', c: 'Vec3', d: 'Vec3'):

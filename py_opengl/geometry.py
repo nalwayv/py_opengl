@@ -132,15 +132,6 @@ class AABB3:
             extents= self.extents.copy()
         )
 
-    # def set_from(self, other: 'AABB3') -> None:
-    #     self.center.x= other.center.x
-    #     self.center.y= other.center.y
-    #     self.center.z= other.center.z
-
-    #     self.extents.x= other.extents.x
-    #     self.extents.y= other.extents.y
-    #     self.extents.z= other.extents.z
-
     def perimeter(self) -> float:
         pmin: maths.Vec3= self.get_min()
         pmax: maths.Vec3= self.get_max()
@@ -743,7 +734,7 @@ class Ray3:
                 t2: float= (pmax.get_at(idx) - self.origin.get_at(idx)) * inv
 
                 if t1 > t2:
-                    t1, t2= t2, t1
+                    t1, t2= maths.swapf(t1, t2)
 
                 if t1 > tmin:
                     tmin= t1
@@ -755,6 +746,47 @@ class Ray3:
                     return -1.0
 
         return tmin
+
+    def intersect_aabb(self, aabb: AABB3, length: float= maths.MAX_FLOAT) -> bool:
+        pmin: maths.Vec3= aabb.get_min()
+        pmax: maths.Vec3= aabb.get_max()
+
+        center: maths.Vec3= (pmin + pmax) * 0.5
+        extent: maths.Vec3= pmax - center
+
+        p0: maths.Vec3= self.origin.copy()
+        p1: maths.Vec3= self.direction * length
+        mpt: maths.Vec3= (p0 + p1) * 0.5
+        hpt: maths.Vec3= p1 - mpt
+
+        mpt.set_from(mpt - center)
+
+        adx: float= maths.absf(hpt.x)
+        if maths.absf(mpt.x) > extent.x + adx:
+            return False
+
+        ady: float= maths.absf(hpt.y)
+        if maths.absf(mpt.y) > extent.y + ady:
+            return False
+
+        adz: float= maths.absf(hpt.z)
+        if maths.absf(mpt.z) > extent.z + adz:
+            return False
+
+        adx += maths.EPSILON
+        ady += maths.EPSILON
+        adz += maths.EPSILON
+
+        if maths.absf(mpt.y * hpt.z - mpt.z * hpt.y) > extent.y * adz + extent.z * ady:
+            return False
+
+        if maths.absf(mpt.z * hpt.x - mpt.x * hpt.z) > extent.x * adz + extent.z * adx:
+            return False
+
+        if maths.absf(mpt.x * hpt.y - mpt.y * hpt.x) > extent.x * ady + extent.y * adx:
+            return False
+
+        return True
 
     def cast_sphere(self, sph: Sphere3) -> float:
         a: maths.Vec3= sph.center - self.origin

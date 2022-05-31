@@ -31,6 +31,9 @@ class Model:
                 return True
         return False
 
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__}:: {self.ID}'
+
     def set_position(self, v3: maths.Vec3) -> None:
         """Hard set position
         """
@@ -109,10 +112,27 @@ class CubeModelAABB(Model):
 
 # ---
 
+class LineModel(Model):
+    
+    __slots__= ('start', 'end')
+    
+    def __init__(self, start: maths.Vec3, end: maths.Vec3) -> None:
+        self.start= start
+        self.end= end
+
+        super().__init__(
+            mesh.LineMesh(self.start, self.end)
+        )
+
+
+# ---
+
 
 class TriModel(Model):
+    
     __slots__= ('tri')
-    def __init__(self, tri= geometry.Triangle3) -> None:
+    
+    def __init__(self, tri: geometry.Triangle3) -> None:
         self.tri= tri
 
         super().__init__(

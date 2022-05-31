@@ -17,7 +17,7 @@ from py_opengl import color
 from py_opengl import model
 from py_opengl import gjk
 from py_opengl import tmp
-# from py_opengl import geometry
+from py_opengl import geometry
 
 # --- CALLBACKS
 
@@ -73,24 +73,39 @@ def main() -> None:
 
         shader0= shader.Shader('debug_shader.vert', 'debug_shader.frag')
 
-        shape0= model.CubeModel(maths.Vec3(0.5, 0.5, 0.5))
+        shape0= model.CubeModel(maths.Vec3.create_from_value(0.5))
         shape1= model.PyramidModel(0.3)
         shape2= model.CubeModel(maths.Vec3(0.2, 0.5, 0.2))
-        shape3= model.PyramidModel(0.5)
+        shape3= model.CubeModel(maths.Vec3.create_from_value(0.4))
 
         shape1.translate(maths.Vec3(1.5, 1.5, 0.0))
-        shape2.translate(maths.Vec3(0.5, -1.0, 0.3))
-        shape3.translate(maths.Vec3(0.0, 1.5, -0.3))
+        shape2.translate(maths.Vec3(1.0, -1.0, 1.0))
+        shape3.translate(maths.Vec3(0.0, 1.0, -1.0))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
 
-        tr= tmp.Tree()
+        # tr= tmp.Tree0()
+        # tr.add(shape0)
+        # tr.add(shape1)
+        # tr.add(shape2)
+        # tr.add(shape3)
+        # ray= geometry.Ray3(maths.Vec3(0.0, 1.0, 5), maths.Vec3(z= -1))
+        # shape4= model.LineModel(ray.origin, ray.origin + ray.direction * 10)
+        # if tr.ray_cast(ray):
+        #     print('rc= True')
+        
+        tr= tmp.Tree1(4, 1)
         tr.add(shape0)
         tr.add(shape1)
         tr.add(shape2)
         tr.add(shape3)
-        print(tr.is_valid())
-        
+
+        ray= geometry.Ray3(maths.Vec3(0.0, 1.0, 5), maths.Vec3(z= -1))
+        ray_shape= model.LineModel(ray.origin, ray.origin + ray.direction * 10)
+        if tr.raycast_check(ray):
+            print('ray cast= true')
+            
+
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
             GL.glClearColor(*bgcolor.unit_values())
@@ -105,14 +120,14 @@ def main() -> None:
             # --
 
             shape0.rotate_euler(maths.Vec3(x= 10.0, y= 10.0) * (1.4 * time.delta))
-            shape0.draw(shader0, cam)
-
             shape1.rotate_euler(maths.Vec3(y= 10.0, z= 5.0) * (-4.2 * time.delta))
-            shape1.draw(shader0, cam)
 
+            shape0.draw(shader0, cam)
+            shape1.draw(shader0, cam)
             shape2.draw(shader0, cam)
             shape3.draw(shader0, cam)
 
+            ray_shape.draw(shader0, cam, True)
             tr.debug(shader0, cam)
 
             # if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_P)):
@@ -152,8 +167,6 @@ def main() -> None:
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_U)):
                 shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
-
-            tr.update(shape1)
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
                 cam.move_by(camera.CameraDirection.IN, 1.4, time.delta)
@@ -205,6 +218,7 @@ def main() -> None:
         shape1.delete()
         shape2.delete()
         shape3.delete()
+        ray_shape.delete()
         shader0.delete()
         glfw.terminate()
 
