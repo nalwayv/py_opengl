@@ -859,11 +859,16 @@ class Vec4:
 
     @staticmethod
     def create_from_v2(xy: Vec2, z: float, w: float) -> 'Vec4':
-        return Vec4(xy.x, xy.y, z, w)
+        x: float= xy.x
+        y: float= xy.y
+        return Vec4(x, y, z, w)
 
     @staticmethod
     def create_from_v3(xyz: Vec3, w: float= 0.0) -> 'Vec4':
-        return Vec4(xyz.x, xyz.y, xyz.z, w)
+        x: float= xyz.x
+        y: float= xyz.y
+        z: float= xyz.z
+        return Vec4(x, y, z, w)
 
     @staticmethod
     def create_from_value(value: float) -> 'Vec4':
@@ -1024,6 +1029,7 @@ class Vec4:
             is_zero(self.z) and
             is_zero(self.w)
         )
+        
 
 
 # --- MATRIX_3
@@ -2132,9 +2138,9 @@ class Mat4:
     def multiply_v4(self, v4: Vec4) -> Vec4:
         """Return matrix multiplyed by vec4
         """
-        x: float= v4.dot(self.col0()),
-        y: float= v4.dot(self.col1()),
-        z: float= v4.dot(self.col2()),
+        x: float= v4.dot(self.col0())
+        y: float= v4.dot(self.col1())
+        z: float= v4.dot(self.col2())
         w: float= v4.dot(self.col3())
 
         return Vec4(x, y, z, w)

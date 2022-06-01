@@ -129,7 +129,6 @@ def main() -> None:
             ray_shape.draw(shader0, cam, True)
             tr.debug(shader0, cam)
 
-
             if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_G)):
                 mksum= gjk.Minkowskisum(shape0, shape1)
                 gjk_check= gjk.GJK()
@@ -200,8 +199,8 @@ def main() -> None:
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
-    # except Exception as err:
-    #     logger.error(f"ERROR: {err}")
+    except Exception as err:
+        logger.error(f"ERROR: {err}")
 
     finally:
         logger.debug('CLOSED')
