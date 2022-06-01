@@ -79,36 +79,36 @@ class Camera:
                 u: maths.Vec3= self.right.cross(self.position + self.front)
                 if not u.is_unit():
                     u.to_unit()
-                u.scaled(sensativity * dt)
-                self.position.added(u)
+                u.scale(sensativity * dt)
+                self.position.add(u)
 
             case CameraDirection.DOWN:
                 d: maths.Vec3= (self.position + self.front).cross(self.right)
                 if not d.is_unit():
                     d.to_unit()
-                d.scaled(sensativity * dt)
-                self.position.added(d)
+                d.scale(sensativity * dt)
+                self.position.add(d)
 
             case CameraDirection.RIGHT:
                 r: maths.Vec3= (self.position + self.front).cross(self.up)
                 if not r.is_unit():
                     r.to_unit()
-                r.scaled(sensativity * dt)
-                self.position.added(r)
+                r.scale(sensativity * dt)
+                self.position.add(r)
 
             case CameraDirection.LEFT:
                 l: maths.Vec3= self.up.cross(self.position + self.front)
                 if not l.is_unit():
                     l.to_unit()
 
-                l.scaled(sensativity * dt)
-                self.position.added(l)
+                l.scale(sensativity * dt)
+                self.position.add(l)
 
             case CameraDirection.OUT:
-                self.position.subbed(self.front * (sensativity * dt))
+                self.position.subtract(self.front * (sensativity * dt))
 
             case CameraDirection.IN:
-                self.position.added(self.front * (sensativity * dt))
+                self.position.add(self.front * (sensativity * dt))
 
         self._update()
     

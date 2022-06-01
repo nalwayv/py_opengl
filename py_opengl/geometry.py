@@ -119,7 +119,7 @@ class AABB3:
         self.center.set_from(expand.center)
         self.extents.set_from(expand.extents)
 
-    def translated(self, v3: maths.Vec3) -> None:
+    def translate(self, v3: maths.Vec3) -> None:
         """Translate by
         """
         self.center.set_from(self.center + v3)

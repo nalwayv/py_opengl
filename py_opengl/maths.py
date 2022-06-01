@@ -325,7 +325,7 @@ class Vec2:
 
         return self * inv_sqrt(lsq)
 
-    def scaled(self, by: float) -> None:
+    def scale(self, by: float) -> None:
         """Scale self by
         """
         self.x *= by
@@ -593,21 +593,21 @@ class Vec3:
         """
         return Vec2(self.x, self.y)
 
-    def scaled(self, by: float) -> None:
+    def scale(self, by: float) -> None:
         """Scale self by
         """
         self.x *= by
         self.y *= by
         self.z *= by
 
-    def added(self, other: 'Vec3') -> None:
+    def add(self, other: 'Vec3') -> None:
         """Add other vec3's xyz values to self xyz values
         """
         self.x += other.x
         self.y += other.y
         self.z += other.z
 
-    def subbed(self, other: 'Vec3') -> None:
+    def subtract(self, other: 'Vec3') -> None:
         """Subtract other vec3's xyz values to self xyz values
         """
         self.x -= other.x
@@ -889,7 +889,7 @@ class Vec4:
         """
         return Vec3(self.x, self.y, self.z)
 
-    def scaled(self, by: float) -> None:
+    def scale(self, by: float) -> None:
         """Scale self by
         """
         self.x *= by
@@ -1865,7 +1865,7 @@ class Mat4:
             Vec4.create_from_v3(d, 1.0)
         )
 
-    def added(self, other: 'Mat4') -> None:
+    def add(self, other: 'Mat4') -> None:
         """Set self to the addition between self and other matrix
         """
         r0: Vec4= self.row0 + other.row0
@@ -1893,7 +1893,7 @@ class Mat4:
         self.row3.z = r3.z
         self.row3.w = r3.w
 
-    def multiplyed(self, other: 'Mat4') -> None:
+    def multiply(self, other: 'Mat4') -> None:
         """Set matrix to multipication between self with other matrix
         """
         self.row0.x= self.row0.dot(other.col0())
@@ -2203,19 +2203,19 @@ class Mat4:
 
     def set_at(self, row: int, col: int, value: float) -> float:
         if row == 0:
-            self.row0[col]= value
+            self.row0.set_at(col, value)
             return
 
         if row == 1:
-            self.row1[col]= value
+            self.row1.set_at(col, value)
             return
 
         if row == 2:
-            self.row2[col]= value
+            self.row2.set_at(col, value)
             return
 
         if row == 3:
-            self.row3[col]= value
+            self.row3.set_at(col, value)
             return
 
         raise Mat4Error('out of range')

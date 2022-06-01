@@ -405,9 +405,8 @@ class Tree0:
     def is_valid(self):
         return self._is_valid(self.root)
 
-    def ray_cast(self, ray: geometry.Ray3) -> list[Node0|None]:
-        direction= ray.direction
-        if direction.is_zero():
+    def ray_cast(self, ray: geometry.Ray3) -> bool:
+        if ray.direction.is_zero():
             return False
 
         que= [self.root]

@@ -89,8 +89,8 @@ def main() -> None:
         # tr.add(shape1)
         # tr.add(shape2)
         # tr.add(shape3)
-        # ray= geometry.Ray3(maths.Vec3(0.0, 1.0, 5), maths.Vec3(z= -1))
-        # shape4= model.LineModel(ray.origin, ray.origin + ray.direction * 10)
+        # ray= geometry.Ray3(maths.Vec3(1.5, 1.5, 5), maths.Vec3(z= -1))
+        # ray_shape= model.LineModel(ray.origin, ray.origin + ray.direction * 10)
         # if tr.ray_cast(ray):
         #     print('rc= True')
         
@@ -119,8 +119,7 @@ def main() -> None:
 
             # --
 
-            shape0.rotate_euler(maths.Vec3(x= 10.0, y= 10.0) * (1.4 * time.delta))
-            shape1.rotate_euler(maths.Vec3(y= 10.0, z= 5.0) * (-4.2 * time.delta))
+            shape1.rotate(1, maths.Vec3(x=0.2, y=0.2) * (1.4 * time.delta))
 
             shape0.draw(shader0, cam)
             shape1.draw(shader0, cam)
@@ -130,14 +129,6 @@ def main() -> None:
             ray_shape.draw(shader0, cam, True)
             tr.debug(shader0, cam)
 
-            # if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_P)):
-            #     a0= shape0.compute_aabb()
-            #     a1= shape1.compute_aabb()
-
-            #     if a0.intersect_aabb(a1):
-            #         print('AABB= True')
-            #     else:
-            #         print(' ')
 
             if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_G)):
                 mksum= gjk.Minkowskisum(shape0, shape1)
@@ -209,8 +200,8 @@ def main() -> None:
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
-    except Exception as err:
-        logger.error(f"ERROR: {err}")
+    # except Exception as err:
+    #     logger.error(f"ERROR: {err}")
 
     finally:
         logger.debug('CLOSED')
