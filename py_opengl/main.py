@@ -15,10 +15,10 @@ from py_opengl import camera
 from py_opengl import window
 from py_opengl import color
 from py_opengl import model
-from py_opengl import gjk
-from py_opengl import tmp
+# from py_opengl import gjk
+# from py_opengl import tmp
 from py_opengl import geometry
-
+from py_opengl import octree
 # --- CALLBACKS
 
 
@@ -83,28 +83,17 @@ def main() -> None:
         shape3.translate(maths.Vec3(0.0, 1.0, -1.0))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
-
-        # tr= tmp.Tree0()
-        # tr.add(shape0)
-        # tr.add(shape1)
-        # tr.add(shape2)
-        # tr.add(shape3)
-        # ray= geometry.Ray3(maths.Vec3(1.5, 1.5, 5), maths.Vec3(z= -1))
-        # ray_shape= model.LineModel(ray.origin, ray.origin + ray.direction * 10)
-        # if tr.ray_cast(ray):
-        #     print('rc= True')
         
-        tr= tmp.Tree1(4, 1)
-        tr.add(shape0)
-        tr.add(shape1)
-        tr.add(shape2)
-        tr.add(shape3)
+        tree= octree.Octree(4, 1, maths.Vec3.zero())
+        tree.add(shape0)
+        tree.add(shape1)
+        tree.add(shape2)
+        tree.add(shape3)
 
         ray= geometry.Ray3(maths.Vec3(0.0, 1.0, 5), maths.Vec3(z= -1))
         ray_shape= model.LineModel(ray.origin, ray.origin + ray.direction * 10)
-        if tr.raycast_check(ray):
+        if tree.raycast_hit(ray):
             print('ray cast= true')
-            
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -119,7 +108,7 @@ def main() -> None:
 
             # --
 
-            shape1.rotate(1, maths.Vec3(x=0.2, y=0.2) * (1.4 * time.delta))
+            shape1.rotate(maths.Vec3(x=30, z=25) * (1.4 * time.delta))
 
             shape0.draw(shader0, cam)
             shape1.draw(shader0, cam)
@@ -127,19 +116,19 @@ def main() -> None:
             shape3.draw(shader0, cam)
 
             ray_shape.draw(shader0, cam, True)
-            tr.debug(shader0, cam)
+            tree.debug(shader0, cam)
 
-            if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_G)):
-                mksum= gjk.Minkowskisum(shape0, shape1)
-                gjk_check= gjk.GJK()
-                check= gjk_check.detect(mksum)
-                if check:
-                    print('GJK= True')
-                else:
-                    print(' ')
+            # if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_G)):
+            #     mksum= gjk.Minkowskisum(shape0, shape1)
+            #     gjk_check= gjk.GJK()
+            #     check= gjk_check.detect(mksum)
+            #     if check:
+            #         print('GJK= True')
+            #     else:
+            #         print(' ')
 
             # --
-
+            cam_speed= 2.0
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_I)):
                 shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
         
@@ -159,23 +148,22 @@ def main() -> None:
                 shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
-                cam.move_by(camera.CameraDirection.IN, 1.4, time.delta)
+                cam.move_by(camera.CameraDirection.IN, cam_speed, time.delta)
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_S)):
-                cam.move_by(camera.CameraDirection.OUT, 1.4, time.delta)
+                cam.move_by(camera.CameraDirection.OUT, cam_speed, time.delta)
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_A)):
-                cam.move_by(camera.CameraDirection.LEFT, 1.4, time.delta)
+                cam.move_by(camera.CameraDirection.LEFT, cam_speed, time.delta)
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_D)):
-                cam.move_by(camera.CameraDirection.RIGHT, 1.4, time.delta)
+                cam.move_by(camera.CameraDirection.RIGHT, cam_speed, time.delta)
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_E)):
-                cam.move_by(camera.CameraDirection.UP, 1.4, time.delta)
+                cam.move_by(camera.CameraDirection.UP, cam_speed, time.delta)
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_Q)):
-                cam.move_by(camera.CameraDirection.DOWN, 1.4, time.delta)
-
+                cam.move_by(camera.CameraDirection.DOWN, cam_speed, time.delta)
 
             if ms.is_button_held(
                 glwin.get_mouse_state(glfw.MOUSE_BUTTON_LEFT)

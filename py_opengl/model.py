@@ -37,35 +37,35 @@ class Model:
     def set_position(self, v3: maths.Vec3) -> None:
         """Hard set position
         """
-        self._transform.translation.set_from(v3)
+        self._transform.position.set_from(v3)
 
     def get_position(self) -> maths.Vec3:
         """Return current position
         """
-        return self._transform.translation
+        return self._transform.position
 
     def translate(self, v3: maths.Vec3) -> None:
         """Translate model by 'xyz'
         """
         self._transform.translate(v3)
 
-    def rotate(self, angle_deg: float, unit_axis: maths.Vec3) -> None:
+    def rotate(self, euler: maths.Vec3) -> None:
         """Rotate model by 'xyz'
         """
-        self._transform.rotate(angle_deg, unit_axis)
+        self._transform.rotate_euler(euler)
 
     def get_furthest_pt(self, dir: maths.Vec3) -> maths.Vec3:
         """Return furthest pt
         """
         result= self._mesh.get_furthest_pt(dir)
-        result.set_from(result + self._transform.translation)
+        result.set_from(result + self._transform.position)
         return result
         
     def compute_aabb(self) -> geometry.AABB3:
         """Compute AABB3
         """
         result= self._mesh.compute_aabb()
-        result.translate(self._transform.translation)
+        result.translate(self._transform.position)
         return result
 
     def draw(self, _shader: shader.Shader, cam: camera.Camera, debug:bool=False) -> None:
