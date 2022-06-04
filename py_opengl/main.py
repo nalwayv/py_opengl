@@ -15,6 +15,7 @@ from py_opengl import camera
 from py_opengl import window
 from py_opengl import color
 from py_opengl import model
+from py_opengl import geometry
 from py_opengl import octree
 # --- CALLBACKS
 
@@ -74,6 +75,7 @@ def main() -> None:
         shape1= model.PyramidModel(0.3)
         shape2= model.CubeModel(maths.Vec3(0.2, 0.5, 0.2))
         shape3= model.CubeModel(maths.Vec3.create_from_value(0.4))
+        shape4= model.LineModel(maths.Vec3(x= 1.5, y=1.5, z= -10), maths.Vec3(z= 1.0)  * 100)
 
         shape0.translate(maths.Vec3(-0.5, 0.0, 0.0))
         shape1.translate(maths.Vec3(1.5, 1.5, -2.5))
@@ -82,15 +84,17 @@ def main() -> None:
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
 
-        tree= octree.Octree(1, 1, maths.Vec3.zero())
+        tree= octree.Octree(1, 0.5, maths.Vec3.zero())
         tree.add(shape0)
         tree.add(shape1)
         tree.add(shape2)
         tree.add(shape3)
 
-        tree.remove(shape0)    
-        tree.remove(shape1)    
-        tree.remove(shape2)    
+        if check := tree.raycast(
+            geometry.Ray3(shape4.start, maths.Vec3(z= 1.0))
+        ):
+            print('yes')
+            print(check)
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -111,6 +115,7 @@ def main() -> None:
             shape1.draw(shader0, cam)
             shape2.draw(shader0, cam)
             shape3.draw(shader0, cam)
+            shape4.draw(shader0, cam, True)
 
             tree.debug(shader0, cam)
 
@@ -192,6 +197,7 @@ def main() -> None:
         shape1.delete()
         shape2.delete()
         shape3.delete()
+        shape4.delete()
         shader0.delete()
         glfw.terminate()
 

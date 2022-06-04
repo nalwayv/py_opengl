@@ -343,3 +343,23 @@ class Octree:
             dbg_model= model.CubeModelAABB(current.aabb)
             dbg_model.draw(s, c, True)
             dbg_model.delete()
+
+    def raycast(self,ray: geometry.Ray3) -> list[T|None]:
+        result: list[T|None]= []
+        que: list[Node|None]= [self.root]
+
+        while que:
+            current= que.pop(0)
+            if current == None:
+                continue
+            if current.has_objs():
+                for obj in current.objs:
+                    aabb= obj.compute_aabb()
+                    t= ray.cast_aabb(aabb)
+                    if t >= 0:
+                        result.append(obj)
+            if current.has_children():
+                for child in current.children:
+                    que.append(child)
+
+        return result
