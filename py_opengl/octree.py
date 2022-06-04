@@ -1,6 +1,6 @@
 """Octree
 """
-from typing import TypeVar, Final
+from typing import TypeVar, Final, NamedTuple
 
 from py_opengl import geometry
 from py_opengl import maths
@@ -20,6 +20,21 @@ PADDING: Final[float]= 1.0
 # ---
 
 
+class NodeObj:
+    __slots__= ('obj', 'aabb')
+
+    def __init__(self) -> None:
+        self.obj: T|None= None
+        self.aabb:geometry.AABB3= geometry.AABB3()
+
+    @staticmethod
+    def create_from_values(obj: T, aabb: geometry.AABB3) -> 'NodeObj':
+        nc= NodeObj()
+        nc.obj= obj
+        nc.aabb= aabb
+        return nc
+
+
 class Node:
 
     __slots__= (
@@ -34,7 +49,8 @@ class Node:
     def __init__(self) -> None:
         self.aabb: geometry.AABB3= geometry.AABB3()
         self.children: list['Node'|None]= []
-        self.objs: list[T|None]= []
+        # self.objs: list[T|None]= []
+        self.objs1: list[NodeObj|None]= []
         self.min_size: float= 0.0
         self.max_size: float= 0.0
         self.center: maths.Vec3= maths.Vec3()
@@ -59,7 +75,7 @@ class Node:
         return len(self.children) != 0
 
     def has_objs(self) -> bool:
-        return len(self.objs) != 0
+        return len(self.objs1) != 0
 
     def best_fit(self, v3: maths.Vec3) -> int:
         result: int= 0
@@ -344,7 +360,43 @@ class Octree:
             dbg_model.draw(s, c, True)
             dbg_model.delete()
 
-    def raycast(self,ray: geometry.Ray3) -> list[T|None]:
+    def _closest(self, objs: list[T|None], ray: geometry.Ray3) -> T|None:
+        ct: float= -1.0
+        result: T|None= None
+
+        if not objs:
+            return None
+
+        for obj in objs:
+            aabb: geometry.AABB3= obj.compute_aabb()
+            t: float= ray.cast_aabb(aabb)
+            if t < 0:
+                continue
+            if ct < 0 or t < ct:
+                ct= t
+                result=obj
+
+        return result
+
+    def raycast_closest(self, ray: geometry.Ray3) -> T|None:
+        que: list[Node|None]= [self.root]
+        while que:
+            current=que.pop(0)
+            if current == None:
+                continue
+            aabb= current.aabb
+            t= ray.cast_aabb(aabb)
+            if t > 0:
+                if not current.has_children():
+                    if current.has_objs():
+                        if hit:= self._closest(current.objs, ray):
+                            return hit
+                else:
+                    for child in current.children:
+                        que.append(child)
+        return None
+
+    def raycast(self, ray: geometry.Ray3) -> list[T|None]:
         result: list[T|None]= []
         que: list[Node|None]= [self.root]
 

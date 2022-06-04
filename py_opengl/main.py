@@ -75,12 +75,12 @@ def main() -> None:
         shape1= model.PyramidModel(0.3)
         shape2= model.CubeModel(maths.Vec3(0.2, 0.5, 0.2))
         shape3= model.CubeModel(maths.Vec3.create_from_value(0.4))
-        shape4= model.LineModel(maths.Vec3(x= 1.5, y=1.5, z= -10), maths.Vec3(z= 1.0)  * 100)
+        shape4= model.LineModel(maths.Vec3(z= -10), maths.Vec3(z= 1.0)  * 100)
 
-        shape0.translate(maths.Vec3(-0.5, 0.0, 0.0))
+        shape0.translate(maths.Vec3(0.0, 0.0, 0.0))
         shape1.translate(maths.Vec3(1.5, 1.5, -2.5))
         shape2.translate(maths.Vec3(2.5, -2.0, 2.0))
-        shape3.translate(maths.Vec3(0.0, 1.0, -1.0))
+        shape3.translate(maths.Vec3(0.0, 0.0, -2.0))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
 
@@ -90,11 +90,16 @@ def main() -> None:
         tree.add(shape2)
         tree.add(shape3)
 
-        if check := tree.raycast(
-            geometry.Ray3(shape4.start, maths.Vec3(z= 1.0))
-        ):
-            print('yes')
-            print(check)
+        # if check := tree.raycast(
+        #     geometry.Ray3(shape4.start, maths.Vec3(z= 1.0))
+        # ):
+        #     print('yes')
+        #     print(check)
+
+        if check := tree.raycast_closest(geometry.Ray3(
+            shape4.start, maths.Vec3(z= 1.0)
+        )):
+            print(f'yes: {check}')
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
