@@ -748,6 +748,14 @@ class Vec3:
         """
         return sqrt(self.length_sqr())
 
+    def dist_sqr(self, other: 'Vec3') -> float:
+        """
+        """
+        x: float= other.x - self.x
+        y: float= other.y - self.y
+        z: float= other.z - self.z
+        return sqr(x) + sqr(y) + sqr(z)
+        
     def dot(self, other: 'Vec3') -> float:
         """Return the dot product between self and other vec3
         """

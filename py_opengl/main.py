@@ -15,9 +15,6 @@ from py_opengl import camera
 from py_opengl import window
 from py_opengl import color
 from py_opengl import model
-# from py_opengl import gjk
-# from py_opengl import tmp
-from py_opengl import geometry
 from py_opengl import octree
 # --- CALLBACKS
 
@@ -78,22 +75,22 @@ def main() -> None:
         shape2= model.CubeModel(maths.Vec3(0.2, 0.5, 0.2))
         shape3= model.CubeModel(maths.Vec3.create_from_value(0.4))
 
-        shape1.translate(maths.Vec3(1.5, 1.5, 0.0))
-        shape2.translate(maths.Vec3(1.0, -1.0, 1.0))
+        shape0.translate(maths.Vec3(-0.5, 0.0, 0.0))
+        shape1.translate(maths.Vec3(1.5, 1.5, -2.5))
+        shape2.translate(maths.Vec3(2.5, -2.0, 2.0))
         shape3.translate(maths.Vec3(0.0, 1.0, -1.0))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
-        
-        tree= octree.Octree(4, 1, maths.Vec3.zero())
+
+        tree= octree.Octree(1, 1, maths.Vec3.zero())
         tree.add(shape0)
         tree.add(shape1)
         tree.add(shape2)
         tree.add(shape3)
 
-        ray= geometry.Ray3(maths.Vec3(0.0, 1.0, 5), maths.Vec3(z= -1))
-        ray_shape= model.LineModel(ray.origin, ray.origin + ray.direction * 10)
-        if tree.raycast_hit(ray):
-            print('ray cast= true')
+        tree.remove(shape0)    
+        tree.remove(shape1)    
+        tree.remove(shape2)    
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -115,7 +112,6 @@ def main() -> None:
             shape2.draw(shader0, cam)
             shape3.draw(shader0, cam)
 
-            ray_shape.draw(shader0, cam, True)
             tree.debug(shader0, cam)
 
             # if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_G)):
@@ -187,8 +183,8 @@ def main() -> None:
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
-    except Exception as err:
-        logger.error(f"ERROR: {err}")
+    # except Exception as err:
+    #     logger.error(f"ERROR: {err}")
 
     finally:
         logger.debug('CLOSED')
@@ -196,7 +192,6 @@ def main() -> None:
         shape1.delete()
         shape2.delete()
         shape3.delete()
-        ray_shape.delete()
         shader0.delete()
         glfw.terminate()
 

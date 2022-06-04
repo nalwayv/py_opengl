@@ -405,7 +405,7 @@ class Tree0:
     def is_valid(self):
         return self._is_valid(self.root)
 
-    def ray_cast(self, ray: geometry.Ray3) -> list[T|None]:
+    def raycast_hit(self, ray: geometry.Ray3) -> list[T|None]:
         result: list[T|None]= []
 
         if ray.direction.is_zero():
@@ -425,3 +425,263 @@ class Tree0:
                     result.append(current.obj)    
 
         return result
+
+
+    def foo(self, ab: geometry.AABB3) -> T|None:
+        result:T|None= None
+        que=[self.root]
+        min_dist: float= maths.MAX_FLOAT
+        
+        p0= ab.center
+
+        while que:
+            current= que.pop(0)
+            p1= current.aabb.center
+
+            dist= p0.dist_sqr(p1)
+            if dist < min_dist:
+                min_dist= dist
+                result= current.obj
+
+
+            if current.aabb.perimeter() <= ab.perimeter():
+                if current.left != None:
+                    que.append(current.left)
+
+                if current.right != None:
+                    p2= current.right.aabb.center
+                    dist= p0.dist_sqr(p2)
+                    if min_dist > dist:
+                        que.append(current.right)
+            else:
+                if current.right != None:
+                    que.append(current.right)
+                if current.left != None:
+                    p2= current.left.aabb.center
+                    dist= p0.dist_sqr(p2)
+                    if min_dist > dist:
+                        que.append(current.left)
+
+        return result
+
+
+# --- qtree
+
+
+class Node1:
+
+    def __init__(self) -> None:
+        self.aabb: geometry.AABB3= geometry.AABB3()
+        self.children: list['Node1'|None]= []
+        self.objs: list[T|None]= []
+        self.max_objs: int= 3
+        self.margin: float= 0.0
+        self.min_size: float= 0.0
+        self.max_size: float= 0.0
+        self.extent: float= 0.0
+        self.center: maths.Vec3= maths.Vec3()
+
+    @staticmethod
+    def init(base_len: float, min_size: float, margin: float, center: maths.Vec3) -> 'Node1':
+        node= Node1()
+        node.set_up(base_len, min_size, margin, center)
+        return node
+
+    def set_up(self, base_len: float, min_size: float, margin: float, center: maths.Vec3):
+        self.max_size= base_len
+        self.min_size = min_size
+        self.margin= margin 
+        self.center= center
+        self.aabb= geometry.AABB3(
+            self.center,
+            maths.Vec3.create_from_value(self.margin * self.max_size)
+        )
+
+
+    def _split(self):
+        q: float= self.max_size * 0.25
+        l: float= self.max_size * 0.5
+        m: float= self.margin
+        ms: float= self.min_size
+        cen: maths.Vec3= self.center
+
+        self.children= [None]*8
+
+        self.children[0]= Node1.init(l, ms, m, cen + maths.Vec3(-q,  q, -q))
+        self.children[1]= Node1.init(l, ms, m, cen + maths.Vec3( q,  q, -q))
+        self.children[2]= Node1.init(l, ms, m, cen + maths.Vec3(-q,  q,  q))
+        self.children[3]= Node1.init(l, ms, m, cen + maths.Vec3( q,  q,  q))
+        self.children[4]= Node1.init(l, ms, m, cen + maths.Vec3(-q, -q, -q))
+        self.children[5]= Node1.init(l, ms, m, cen + maths.Vec3( q, -q, -q))
+        self.children[6]= Node1.init(l, ms, m, cen + maths.Vec3(-q, -q,  q))
+        self.children[7]= Node1.init(l, ms, m, cen + maths.Vec3( q, -q,  q))
+
+    def _best_fit(self, v3: maths.Vec3) -> int:
+        result: int= 0
+        if v3.x <= self.center.x:
+            result += 1
+        if v3.y >= self.center.y:
+            result += 4
+        if v3.z >= self.center.z:
+            result += 2
+        return result
+    
+    def _has_childern(self) -> bool:
+        return len(self.children) > 0
+
+    def _add(self, obj: T, obj_aabb: geometry.AABB3):
+        if not self._has_childern():
+            if len(self.objs) < self.max_objs or (self.max_size * 0.5) < self.min_size:
+                self.objs.append(obj)
+                return
+
+            if len(self.children) == 0:
+                self._split()
+
+                n= len(self.objs)-1
+                while n >= 0:
+                    current= self.objs[n]
+                    bounds= current.compute_aabb()
+                    bf: int= self._best_fit(bounds.center)
+
+                    if self.children[bf].aabb.contains_aabb(bounds):
+                        self.children[bf]._add(current, bounds)
+                        self.objs.remove(current)
+                    n -= 1
+                
+        bf: int= self._best_fit(obj_aabb.center)
+        if self.children[bf].aabb.contains_aabb(obj_aabb):
+            self.children[bf]._add(obj, obj_aabb)
+        else:
+            self.objs.append(obj)
+
+    def add(self, obj: T) -> bool:
+        obj_aabb= obj.compute_aabb()
+        if not self.aabb.contains_aabb(obj_aabb):
+            return False
+        self._add(obj, obj_aabb)
+        return True
+
+    def _should_merge(self) -> bool:
+        count= len(self.objs)
+        if self.children:
+            for child in self.children:
+                if child.children:
+                    return False
+                count += len(child.objs)
+        return count <= self.max_objs
+
+    def _merge(self) -> None:
+        for child in self.children:
+            for obj in child.objs[::-1]:
+                self.objs.append(obj)
+        self.children.clear()
+
+    def _remove(self, obj: T, obj_aabb: geometry.AABB3) -> None:
+        check: bool= False
+        for o in self.objs:
+            if o is obj:
+                self.objs.remove(obj)
+                check= True
+                break
+
+        if not check and self.children:
+            bf= self._best_fit(obj_aabb.center)
+            child= self.children[bf]
+            child._remove(obj, obj_aabb)
+
+        if check and self.children:
+            if self._should_merge():
+                self._merge()
+
+    def remove(self, obj: T) -> bool:
+        aabb= obj.compute_aabb()
+        if not self.aabb.contains_aabb(aabb):
+            return False
+        self._remove(obj, aabb)
+        return True
+
+    def debug(self, s: shader.Shader, c: camera.Camera):
+        que: list[Node1|None]= [self]
+        while que:
+            current=que.pop(0)
+
+            if current.children:
+                for child in current.children:
+                    que.append(child)
+
+            for obj in current.objs:
+                obj_aabb= obj.compute_aabb()
+                obj_aabb.expanded(0.1)
+                m= model.CubeModelAABB(obj_aabb)
+                m.draw(s, c, True)
+                m.delete()
+            m= model.CubeModelAABB(current.aabb)
+            m.draw(s, c, True)
+            m.delete()
+
+
+    def _info(self):
+        if self.children:
+            for child in self.children:
+                child._info()
+
+        print(len(self.objs))
+
+    def _find_closest(self, objs: list[T|None], ray: geometry.Ray3) -> T|None:
+        if len(objs) == 0:
+            return None
+
+        result: T|None= None
+        closest_t: float= -1.0
+
+        for obj in objs:
+            t: float= ray.cast_aabb(obj.compute_aabb())
+            if t < 0:
+                continue
+            
+            if closest_t < 0 or t < closest_t:
+                closest_t= t
+                result= obj
+
+        return result
+
+    def _raycast(self, ray: geometry.Ray3) -> T|None:
+        t: float= ray.cast_aabb(self.aabb)
+        if t >= 0:
+            if not self.children:
+                return self._find_closest(self.objs, ray)
+            else:
+                tt: list[T|None]= []
+
+                for child in self.children:
+                    obj: T|None= child._raycast(ray)    
+                    if obj != None:
+                        tt.append(obj)
+                print(tt)
+                return self._find_closest(tt, ray)
+
+        return None
+
+class Tree1:
+    def __init__(self, max_size: float, min_size: float) -> None:
+        self.root: Node1|None = Node1()
+        self.root.set_up(max_size, min_size, 1.0, maths.Vec3())
+
+    def add(self, obj: T) -> bool:
+        return self.root.add(obj)
+
+    def remove(self, obj: T) -> bool:
+        return self.root.remove(obj)
+
+    def raycast_check(self, ray: geometry.Ray3) -> bool:
+        return self.root.raycast_check(ray)
+
+    def debug(self, s: shader.Shader, c: camera.Camera):
+        self.root.debug(s, c)
+
+    def info(self):
+        self.root._info()
+
+    def raycast(self, ray: geometry.Ray3) -> T|None:
+        return self.root._raycast(ray)
