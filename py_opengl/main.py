@@ -116,7 +116,7 @@ def main() -> None:
             tree.debug(shader0, cam)
 
             # --
-
+       
             cam_speed= 2.0
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_I)):
                 shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
@@ -171,13 +171,13 @@ def main() -> None:
                     cam.rotate(camera.CameraRotation.YAW, new_mp.x, 0.2)
                     cam.rotate(camera.CameraRotation.PITCH, new_mp.y, 0.2)
 
-            # --
+            # # --
 
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
-    # except Exception as err:
-    #     logger.error(f"ERROR: {err}")
+    except Exception as err:
+        logger.error(f"ERROR: {err}")
 
     finally:
         logger.debug('CLOSED')

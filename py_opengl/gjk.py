@@ -21,7 +21,7 @@ class SimplexError(Exception):
 
 class Simplex:
 
-    __slots__= ('_pts', '_count')
+    __slots__= ('_pts', )
 
     def __init__(self) -> None:
         self._pts: list[maths.Vec3]= []
@@ -177,11 +177,11 @@ class Minkowskisum:
 
     def __init__(
         self,
-        mt0: MT|None= None,
-        mt1: MT|None= None
+        m0: MT|None= None,
+        m1: MT|None= None
     ) -> None:
-        self.m0: MT|None= mt0
-        self.m1: MT|None= mt1
+        self.m0: MT|None= m0
+        self.m1: MT|None= m1
 
     def get_support(self, dir: maths.Vec3) -> maths.Vec3:
         """Return support between model types based on direction
@@ -217,7 +217,7 @@ class Minkowskisum:
 
 class GJK:
 
-    __slots__= ('simplex', 'iterations')
+    __slots__= ('iterations', )
 
     def __init__(self) -> None:
         self.iterations: int= 30
