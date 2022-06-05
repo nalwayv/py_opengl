@@ -1,5 +1,6 @@
 """Camera
 """
+from typing import Final
 from enum import Enum, auto
 
 from py_opengl import maths
@@ -39,7 +40,6 @@ class CameraZoom(Enum):
     DEFAULT= auto()
 
 
-
 class Camera:
     
     __slots__= (
@@ -67,7 +67,7 @@ class Camera:
         self.znear: float= 0.01
         self.zfar: float= 1000.0
 
-    def move_by(self, dir: CameraDirection, sensativity: float, dt: float) -> None:
+    def translate(self, dir: CameraDirection, sensativity: float, dt: float) -> None:
         """Move camera
 
         Raises
@@ -112,7 +112,7 @@ class Camera:
 
         self._update()
     
-    def rotate_by(self, dir: CameraRotation, value: float, sensativity: float) -> None:
+    def rotate(self, dir: CameraRotation, value: float, sensativity: float) -> None:
         """Rotate camera by value
 
         Raises
@@ -131,7 +131,7 @@ class Camera:
 
         self._update()
 
-    def zoom_by(self, dir: CameraZoom, value: float, sensativity: float) -> None:
+    def zoom(self, dir: CameraZoom, value: float, sensativity: float) -> None:
         """Zoom camera by value
             
         Raises

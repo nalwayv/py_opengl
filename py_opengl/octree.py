@@ -20,21 +20,6 @@ PADDING: Final[float]= 1.0
 # ---
 
 
-class NodeObj:
-    __slots__= ('obj', 'aabb')
-
-    def __init__(self) -> None:
-        self.obj: T|None= None
-        self.aabb:geometry.AABB3= geometry.AABB3()
-
-    @staticmethod
-    def create_from_values(obj: T, aabb: geometry.AABB3) -> 'NodeObj':
-        nc= NodeObj()
-        nc.obj= obj
-        nc.aabb= aabb
-        return nc
-
-
 class Node:
 
     __slots__= (
@@ -49,8 +34,7 @@ class Node:
     def __init__(self) -> None:
         self.aabb: geometry.AABB3= geometry.AABB3()
         self.children: list['Node'|None]= []
-        # self.objs: list[T|None]= []
-        self.objs1: list[NodeObj|None]= []
+        self.objs: list[T|None]= []
         self.min_size: float= 0.0
         self.max_size: float= 0.0
         self.center: maths.Vec3= maths.Vec3()
@@ -75,7 +59,7 @@ class Node:
         return len(self.children) != 0
 
     def has_objs(self) -> bool:
-        return len(self.objs1) != 0
+        return len(self.objs) != 0
 
     def best_fit(self, v3: maths.Vec3) -> int:
         result: int= 0
