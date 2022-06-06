@@ -53,6 +53,9 @@ class Camera:
         'pitch',
         'znear',
         'zfar',
+        'sensativity',
+        'rsensativity',
+        'zsensativity'
     )
 
     def __init__(self, pos: maths.Vec3, aspect: float= 1.0) -> None:
@@ -66,8 +69,11 @@ class Camera:
         self.pitch: float= 0.0
         self.znear: float= 0.01
         self.zfar: float= 1000.0
+        self.sensativity: float= 3.2
+        self.rsensativity: float = 18.2
+        self.zsensativity: float = 0.2
 
-    def translate(self, dir: CameraDirection, sensativity: float, dt: float) -> None:
+    def translate(self, dir: CameraDirection, dt: float) -> None:
         """Move camera
 
         Raises
@@ -79,21 +85,21 @@ class Camera:
                 u: maths.Vec3= self.right.cross(self.position + self.front)
                 if not u.is_unit():
                     u.to_unit()
-                u.scale(sensativity * dt)
+                u.scale(self.sensativity * dt)
                 self.position.add(u)
 
             case CameraDirection.DOWN:
                 d: maths.Vec3= (self.position + self.front).cross(self.right)
                 if not d.is_unit():
                     d.to_unit()
-                d.scale(sensativity * dt)
+                d.scale(self.sensativity * dt)
                 self.position.add(d)
 
             case CameraDirection.RIGHT:
                 r: maths.Vec3= (self.position + self.front).cross(self.up)
                 if not r.is_unit():
                     r.to_unit()
-                r.scale(sensativity * dt)
+                r.scale(self.sensativity * dt)
                 self.position.add(r)
 
             case CameraDirection.LEFT:
@@ -101,18 +107,18 @@ class Camera:
                 if not l.is_unit():
                     l.to_unit()
 
-                l.scale(sensativity * dt)
+                l.scale(self.sensativity * dt)
                 self.position.add(l)
 
             case CameraDirection.OUT:
-                self.position.subtract(self.front * (sensativity * dt))
+                self.position.subtract(self.front * (self.sensativity * dt))
 
             case CameraDirection.IN:
-                self.position.add(self.front * (sensativity * dt))
+                self.position.add(self.front * (self.sensativity * dt))
 
         self._update()
     
-    def rotate(self, dir: CameraRotation, value: float, sensativity: float) -> None:
+    def rotate(self, dir: CameraRotation, value: float, dt: float) -> None:
         """Rotate camera by value
 
         Raises
@@ -121,36 +127,13 @@ class Camera:
         """
         match dir:
             case CameraRotation.YAW:
-                self.yaw -= maths.to_rad(value * sensativity)
+                self.yaw -= maths.to_rad(value * self.rsensativity * dt)
 
             case CameraRotation.PITCH:
-                self.pitch += maths.to_rad(maths.clampf(value * sensativity, -89.0, 89.0))
+                self.pitch += maths.to_rad(maths.clampf(value * self.rsensativity * dt, -89.0, 89.0))
 
             case CameraRotation.ROLL:
                 return
-
-        self._update()
-
-    def zoom(self, dir: CameraZoom, value: float, sensativity: float) -> None:
-        """Zoom camera by value
-            
-        Raises
-        ---
-        CameraError
-        """
-        match dir:
-            case CameraZoom.OUT: 
-                self.fovy= maths.clampf(
-                    self.fovy + maths.to_rad(maths.clampf(value * sensativity, 1.0, 45.0)), 
-                    0.1, 
-                    maths.PI
-                )
-            case CameraZoom.IN: 
-                self.fovy= maths.clampf(
-                    self.fovy - maths.to_rad(maths.clampf(value * sensativity, 1.0, 45.0)), 
-                    0.1, 
-                    maths.PI
-                )
 
         self._update()
 

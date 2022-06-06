@@ -148,8 +148,7 @@ class Octree:
             return
 
         for child in node.children:
-            for n in range(len(child.objs)-1, 0, -1):
-                obj= node.objs[n]
+            for obj in child.objs[::-1]:
                 node.objs.append(obj)
         node.children.clear()
 

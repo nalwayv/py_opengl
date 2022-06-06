@@ -291,6 +291,13 @@ class Vec2:
             case 1:
                 self.y= value
     
+    def set_from(self, other: 'Vec2') -> None:
+        self.x= other.x
+        self.y= other.y
+
+    def copy(self) -> 'Vec2':
+        return Vec2(self.x, self.y)
+
     def sum(self) -> float:
         """Return sum of components
         """
@@ -1392,9 +1399,9 @@ class Mat3:
     def multiply_v3(self, v3: Vec3) -> Vec3:
         """Return mat3 multiplyed by vec3
         """
-        x: float= v3.dot(self.col0()),
-        y: float= v3.dot(self.col1()),
-        z: float= v3.dot(self.col2()),
+        x: float= v3.dot(self.col0())
+        y: float= v3.dot(self.col1())
+        z: float= v3.dot(self.col2())
         return Vec3(x, y, z)
 
     def get_rotation(self) -> 'Quaternion':
@@ -1444,11 +1451,12 @@ class Mat3:
 
     def get_at(self, row: int, col: int) -> float:
         if row == 0:
-            return self.row0[col]
+            return self.row0.get_at(col)
         if row == 1:
-            return self.row1[col]
+            return self.row1.get_at(col)
         if row == 2:
-            return self.row2[col]
+            return self.row2.get_at(col)
+
         raise Mat3Error('out of range')
 
     def set_at(self, row: int, col: int, value: float) -> None:
@@ -2205,13 +2213,13 @@ class Mat4:
 
     def get_at(self, row: int, col: int) -> float:
         if row == 0:
-            return self.row0[col]
+            return self.row0.get_at(col)
         if row == 1:
-            return self.row1[col]
+            return self.row1.get_at(col)
         if row == 2:
-            return self.row2[col]
+            return self.row2.get_at(col)
         if row == 3:
-            return self.row3[col]
+            return self.row3.get_at(col)
 
         raise Mat4Error('out of range')
 
