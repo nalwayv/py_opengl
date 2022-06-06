@@ -1,6 +1,5 @@
 """Main
 """
-
 import glfw
 from loguru import logger
 from OpenGL import GL
@@ -16,8 +15,48 @@ from py_opengl import window
 from py_opengl import color
 from py_opengl import model
 from py_opengl import geometry
-# from py_opengl import octree
 from py_opengl import abtree
+# from py_opengl import gjk
+
+
+# ---
+
+
+class Scene:
+
+    __slots__= ('objects', 'tree')
+
+    def __init__(self) -> None:
+        self.objects: list[model.Model|None]= []
+        self.tree: abtree.ABTree= abtree.ABTree()
+
+    def add_obj(self, obj: model.Model) -> None:
+        if obj in self.objects:
+            return
+
+        self.objects.append(obj)
+        self.tree.add(obj)
+
+    def remove_obj(self, obj: model.Model) -> None:
+        if obj not in self.objects:
+            return
+        self.objects.remove(obj)
+        self.tree.remove(obj)
+
+    def update_obj(self, obj: model.Model) -> None:
+        if obj not in self.objects:
+            return
+        self.tree.update(obj)
+
+    def raycast(self, ray: geometry.Ray3) -> model.Model|None:
+        return self.tree.raycast(ray)
+    
+    def query(self, ab: geometry.AABB3) -> list[model.Model|None]:
+        return self.tree.query(ab)
+
+    def draw_debug(self, s: shader.Shader, c: camera.Camera) -> None:
+        self.tree.debug(s, c)
+
 
 # --- CALLBACKS
 
@@ -82,25 +121,15 @@ def main() -> None:
         shape0.translate(maths.Vec3(0.0, 0.0, 0.0))
         shape1.translate(maths.Vec3(1.5, 1.5, -2.5))
         shape2.translate(maths.Vec3(2.5, -2.0, 2.0))
-        shape3.translate(maths.Vec3(0.0, 0.0, -2.0))
+        shape3.translate(maths.Vec3(0.0, 0.0, -0.5))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
 
-        # tree= octree.Octree(1, 0.5, maths.Vec3.zero())
-        # tree.add(shape0)
-        # tree.add(shape1)
-        # tree.add(shape2)
-        # tree.add(shape3)
-        tree= abtree.ABTree()
-        tree.add(shape0)
-        tree.add(shape1)
-        tree.add(shape2)
-        tree.add(shape3)
-
-        if check := tree.raycast(geometry.Ray3(
-            shape4.start, maths.Vec3(z= 1.0)
-        )):
-            print(f'yes: {check}')
+        scene= Scene()
+        scene.add_obj(shape0)
+        scene.add_obj(shape1)
+        scene.add_obj(shape2)
+        scene.add_obj(shape3)
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -114,41 +143,27 @@ def main() -> None:
             time.update()
 
             # --
-
             shape1.rotate(maths.Vec3(x=30, z=25) * (1.4 * time.delta))
-
             shape0.draw(shader0, cam)
             shape1.draw(shader0, cam)
             shape2.draw(shader0, cam)
             shape3.draw(shader0, cam)
             shape4.draw(shader0, cam, True)
 
-            tree.debug(shader0, cam)
+            scene.draw_debug(shader0, cam)
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_P)):
-                tree.update(shape1)
+            # if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_P)):
+            #     if objs := scene.query(shape3.compute_aabb()):
+            #         for obj in objs:
+            #             if obj is not shape3:
+            #                 if gjk.GJK().detect(gjk.Minkowskisum(shape3, obj)):
+            #                     print('GJK')    
+            #                 print(f'QUERY: {obj}')
+            #     print('---')
+  
 
             # --
         
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_I)):
-                shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
-        
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_K)):
-                shape1.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
-
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_J)):
-                shape1.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
-
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_L)):
-                shape1.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
-
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_O)):
-                shape1.translate(maths.Vec3(z= 1.5) * (1.4 * time.delta))
-
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_U)):
-                shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
-
-
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
                 cam.translate(camera.CameraDirection.IN, time.delta)
 
