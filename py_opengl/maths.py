@@ -2516,6 +2516,46 @@ class Quaternion:
         v3: Vec3= start.cross(to)
         return Quaternion(v3.x, v3.y, v3.z, 1.0 + dot)
 
+    @staticmethod
+    def create_from_mat4(m4: Mat4) -> 'Quaternion':
+        tr= m4.trace()
+        result: Quaternion= Quaternion()
+
+        if tr > 0.0:
+            s: float= sqrt(tr + 1.0) * 2.0
+            inv_s: float= 1.0 / s
+            result.w= s * 0.25
+            result.x= (m4.row2.y - m4.row1.z) * inv_s
+            result.y= (m4.row0.z - m4.row2.x) * inv_s
+            result.z= (m4.row1.x - m4.row0.y) * inv_s
+        else:
+            ax: float= m4.row0.x
+            by: float= m4.row1.y
+            cz: float= m4.row2.z
+            if ax > by and ax > cz:
+                s: float= sqrt(1.0 + ax - by - cz) * 2.0
+                inv_s: float= 1.0 / s
+                result.w= (m4.row2.y - m4.row1.z) * inv_s
+                result.x= s * 0.25
+                result.y= (m4.row0.y + m4.row1.x) * inv_s
+                result.z= (m4.row0.z + m4.row2.x) * inv_s
+            elif ax > by:
+                s: float= sqrt(1.0 + by - ax - cz) * 2.0
+                inv_s: float= 1.0 / s
+                result.w= (m4.row0.z - m4.row2.x) * inv_s
+                result.x= (m4.row0.y + m4.row1.x) * inv_s
+                result.y= s * 0.25
+                result.z= (m4.row1.Z + m4.row2.y) * inv_s
+            else:
+                s: float= sqrt(1.0 + cz - ax - by) * 2.0
+                inv_s: float= 1.0 / s
+                result.w= (m4.row1.x - m4.row0.y) * inv_s
+                result.x= (m4.row0.z + m4.row2.x) * inv_s
+                result.y= (m4.row1.z + m4.row2.y) * inv_s
+                result.z= s * 0.25
+
+        return result
+
     def lerp(self, to: 'Quaternion', weight: float) -> 'Quaternion':
         """Return the interpolation between two quaternions
         """

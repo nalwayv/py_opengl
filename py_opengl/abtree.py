@@ -402,23 +402,19 @@ class ABTree:
             current.aabb.translate(shift_by)
 
     def debug(self, s: shader.Shader, c: camera.Camera) -> None:
-        leafs= list(self.leaves.values())
+        que: list[Node|None]= [self.root]
 
-        # area bounds
-        aabb: geometry.AABB3= self.root.aabb.copy()
-        t: float=0.0
-        rt: float= self.root.aabb.perimeter()
-        for leaf in leafs:
-            t += leaf.aabb.perimeter()
-        
-        aabb.expand(t * (1.0 / rt))
-        root_m= model.CubeModelAABB(aabb)
-        root_m.draw(s, c, True)
-        root_m.delete()
+        while que:
+            current: Node|None= que.pop(0)
 
-        # leaf bounds
-        for leaf in leafs:
-            leaf_m= model.CubeModelAABB(leaf.aabb)
+            if current == None:
+                return
+
+            if not current.is_leaf():
+                que.append(current.left)
+                que.append(current.right)
+
+            leaf_m= model.CubeModelAABB(current.aabb)
             leaf_m.draw(s, c, True)
             leaf_m.delete()
 

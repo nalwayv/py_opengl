@@ -21,7 +21,7 @@ from py_opengl import abtree
 
 # ---
 
-
+# TMP
 class Scene:
 
     __slots__= ('objects', 'tree')
@@ -116,20 +116,22 @@ def main() -> None:
         shape1= model.PyramidModel(0.3)
         shape2= model.CubeModel(maths.Vec3(0.2, 0.5, 0.2))
         shape3= model.CubeModel(maths.Vec3.create_from_value(0.4))
-        shape4= model.LineModel(maths.Vec3(z= -10), maths.Vec3(z= 1.0)  * 100)
+        shape4= model.PyramidModel(0.5)
 
         shape0.translate(maths.Vec3(0.0, 0.0, 0.0))
         shape1.translate(maths.Vec3(1.5, 1.5, -2.5))
         shape2.translate(maths.Vec3(2.5, -2.0, 2.0))
-        shape3.translate(maths.Vec3(0.0, 0.0, -0.5))
+        shape3.translate(maths.Vec3(1.5, 1.0, 1.0))
+        shape4.translate(maths.Vec3(-1.0, -1.0, 1.0))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
 
-        scene= Scene()
+        scene: Scene= Scene()
         scene.add_obj(shape0)
         scene.add_obj(shape1)
         scene.add_obj(shape2)
         scene.add_obj(shape3)
+        scene.add_obj(shape4)
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -143,14 +145,18 @@ def main() -> None:
             time.update()
 
             # --
-            shape1.rotate(maths.Vec3(x=30, z=25) * (1.4 * time.delta))
+
+            shape1.rotate(maths.Vec3(x=30, z=25) * (1.2 * time.delta))
             shape0.draw(shader0, cam)
             shape1.draw(shader0, cam)
             shape2.draw(shader0, cam)
             shape3.draw(shader0, cam)
-            shape4.draw(shader0, cam, True)
+            shape4.draw(shader0, cam)
 
             scene.draw_debug(shader0, cam)
+
+            if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_P)):
+                scene.update_obj(shape1)
 
             # if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_P)):
             #     if objs := scene.query(shape3.compute_aabb()):
@@ -158,9 +164,25 @@ def main() -> None:
             #             if obj is not shape3:
             #                 if gjk.GJK().detect(gjk.Minkowskisum(shape3, obj)):
             #                     print('GJK')    
-            #                 print(f'QUERY: {obj}')
             #     print('---')
   
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_I)):
+                shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
+        
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_K)):
+                shape1.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
+
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_J)):
+                shape1.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
+
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_L)):
+                shape1.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
+
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_O)):
+                shape1.translate(maths.Vec3(z= 1.5) * (1.4 * time.delta))
+
+            if kb.is_key_held(glwin.get_key_state(glfw.KEY_U)):
+                shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
 
             # --
         
@@ -192,14 +214,14 @@ def main() -> None:
                     first_move = False
                 else:
                     mx, my= glwin.get_mouse_pos()
-                    new_mp= maths.Vec3(x=mx, y=my) - last_mp
+                    new_mp= maths.Vec3(x= mx, y= my) - last_mp
                     last_mp.x= mx
                     last_mp.y= my
 
                     cam.rotate(camera.CameraRotation.YAW, new_mp.x, time.delta)
                     cam.rotate(camera.CameraRotation.PITCH, new_mp.y, time.delta)
 
-            # # --
+            # --
 
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
