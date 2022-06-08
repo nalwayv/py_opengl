@@ -303,6 +303,12 @@ class Vec2:
         """
         return self.x + self.y
 
+    def get_min_value(self) -> float:
+        return minf(self.x, self.y)
+
+    def get_max_value(self) -> float:
+        return maxf(self.x, self.y)
+
     def lerp(self, to: 'Vec2', weight: float) -> 'Vec2':
         """Return a lerped vec2 between self and to
         """
@@ -575,6 +581,20 @@ class Vec3:
         """Return sum of components 'xyz'
         """
         return self.x + self.y + self.z
+
+    def get_min_value(self) -> float:
+        result: float= INFINITY
+        result= minf(result, self.x)
+        result= minf(result, self.y)
+        result= minf(result, self.z)
+        return result
+
+    def get_max_value(self) -> float:
+        result: float= NEGATIVE_INFINITY
+        result= maxf(result, self.x)
+        result= maxf(result, self.y)
+        result= maxf(result, self.z)
+        return result
 
     def abs(self) -> 'Vec3':
         """Return a copy of self with positive values
@@ -893,6 +913,22 @@ class Vec4:
         """Return sum of components
         """
         return self.x + self.y + self.z + self.w
+
+    def get_min_value(self) -> float:
+        result: float= MAX_FLOAT
+        result= minf(result, self.x)
+        result= minf(result, self.y)
+        result= minf(result, self.z)
+        result= minf(result, self.w)
+        return result
+
+    def get_max_value(self) -> float:
+        result: float= MIN_FLOAT
+        result= maxf(result, self.x)
+        result= maxf(result, self.y)
+        result= maxf(result, self.z)
+        result= maxf(result, self.w)
+        return result
 
     def to_list(self) -> list[float]:
         """Return list[float] of *xyzw* components
@@ -2454,6 +2490,10 @@ class Quaternion:
         return f'Q({self.x}, {self.y}, {self.z}, {self.w})'
 
     @staticmethod
+    def create_from_vec3(v3: Vec3, w: float= 0.0) -> 'Quaternion':
+        return Quaternion(v3.x, v3.y, v3.z, w)
+
+    @staticmethod
     def create_from_vec4(v4: Vec4) -> 'Quaternion':
         return Quaternion(v4.x, v4.y, v4.z, v4.w)
 
@@ -2699,6 +2739,18 @@ class Quaternion:
         self.y *= inv
         self.z *= inv
         self.w *= inv
+
+    def multiply_v3(self, v3: Vec3) -> Vec3:
+        qx: float= self.w * v3.x + self.y * v3.z - self.z * v3.y
+        qy: float= self.w * v3.y + self.z * v3.x - self.x * v3.z
+        qz: float= self.w * v3.z + self.x * v3.y - self.y * v3.x
+        qw: float=-self.x * v3.x - self.y * v3.y - self.z * v3.z
+
+        return Vec3(
+            self.w * qx - qy * self.z + qz * self.y - qw * self.x,
+            self.w * qy - qz * self.x + qx * self.z - qw * self.y,
+            self.w * qz - qx * self.y + qy * self.x - qw * self.z
+        )
 
     def to_euler(self) -> Vec3:
         """Return self as euler values

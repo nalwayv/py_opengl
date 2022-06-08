@@ -115,8 +115,8 @@ def main() -> None:
         shape0= model.CubeModel(maths.Vec3.create_from_value(0.5))
         shape1= model.PyramidModel(0.3)
         shape2= model.CubeModel(maths.Vec3(0.2, 0.5, 0.2))
-        shape3= model.CubeModel(maths.Vec3.create_from_value(0.4))
-        shape4= model.PyramidModel(0.5)
+        shape3= model.CubeModelAABB(geometry.AABB3(maths.Vec3(), maths.Vec3.create_from_value(0.3)))
+        shape4= model.CubeModel(maths.Vec3.create_from_value(0.5))
 
         shape0.translate(maths.Vec3(0.0, 0.0, 0.0))
         shape1.translate(maths.Vec3(1.5, 1.5, -2.5))
@@ -155,17 +155,6 @@ def main() -> None:
 
             scene.draw_debug(shader0, cam)
 
-            if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_P)):
-                scene.update_obj(shape1)
-
-            # if kb.is_key_pressed(glwin.get_key_state(glfw.KEY_P)):
-            #     if objs := scene.query(shape3.compute_aabb()):
-            #         for obj in objs:
-            #             if obj is not shape3:
-            #                 if gjk.GJK().detect(gjk.Minkowskisum(shape3, obj)):
-            #                     print('GJK')    
-            #     print('---')
-  
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_I)):
                 shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
         

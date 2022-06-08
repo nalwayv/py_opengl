@@ -310,6 +310,7 @@ class Triangle3:
                 return True
         return False
 
+
     def intersect_pt(self, pt: maths.Vec3):
         bc= maths.Vec3.barycentric(
             self.p0,
@@ -359,14 +360,6 @@ class Sphere3:
             ):
                 return True
         return False
-
-    def compute_aabb(self, t: transform.Transform) -> AABB3:
-        center= t.transformed(self.center)
-
-        p0: maths.Vec3= center + maths.Vec3.create_from_value(self.radius)
-        p1: maths.Vec3= center - maths.Vec3.create_from_value(self.radius)
-
-        return AABB3.create_from_min_max(p0, p1)
 
     def area(self) -> float:
         """Return area

@@ -513,7 +513,6 @@ class CubeMesh(Mesh):
         super().__init__(vertices, indices)
 
 
-
 class CubeMeshAABB(Mesh):
 
     __slots__= ('bounds',)
