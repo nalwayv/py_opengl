@@ -102,7 +102,7 @@ def main() -> None:
 
         time= clock.Clock()
 
-        cam= camera.Camera(maths.Vec3(z= 3.0), float(width / height))
+        cam= camera.Camera(maths.Vec3(z= 5.0), float(width / height))
 
         kb: keyboard.Keyboard= keyboard.Keyboard()
 
@@ -117,6 +117,7 @@ def main() -> None:
         shape2= model.CubeModel(maths.Vec3(0.2, 0.5, 0.2))
         shape3= model.CubeModelAABB(geometry.AABB3(maths.Vec3(), maths.Vec3.create_from_value(0.3)))
         shape4= model.CubeModel(maths.Vec3.create_from_value(0.5))
+
 
         shape0.translate(maths.Vec3(0.0, 0.0, 0.0))
         shape1.translate(maths.Vec3(1.5, 1.5, -2.5))
@@ -152,6 +153,7 @@ def main() -> None:
             shape2.draw(shader0, cam)
             shape3.draw(shader0, cam)
             shape4.draw(shader0, cam)
+            
 
             scene.draw_debug(shader0, cam)
 
@@ -225,7 +227,9 @@ def main() -> None:
         shape2.delete()
         shape3.delete()
         shape4.delete()
+
         shader0.delete()
+        
         glfw.terminate()
 
 

@@ -1,6 +1,8 @@
 """Geometry
 """
+from audioop import cross
 from enum import Enum, auto
+from re import M
 
 from py_opengl import maths
 from py_opengl import transform
@@ -481,9 +483,11 @@ class Plane3:
 
         return Plane3(normal= n, direction= d)
 
-    def to_str(self) -> str:
-        return f'N(X: {self.normal.x}, Y: {self.normal.y}, Z: {self.normal.z}), D({self.direction})'
-
+    def __str__(self) -> str:
+        return f'''
+        NORMAL: (X: {self.normal.x}, Y: {self.normal.y}, Z: {self.normal.z})
+        DIRECTION: ({self.direction})
+        '''
     def copy(self) -> 'Plane3':
         """Return a copy of self
         """
@@ -542,12 +546,35 @@ class Plane3:
             return
 
         inv: float= maths.inv_sqrt(len_sqr)
+        print(inv)
         self.normal.x *= inv
         self.normal.y *= inv
         self.normal.z *= inv
         self.direction *= inv
 
-    def intersect_plain(self, other: 'Plane3') -> bool:
+    def pt_from_intersect_plane(self, other: 'Plane3') -> maths.Vec3:
+        d: maths.Vec3= self.normal.cross(other.nomal)
+        denom: float= d.length_sqr()
+
+        if denom < maths.EPSILON:
+            return maths.Vec3.zero()
+        
+        pt: maths.Vec3= (other.normal * self.direction) - (self.normal * other.direction)
+        
+        return pt.cross(d) * (1.0 / denom)
+
+    def pt_from_intersect_planes(self, p2: 'Plane3', p3: 'Plane3') -> maths.Vec3:
+        u: maths.Vec3= p2.normal.cross(p3.normal)
+        denom: float= self.normal.dot(u)
+
+        if maths.absf(denom) < maths.EPSILON:
+            return maths.Vec3.zero()
+        
+        pt: maths.Vec3= (p2.normal * p3.direction) - (p3.normal * p2.direction)
+        
+        return (u * self.direction) + self.normal.cross(pt) * (1.0 / denom)
+
+    def intersect_pane(self, other: 'Plane3') -> bool:
         dis: float= (self.normal.cross(other.nomal)).length_sqr()
         return not maths.is_zero(dis)
 
@@ -636,6 +663,29 @@ class Frustum:
             ):
                 return True
         return False
+
+    def __str__(self) -> str:
+        return f'''
+        TOP: {self.top}
+        BOTTOM: {self.bottom}
+        LEFT: {self.left}
+        RIGHT: {self.right}
+        NEAR: {self.near}
+        FAR: {self.far}
+        '''
+
+    def get_corners(self) -> list[maths.Vec3]:
+        return [
+            self.near.pt_from_intersect_planes(self.top, self.left),
+            self.near.pt_from_intersect_planes(self.top, self.right),
+            self.near.pt_from_intersect_planes(self.bottom, self.left),
+            self.near.pt_from_intersect_planes(self.bottom, self.right),
+            self.far.pt_from_intersect_planes(self.top, self.left),
+            self.far.pt_from_intersect_planes(self.top, self.right),
+            self.far.pt_from_intersect_planes(self.bottom, self.left),
+            self.far.pt_from_intersect_planes(self.bottom, self.right)
+        ]
+
 
 # --- RAY3D
 

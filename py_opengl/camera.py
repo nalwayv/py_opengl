@@ -1,6 +1,5 @@
 """Camera
 """
-from typing import Final
 from enum import Enum, auto
 
 from py_opengl import maths
@@ -157,7 +156,7 @@ class Camera:
     def get_projection_matrix(self) -> maths.Mat4:
         """Return projection matrix
         """
-        return maths.Mat4.create_perspective(self.fovy, self.aspect, self.znear, self.zfar)
+        return maths.Mat4.create_projection(self.fovy, self.aspect, self.znear, self.zfar)
 
     def get_view_matrix(self) -> maths.Mat4:
         """Return view matrix
@@ -167,26 +166,31 @@ class Camera:
     def get_frustum(self) -> geometry.Frustum:
         result: geometry.Frustum= geometry.Frustum()
         vp: maths.Mat4= self.get_view_matrix() * self.get_projection_matrix()
+       
+        p0= vp.col0().xyz()
+        p1= vp.col1().xyz()
+        p2= vp.col2().xyz()
+        p3= vp.col3().xyz()
 
-        result.left.normal.set_from(vp.col3().xyz() + vp.col0().xyz())
-        result.right.normal.set_from(vp.col3().xyz() - vp.col0().xyz())
-        result.bottom.normal.set_from(vp.col3().xyz() + vp.col1().xyz())
-        result.top.normal.set_from(vp.col3().xyz() - vp.col1().xyz())
-        result.near.normal.set_from(vp.col2().xyz())
-        result.far.normal.set_from(vp.col3().xyz() - vp.col2().xyz())
+        result.left.normal= p3 + p0
+        result.right.normal= p3 - p0
+        result.bottom.normal= p3 + p1
+        result.top.normal= p3 - p1
+        result.near.normal= p2
+        result.far.normal= p3 - p2
 
-        result.left.direction= vp.get_at(3,3) + vp.get_at(3,0)
-        result.right.direction= vp.get_at(3,3) - vp.get_at(3,0)
-        result.bottom.direction= vp.get_at(3,3) + vp.get_at(3,1) 
-        result.top.direction= vp.get_at(3,3) - vp.get_at(3,1) 
-        result.near.direction= vp.get_at(3,2)
-        result.far.direction= vp.get_at(3,3) - vp.get_at(3,2) 
+        result.left.direction = vp.get_at(3, 3) + vp.get_at(3, 0)
+        result.right.direction = vp.get_at(3, 3) - vp.get_at(3, 0)
+        result.bottom.direction = vp.get_at(3, 3) + vp.get_at(3, 1)
+        result.top.direction = vp.get_at(3, 3) - vp.get_at(3, 1)
+        result.near.direction = vp.get_at(3, 2)
+        result.far.direction = vp.get_at(3, 3) - vp.get_at(3, 3)
 
-        result.left.normal.to_unit()
-        result.right.normal.to_unit()
-        result.bottom.normal.to_unit()
-        result.top.normal.to_unit()
-        result.far.normal.to_unit()
-        result.near.normal.to_unit()
+        result.left.to_unit()
+        result.right.to_unit()
+        result.top.to_unit()
+        result.bottom.to_unit()
+        result.near.to_unit()
+        result.far.to_unit()
 
         return result

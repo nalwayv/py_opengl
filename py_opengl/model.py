@@ -204,3 +204,16 @@ class SphereModel(Model):
             self._transform.position + maths.Vec3.create_from_value(self.radius)
         )
 
+# ---
+
+
+class FrustumModel(Model):
+
+    __slots__= ('frustum',)
+
+    def __init__(self, frustum: geometry.Frustum) -> None:
+        self.frustum= frustum
+
+        super().__init__(
+            mesh.FrustumMesh(self.frustum)
+        )

@@ -265,9 +265,9 @@ class SphereMesh(Mesh):
 
         for i in range(prec + 1):
             for j in range(prec + 1):
-                y: float= maths.cos(maths.to_rad(180.0 - i * 180.0 / prec))
-                x: float= -maths.cos(maths.to_rad(j * 360.0 / prec)) * maths.absf(maths.cos(maths.arcsin(y)))
-                z: float= maths.sin(maths.to_rad(j * 360.0 / prec)) * maths.absf(maths.cos(maths.arcsin(y)))
+                y: float= maths.cos(maths.PI - i * maths.PI / prec)
+                x: float= -maths.cos(j * maths.TAU / prec) * maths.absf(maths.cos(maths.arcsin(y)))
+                z: float= maths.sin(j * maths.TAU / prec) * maths.absf(maths.cos(maths.arcsin(y)))
 
                 vertices[i * (prec + 1) + j]= Vertex(
                     maths.Vec3(x, y, z) * radius,
@@ -515,13 +515,10 @@ class CubeMesh(Mesh):
 
 class CubeMeshAABB(Mesh):
 
-    __slots__= ('bounds',)
     
     def __init__(self, bounds: geometry.AABB3) -> None:
-        self.bounds: geometry.AABB3= bounds
-
-        minpt= self.bounds.get_min()
-        maxpt= self.bounds.get_max()
+        minpt= bounds.get_min()
+        maxpt= bounds.get_max()
 
         vertices: list[Vertex]= [
             # front
@@ -647,6 +644,162 @@ class CubeMeshAABB(Mesh):
             ),
             Vertex(
                 maths.Vec3(maxpt.x, maxpt.y, minpt.z),
+                maths.Vec3(0.0, 0.0, -1.0),
+                maths.Vec3(0.0, 0.0, 0.5)
+            )
+        ]
+
+        indices: list[int]= [
+             0,  1,  2,  2,  3,  0,
+             4,  5,  6,  6,  7,  4,
+             8,  9, 10, 10, 11,  8,
+            12, 13, 14, 14, 15, 12,
+            16, 17, 18, 18, 19, 16,
+            20, 21, 22, 22, 23, 20
+        ]
+
+        super().__init__(vertices, indices)
+
+
+class FrustumMesh(Mesh):
+    
+    def __init__(self, frustum: geometry.Frustum) -> None:
+
+        pts: list[maths.Vec3]= frustum.get_corners()
+
+        near_top_left: maths.Vec3= pts[0]
+        near_top_right: maths.Vec3= pts[1]
+        near_bottom_left: maths.Vec3= pts[2]
+        near_bottom_right: maths.Vec3= pts[3]
+        far_top_left: maths.Vec3= pts[4]
+        far_top_right: maths.Vec3= pts[5]
+        far_bottom_left: maths.Vec3= pts[6]
+        far_bottom_right: maths.Vec3= pts[7]
+
+        vertices: list[Vertex]= [
+            # front
+            Vertex(
+                near_top_right,
+                maths.Vec3(0.0, 0.0, 1.0),
+                maths.Vec3(1.0, 0.5, 0.5)
+            ),
+            Vertex(
+                near_top_left,
+                maths.Vec3(0.0, 0.0, 1.0),
+                maths.Vec3(1.0, 0.5, 0.5)
+            ),
+            Vertex(
+                near_bottom_left,
+                maths.Vec3(0.0, 0.0, 1.0),
+                maths.Vec3(1.0, 0.5, 0.5)
+            ),
+            Vertex(
+                near_bottom_right,
+                maths.Vec3(0.0, 0.0, 1.0),
+                maths.Vec3(1.0, 0.5, 0.5)
+            ),
+            # right
+            Vertex(
+                near_top_right,
+                maths.Vec3(1.0, 0.0, 0.0),
+                maths.Vec3(0.5, 0.0, 0.0)
+            ),
+            Vertex(
+                near_bottom_right,
+                maths.Vec3(1.0, 0.0, 0.0),
+                maths.Vec3(0.5, 0.0, 0.0)
+            ),
+            Vertex(
+                far_bottom_right,
+                maths.Vec3(1.0, 0.0, 0.0),
+                maths.Vec3(0.5, 0.0, 0.0)
+            ),
+            Vertex(
+                far_top_right,
+                maths.Vec3(1.0, 0.0, 0.0),
+                maths.Vec3(0.5, 0.0, 0.0)
+            ),
+            # top
+            Vertex(
+                near_top_right,
+                maths.Vec3(0.0, 1.0, 0.0),
+                maths.Vec3(0.5, 1.0, 0.5)
+            ),
+            Vertex(
+                far_top_right,
+                maths.Vec3(0.0, 1.0, 0.0),
+                maths.Vec3(0.5, 1.0, 0.5)
+            ),
+            Vertex(
+                far_top_left,
+                maths.Vec3(0.0, 1.0, 0.0),
+                maths.Vec3(0.5, 1.0, 0.5)
+            ),
+            Vertex(
+                near_top_left,
+                maths.Vec3(0.0, 1.0, 0.0),
+                maths.Vec3(0.5, 1.0, 0.5)
+            ),
+            # left
+            Vertex(
+                near_top_left,
+                maths.Vec3(-1.0, 0.0, 0.0),
+                maths.Vec3(0.0, 0.5, 0.0)
+            ),
+            Vertex(
+                far_top_left,
+                maths.Vec3(-1.0, 0.0, 0.0),
+                maths.Vec3(0.0, 0.5, 0.0)
+            ),
+            Vertex(
+                far_bottom_left,
+                maths.Vec3(-1.0, 0.0, 0.0),
+                maths.Vec3(0.0, 0.5, 0.0)
+            ),
+            Vertex(
+                near_bottom_left,
+                maths.Vec3(-1.0, 0.0, 0.0),
+                maths.Vec3(0.0, 0.5, 0.0)
+            ),
+            # bottom
+            Vertex(
+                far_bottom_left,
+                maths.Vec3(0.0, -1.0, 0.0),
+                maths.Vec3(0.5, 0.5, 1.0)
+            ),
+            Vertex(
+                far_bottom_right,
+                maths.Vec3(0.0, -1.0, 0.0),
+                maths.Vec3(0.5, 0.5, 1.0)
+            ),
+            Vertex(
+                near_bottom_right,
+                maths.Vec3(0.0, -1.0, 0.0),
+                maths.Vec3(0.5, 0.5, 1.0)
+            ),
+            Vertex(
+                near_bottom_left,
+                maths.Vec3(0.0, -1.0, 0.0),
+                maths.Vec3(0.5, 0.5, 1.0)
+            ),
+            # back
+            Vertex(
+                far_bottom_right,
+                maths.Vec3(0.0, 0.0, -1.0),
+                maths.Vec3(0.0, 0.0, 0.5)
+            ),
+            Vertex(
+                far_bottom_left,
+                maths.Vec3(0.0, 0.0, -1.0),
+                maths.Vec3(0.0, 0.0, 0.5)
+            ),
+            Vertex(
+                far_top_left,
+                maths.Vec3(0.0, 0.0, -1.0),
+                maths.Vec3(0.0, 0.0, 0.5)
+            ),
+            Vertex(
+                far_top_right,
                 maths.Vec3(0.0, 0.0, -1.0),
                 maths.Vec3(0.0, 0.0, 0.5)
             )

@@ -1497,15 +1497,15 @@ class Mat3:
 
     def set_at(self, row: int, col: int, value: float) -> None:
         if row == 0:
-            self.row0[col]= value
+            self.row0.set_at(col, value)
             return
 
         if row == 1:
-            self.row1[col]= value
+            self.row1.set_at(col, value)
             return
 
         if row == 2:
-            self.row2[col]= value
+            self.row2.set_at(col, value)
             return
 
         raise Mat3Error('out of range')
@@ -1862,13 +1862,13 @@ class Mat4:
         )
 
     @staticmethod
-    def create_perspective(
+    def create_projection(
             fov: float,
             aspect: float,
             near: float,
             far: float
     ) -> 'Mat4':
-        """Create a matrix 'perspective' field of view
+        """Create a matrix 'projection' field of view
 
         Raises
         ---
@@ -2194,6 +2194,14 @@ class Mat4:
         y: float= v4.dot(self.col1())
         z: float= v4.dot(self.col2())
         w: float= v4.dot(self.col3())
+
+        return Vec4(x, y, z, w)
+
+    def transform_v3(self, v3: Vec3):
+        x: float= v3.dot(self.row0.xyz()) + self.row0.w
+        y: float= v3.dot(self.row1.xyz()) + self.row1.w
+        z: float= v3.dot(self.row2.xyz()) + self.row2.w
+        w: float= v3.dot(self.row3.xyz()) + self.row3.w
 
         return Vec4(x, y, z, w)
 
