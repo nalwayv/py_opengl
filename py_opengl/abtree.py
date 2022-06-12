@@ -5,7 +5,6 @@ from typing import TypeVar
 from py_opengl import geometry
 from py_opengl import maths
 from py_opengl import model
-from py_opengl import camera
 from py_opengl import shader
 
 
@@ -401,7 +400,7 @@ class ABTree:
             
             current.aabb.translate(shift_by)
 
-    def debug(self, s: shader.Shader, c: camera.Camera) -> None:
+    def debug(self, s: shader.Shader, view: maths.Mat4, projection: maths.Mat4) -> None:
         que: list[Node|None]= [self.root]
 
         while que:
@@ -415,7 +414,7 @@ class ABTree:
                 que.append(current.right)
 
             leaf_m= model.CubeModelAABB(current.aabb)
-            leaf_m.draw(s, c, True)
+            leaf_m.draw(s, view, projection, True)
             leaf_m.delete()
 
     def raycast(self, ray: geometry.Ray3) -> T|None:

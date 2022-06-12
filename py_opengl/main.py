@@ -54,8 +54,8 @@ class Scene:
     def query(self, ab: geometry.AABB3) -> list[model.Model|None]:
         return self.tree.query(ab)
 
-    def draw_debug(self, s: shader.Shader, c: camera.Camera) -> None:
-        self.tree.debug(s, c)
+    def draw_debug(self, s: shader.Shader, view:maths.Mat4, projection:maths.Mat4) -> None:
+        self.tree.debug(s, view, projection)
 
 
 # --- CALLBACKS
@@ -134,9 +134,6 @@ def main() -> None:
         scene.add_obj(shape3)
         scene.add_obj(shape4)
 
-        # f=cam.tmp()
-        # sf= model.FrustumModel(f.get_corners())
-
         fshape= model.FrustumModel(cam.get_frustum_corners())
         fshape.set_scale(maths.Vec3.create_from_value(0.1))
         fshape.translate(maths.Vec3(z= 5))
@@ -155,16 +152,15 @@ def main() -> None:
             # --
 
             shape1.rotate(maths.Vec3(x=30, z=25) * (1.2 * time.delta))
-            shape0.draw(shader0, cam)
-            shape1.draw(shader0, cam)
-            shape2.draw(shader0, cam)
-            shape3.draw(shader0, cam)
-            shape4.draw(shader0, cam)
-            
+            shape0.draw(shader0, cam.get_view_matrix(), cam.get_projection_matrix())
+            shape1.draw(shader0, cam.get_view_matrix(), cam.get_projection_matrix())
+            shape2.draw(shader0, cam.get_view_matrix(), cam.get_projection_matrix())
+            shape3.draw(shader0, cam.get_view_matrix(), cam.get_projection_matrix())
+            shape4.draw(shader0, cam.get_view_matrix(), cam.get_projection_matrix())
 
-            scene.draw_debug(shader0, cam)
+            scene.draw_debug(shader0, cam.get_view_matrix(), cam.get_projection_matrix())
 
-            fshape.draw(shader0, cam, True)
+            fshape.draw(shader0, cam.get_view_matrix(), cam.get_projection_matrix(), True)
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_I)):
                 shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))

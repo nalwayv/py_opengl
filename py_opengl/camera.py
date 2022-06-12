@@ -1,11 +1,10 @@
 """Camera
 """
 from enum import Enum, auto
-from tkinter import W
 
 from py_opengl import maths
-from py_opengl import geometry
-
+from py_opengl import shader
+from py_opengl import model
 
 # ---
 
@@ -164,7 +163,7 @@ class Camera:
         """
         return maths.Mat4.create_lookat_rh(self.position, self.position + self.front, self.up)
 
-    def get_frustum_corners(self):
+    def get_frustum_corners(self) -> list[maths.Vec4]:
         
         corners: list[maths.Vec4]= [
             maths.Vec4(-1.0, -1.0, -1.0, 1.0),# n bl

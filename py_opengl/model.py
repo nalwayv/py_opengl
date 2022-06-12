@@ -6,7 +6,6 @@ from py_opengl import maths
 from py_opengl import geometry
 from py_opengl import mesh
 from py_opengl import transform
-from py_opengl import camera
 from py_opengl import shader
 
 
@@ -73,13 +72,19 @@ class Model:
         result.translate(self._transform.position)
         return result
 
-    def draw(self, _shader: shader.Shader, cam: camera.Camera, debug:bool=False) -> None:
+    def draw(
+        self,
+        _shader: shader.Shader,
+        view: maths.Mat4,
+        projection: maths.Mat4,
+        debug:bool= False
+    ) -> None:
         """Draw
         """
         _shader.use()
         _shader.set_mat4('m_matrix', self._transform.get_transform_matrix())
-        _shader.set_mat4('v_matrix', cam.get_view_matrix())
-        _shader.set_mat4('p_matrix', cam.get_projection_matrix())
+        _shader.set_mat4('v_matrix', view)
+        _shader.set_mat4('p_matrix', projection)
         self._mesh.render(debug)
 
     def delete(self) -> None:
