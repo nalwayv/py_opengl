@@ -1,7 +1,5 @@
 """Mesh
 """
-# TODO
-from enum import Enum, auto
 from OpenGL import GL
 
 from py_opengl import utils
@@ -11,9 +9,13 @@ from py_opengl import geometry
 
 # ---
 
-class RenderMode(Enum):
-    DEBUG= auto()
-    TRIANGLES= auto()
+
+class MeshError(Exception):
+    '''
+    '''
+    def __init__(self, msg: str):
+        super().__init__(msg)
+
 
 # ---
 
@@ -84,6 +86,9 @@ class VBO:
         GL.glDeleteBuffers(1, self.ID)
 
 
+# ---
+
+
 class VAO:
 
     __slots__= ('ID',)
@@ -99,6 +104,9 @@ class VAO:
 
     def delete(self) -> None:
         GL.glDeleteVertexArrays(1, self.ID)
+
+
+# ---
 
 
 class EBO:
@@ -513,6 +521,9 @@ class CubeMesh(Mesh):
         super().__init__(vertices, indices)
 
 
+# ---
+
+
 class CubeMeshAABB(Mesh):
 
     
@@ -660,146 +671,151 @@ class CubeMeshAABB(Mesh):
 
         super().__init__(vertices, indices)
 
+# ---
+
+
 
 class FrustumMesh(Mesh):
+
     
-    def __init__(self, frustum: geometry.Frustum) -> None:
+    def __init__(self, arr: list[maths.Vec4]) -> None:
+        if len(arr) != 8:
+            raise MeshError('len of arr was not 8')
 
-        pts: list[maths.Vec3]= frustum.get_corners()
+        nbl= arr[0].xyz()
+        nbr= arr[1].xyz()
+        ntl= arr[2].xyz()
+        ntr= arr[3].xyz()
 
-        near_top_left: maths.Vec3= pts[0]
-        near_top_right: maths.Vec3= pts[1]
-        near_bottom_left: maths.Vec3= pts[2]
-        near_bottom_right: maths.Vec3= pts[3]
-        far_top_left: maths.Vec3= pts[4]
-        far_top_right: maths.Vec3= pts[5]
-        far_bottom_left: maths.Vec3= pts[6]
-        far_bottom_right: maths.Vec3= pts[7]
+        fbl= arr[4].xyz()
+        fbr= arr[5].xyz()
+        ftl= arr[6].xyz()
+        ftr= arr[7].xyz()
 
         vertices: list[Vertex]= [
             # front
             Vertex(
-                near_top_right,
+                ftr,
                 maths.Vec3(0.0, 0.0, 1.0),
                 maths.Vec3(1.0, 0.5, 0.5)
             ),
             Vertex(
-                near_top_left,
+                ftl,
                 maths.Vec3(0.0, 0.0, 1.0),
                 maths.Vec3(1.0, 0.5, 0.5)
             ),
             Vertex(
-                near_bottom_left,
+                fbl,
                 maths.Vec3(0.0, 0.0, 1.0),
                 maths.Vec3(1.0, 0.5, 0.5)
             ),
             Vertex(
-                near_bottom_right,
+                fbr,
                 maths.Vec3(0.0, 0.0, 1.0),
                 maths.Vec3(1.0, 0.5, 0.5)
             ),
             # right
             Vertex(
-                near_top_right,
+                ftr,
                 maths.Vec3(1.0, 0.0, 0.0),
                 maths.Vec3(0.5, 0.0, 0.0)
             ),
             Vertex(
-                near_bottom_right,
+                fbr,
                 maths.Vec3(1.0, 0.0, 0.0),
                 maths.Vec3(0.5, 0.0, 0.0)
             ),
             Vertex(
-                far_bottom_right,
+                nbr,
                 maths.Vec3(1.0, 0.0, 0.0),
                 maths.Vec3(0.5, 0.0, 0.0)
             ),
             Vertex(
-                far_top_right,
+                ntr,
                 maths.Vec3(1.0, 0.0, 0.0),
                 maths.Vec3(0.5, 0.0, 0.0)
             ),
             # top
             Vertex(
-                near_top_right,
+                ftr,
                 maths.Vec3(0.0, 1.0, 0.0),
                 maths.Vec3(0.5, 1.0, 0.5)
             ),
             Vertex(
-                far_top_right,
+                ntr,
                 maths.Vec3(0.0, 1.0, 0.0),
                 maths.Vec3(0.5, 1.0, 0.5)
             ),
             Vertex(
-                far_top_left,
+                ntl,
                 maths.Vec3(0.0, 1.0, 0.0),
                 maths.Vec3(0.5, 1.0, 0.5)
             ),
             Vertex(
-                near_top_left,
+                ftl,
                 maths.Vec3(0.0, 1.0, 0.0),
                 maths.Vec3(0.5, 1.0, 0.5)
             ),
             # left
             Vertex(
-                near_top_left,
+                ftl,
                 maths.Vec3(-1.0, 0.0, 0.0),
                 maths.Vec3(0.0, 0.5, 0.0)
             ),
             Vertex(
-                far_top_left,
+                ntl,
                 maths.Vec3(-1.0, 0.0, 0.0),
                 maths.Vec3(0.0, 0.5, 0.0)
             ),
             Vertex(
-                far_bottom_left,
+                nbl,
                 maths.Vec3(-1.0, 0.0, 0.0),
                 maths.Vec3(0.0, 0.5, 0.0)
             ),
             Vertex(
-                near_bottom_left,
+                fbl,
                 maths.Vec3(-1.0, 0.0, 0.0),
                 maths.Vec3(0.0, 0.5, 0.0)
             ),
             # bottom
             Vertex(
-                far_bottom_left,
+                nbl,
                 maths.Vec3(0.0, -1.0, 0.0),
                 maths.Vec3(0.5, 0.5, 1.0)
             ),
             Vertex(
-                far_bottom_right,
+                nbr,
                 maths.Vec3(0.0, -1.0, 0.0),
                 maths.Vec3(0.5, 0.5, 1.0)
             ),
             Vertex(
-                near_bottom_right,
+                fbr,
                 maths.Vec3(0.0, -1.0, 0.0),
                 maths.Vec3(0.5, 0.5, 1.0)
             ),
             Vertex(
-                near_bottom_left,
+                fbl,
                 maths.Vec3(0.0, -1.0, 0.0),
                 maths.Vec3(0.5, 0.5, 1.0)
             ),
             # back
             Vertex(
-                far_bottom_right,
+                nbr,
                 maths.Vec3(0.0, 0.0, -1.0),
                 maths.Vec3(0.0, 0.0, 0.5)
             ),
             Vertex(
-                far_bottom_left,
+                nbl,
                 maths.Vec3(0.0, 0.0, -1.0),
                 maths.Vec3(0.0, 0.0, 0.5)
             ),
             Vertex(
-                far_top_left,
+                ntl,
                 maths.Vec3(0.0, 0.0, -1.0),
                 maths.Vec3(0.0, 0.0, 0.5)
             ),
             Vertex(
-                far_top_right,
+                ntr,
                 maths.Vec3(0.0, 0.0, -1.0),
                 maths.Vec3(0.0, 0.0, 0.5)
             )
@@ -815,3 +831,4 @@ class FrustumMesh(Mesh):
         ]
 
         super().__init__(vertices, indices)
+

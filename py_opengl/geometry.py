@@ -428,7 +428,7 @@ class Plane3:
 
     def __init__(
         self,
-        normal: maths.Vec3= maths.Vec3(),
+        normal: maths.Vec3= maths.Vec3(x= 1.0),
         direction: float= 0.0
     ) -> None:
         self.normal: maths.Vec3= normal
@@ -455,6 +455,14 @@ class Plane3:
     def __post_init__(self):
         if not self.normal.is_unit():
             self.normal.to_unit()
+
+    @staticmethod
+    def create_from_v4(v4: maths.Vec4) -> 'Plane3':
+        n: maths.Vec3= v4.xyz()
+        w: float= v4.w
+        if not n.is_unit():
+            n.to_unit()
+        return Plane3(n, v4.w)
 
     @staticmethod
     def create_from_normal_and_point(unit_v3: maths.Vec3, pt: maths.Vec3):
@@ -546,7 +554,6 @@ class Plane3:
             return
 
         inv: float= maths.inv_sqrt(len_sqr)
-        print(inv)
         self.normal.x *= inv
         self.normal.y *= inv
         self.normal.z *= inv
@@ -673,19 +680,6 @@ class Frustum:
         NEAR: {self.near}
         FAR: {self.far}
         '''
-
-    def get_corners(self) -> list[maths.Vec3]:
-        return [
-            self.near.pt_from_intersect_planes(self.top, self.left),
-            self.near.pt_from_intersect_planes(self.top, self.right),
-            self.near.pt_from_intersect_planes(self.bottom, self.left),
-            self.near.pt_from_intersect_planes(self.bottom, self.right),
-            self.far.pt_from_intersect_planes(self.top, self.left),
-            self.far.pt_from_intersect_planes(self.top, self.right),
-            self.far.pt_from_intersect_planes(self.bottom, self.left),
-            self.far.pt_from_intersect_planes(self.bottom, self.right)
-        ]
-
 
 # --- RAY3D
 

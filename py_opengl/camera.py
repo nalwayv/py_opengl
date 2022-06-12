@@ -1,6 +1,7 @@
 """Camera
 """
 from enum import Enum, auto
+from tkinter import W
 
 from py_opengl import maths
 from py_opengl import geometry
@@ -67,7 +68,7 @@ class Camera:
         self.yaw: float= -maths.PHI
         self.pitch: float= 0.0
         self.znear: float= 0.01
-        self.zfar: float= 1000.0
+        self.zfar: float= 110.0
         self.sensativity: float= 3.2
         self.rsensativity: float = 18.2
         self.zsensativity: float = 0.2
@@ -156,41 +157,33 @@ class Camera:
     def get_projection_matrix(self) -> maths.Mat4:
         """Return projection matrix
         """
-        return maths.Mat4.create_projection(self.fovy, self.aspect, self.znear, self.zfar)
+        return maths.Mat4.create_projection_rh(self.fovy, self.aspect, self.znear, self.zfar)
 
     def get_view_matrix(self) -> maths.Mat4:
         """Return view matrix
         """
-        return maths.Mat4.create_look_at(self.position, self.position + self.front, self.up)
+        return maths.Mat4.create_lookat_rh(self.position, self.position + self.front, self.up)
 
-    def get_frustum(self) -> geometry.Frustum:
-        result: geometry.Frustum= geometry.Frustum()
-        vp: maths.Mat4= self.get_view_matrix() * self.get_projection_matrix()
-       
-        p0= vp.col0().xyz()
-        p1= vp.col1().xyz()
-        p2= vp.col2().xyz()
-        p3= vp.col3().xyz()
+    def get_frustum_corners(self):
+        
+        corners: list[maths.Vec4]= [
+            maths.Vec4(-1.0, -1.0, -1.0, 1.0),# n bl
+            maths.Vec4( 1.0, -1.0, -1.0, 1.0),# n br
+            maths.Vec4(-1.0,  1.0, -1.0, 1.0),# n tl
+            maths.Vec4( 1.0,  1.0, -1.0, 1.0),# n tr
 
-        result.left.normal= p3 + p0
-        result.right.normal= p3 - p0
-        result.bottom.normal= p3 + p1
-        result.top.normal= p3 - p1
-        result.near.normal= p2
-        result.far.normal= p3 - p2
+            maths.Vec4(-1.0, -1.0,  1.0, 1.0),# f bl
+            maths.Vec4( 1.0, -1.0,  1.0, 1.0),# f br
+            maths.Vec4(-1.0,  1.0,  1.0, 1.0),# f tl
+            maths.Vec4( 1.0,  1.0,  1.0, 1.0),# f tr
+        ]
 
-        result.left.direction = vp.get_at(3, 3) + vp.get_at(3, 0)
-        result.right.direction = vp.get_at(3, 3) - vp.get_at(3, 0)
-        result.bottom.direction = vp.get_at(3, 3) + vp.get_at(3, 1)
-        result.top.direction = vp.get_at(3, 3) - vp.get_at(3, 1)
-        result.near.direction = vp.get_at(3, 2)
-        result.far.direction = vp.get_at(3, 3) - vp.get_at(3, 3)
+        iv= self.get_view_matrix().inverse()
+        ip= self.get_projection_matrix().inverse()
+        inv_vp = ip * iv
 
-        result.left.to_unit()
-        result.right.to_unit()
-        result.top.to_unit()
-        result.bottom.to_unit()
-        result.near.to_unit()
-        result.far.to_unit()
+        for corner in corners:
+            corner.set_from(inv_vp.multiply_v4(corner))
+            corner.set_from(corner * (1.0 / corner.w))
 
-        return result
+        return corners

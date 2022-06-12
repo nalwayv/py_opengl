@@ -37,7 +37,12 @@ class Model:
     def set_position(self, v3: maths.Vec3) -> None:
         """Hard set position
         """
-        self._transform.position.set_from(v3)
+        self._transform.set_position(v3)
+
+    def set_scale(self, v3: maths.Vec3) -> None:
+        """Hard set scale
+        """
+        self._transform.set_scale(v3)
 
     def get_position(self) -> maths.Vec3:
         """Return current position
@@ -82,7 +87,9 @@ class Model:
         """
         self._mesh.delete()
 
+
 # ---
+
 
 class CubeModel(Model):
 
@@ -99,6 +106,9 @@ class CubeModel(Model):
         """OVERRIDE:: Compute AABB3
         """
         return geometry.AABB3(self._transform.position, self.size)
+
+
+# ---
 
 
 class CubeModelAABB(Model):
@@ -204,16 +214,14 @@ class SphereModel(Model):
             self._transform.position + maths.Vec3.create_from_value(self.radius)
         )
 
+
 # ---
 
 
 class FrustumModel(Model):
 
-    __slots__= ('frustum',)
-
-    def __init__(self, frustum: geometry.Frustum) -> None:
-        self.frustum= frustum
+    def __init__(self, arr: list[maths.Vec4]) -> None:
 
         super().__init__(
-            mesh.FrustumMesh(self.frustum)
+            mesh.FrustumMesh(arr)
         )

@@ -1629,6 +1629,9 @@ class Mat4:
 
         return Mat4(r0, r1, r2, r3)
 
+    def __str__(self) -> str:
+        return f'{self.row0}\n{self.row1}\n{self.row2}\n{self.row3}'
+
     @staticmethod
     def create_from_values(
         ax: float, ay: float, az: float, aw: float,
@@ -1862,65 +1865,68 @@ class Mat4:
         )
 
     @staticmethod
-    def create_projection(
+    def create_frustum_rh(left,right,bottom,top,near,far):
+        rl: float= 1.0 / (right-left)
+        tb: float= 1.0 / (top-bottom)
+        fn: float= 1.0 / (far-near)
+        nv: float= 2.0 * near
+
+        return Mat4(
+            Vec4(x= nv * rl),
+            Vec4(y= nv * tb),
+            Vec4(
+                (right + left) * rl,
+                (top + bottom) * tb,
+                (far + near) * fn,
+                -1.0
+            ),
+            Vec4(z= far * nv * fn),
+        )
+
+    @staticmethod
+    def create_projection_rh(
             fov: float,
             aspect: float,
             near: float,
             far: float
     ) -> 'Mat4':
-        """Create a matrix 'projection' field of view
+        """Create a right hand coord projection matrix
 
         Raises
         ---
         Mat4Error
             if values like aspect equil zero
         """
-        inv_r: float= 1.0 / to_rad(fov * 0.5)
-        dz: float= far - near
-        s: float= sin(inv_r)
-
-        if is_zero(dz) or is_zero(s) or is_zero(aspect):
-            raise Mat4Error("m4 projection values were zero")
-
-        c: float= cos(inv_r) / s
+        r: float= fov * 0.5
+        inv_t: float= 1.0 / tan(r)
+        inv_f: float= 1.0 / (near - far)
 
         return Mat4(
-            Vec4(x= c / aspect),
-            Vec4(y= c),
-            Vec4(z= -(far + near) / dz, w= -1.0),
-            Vec4(z= -2.0 * near * far / dz)
+            Vec4(x= inv_t / aspect),
+            Vec4(y= inv_t),
+            Vec4(z= (near + far) * inv_f, w= -1.0),
+            Vec4(z= 2.0 * near * far * inv_f)
         )
 
     @staticmethod
-    def create_look_at(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
-        """Create a  matrix 'look at' field of view
+    def create_lookat_rh(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
+        """Create a right hand coords lookat matrix
         """
-        z: Vec3 = (eye - target)
-        if not z.is_unit():
-            z.to_unit()
-
-        if z.is_zero():
-            return Mat4.identity()
-
-        x: Vec3= up.cross(z)
-        if not x.is_unit():
-            x.to_unit()
-
-        y: Vec3= z.cross(x)
-        if not y.is_unit():
-            y.to_unit()
-
-        d: Vec3= Vec3(
-            -x.dot(eye),
-            -y.dot(eye),
-            -z.dot(eye)
-        )
+        f: Vec3= target-eye
+        if not f.is_unit():
+            f.to_unit()
+        
+        s: Vec3= f.cross(up)
+        if not s.is_unit():
+            s.to_unit()
+            
+        u: Vec3= s.cross(f)
 
         return Mat4(
-            Vec4(x= x.x, y= y.x, z= z.x),
-            Vec4(x= x.y, y= y.y, z= z.y),
-            Vec4(x= x.z, y= y.z, z= z.z),
-            Vec4.create_from_v3(d, 1.0)
+            Vec4(s.x, u.x, -f.x, 0.0),
+            Vec4(s.y, u.y, -f.y, 0.0),
+            Vec4(s.z, u.z, -f.z, 0.0),
+            Vec4(-s.dot(eye), -u.dot(eye), f.dot(eye), 1.0)
         )
 
     def add(self, other: 'Mat4') -> None:
@@ -2073,22 +2079,22 @@ class Mat4:
 
         inv: float= 1.0 / det
 
-        ax: float= (a11 * b11 - a12 * b10 + a13 * b09) * inv
+        ax: float= ( a11 * b11 - a12 * b10 + a13 * b09) * inv
         ay: float= (-a01 * b11 + a02 * b10 - a03 * b09) * inv
-        az: float= (a31 * b05 - a32 * b04 + a33 * b03) * inv
+        az: float= ( a31 * b05 - a32 * b04 + a33 * b03) * inv
         aw: float= (-a21 * b05 + a22 * b04 - a23 * b03) * inv
         bx: float= (-a10 * b11 + a12 * b08 - a13 * b07) * inv
-        by: float= (a00 * b11 - a02 * b08 + a03 * b07) * inv
+        by: float= ( a00 * b11 - a02 * b08 + a03 * b07) * inv
         bz: float= (-a30 * b05 + a32 * b02 - a33 * b01) * inv
-        bw: float= (a20 * b05 - a22 * b02 + a23 * b01) * inv
-        cx: float= (a10 * b10 - a11 * b08 + a13 * b06) * inv
+        bw: float= ( a20 * b05 - a22 * b02 + a23 * b01) * inv
+        cx: float= ( a10 * b10 - a11 * b08 + a13 * b06) * inv
         cy: float= (-a00 * b10 + a01 * b08 - a03 * b06) * inv
-        cz: float= (a30 * b04 - a31 * b02 + a33 * b00) * inv
+        cz: float= ( a30 * b04 - a31 * b02 + a33 * b00) * inv
         cw: float= (-a20 * b04 + a21 * b02 - a23 * b00) * inv
         dx: float= (-a10 * b09 + a11 * b07 - a12 * b06) * inv
-        dy: float= (a00 * b09 - a01 * b07 + a02 * b06) * inv
+        dy: float= ( a00 * b09 - a01 * b07 + a02 * b06) * inv
         dz: float= (-a30 * b03 + a31 * b01 - a32 * b00) * inv
-        dw: float= (a20 * b03 - a21 * b01 + a22 * b00) * inv
+        dw: float= ( a20 * b03 - a21 * b01 + a22 * b00) * inv
 
         return Mat4(
             Vec4(ax, ay, az, aw),
@@ -2196,6 +2202,21 @@ class Mat4:
         w: float= v4.dot(self.col3())
 
         return Vec4(x, y, z, w)
+
+    def multiply_v3(self, v3: Vec3) -> Vec3:
+        """Return matrix multiplyed by vec3
+        """
+        x: float= (v3.x * self.row0.x) + (v3.y * self.row1.x) + (v3.z * self.row2.x) + self.row3.x
+        y: float= (v3.x * self.row0.y) + (v3.y * self.row1.y) + (v3.z * self.row2.y) + self.row3.y
+        z: float= (v3.x * self.row0.z) + (v3.y * self.row1.z) + (v3.z * self.row2.z) + self.row3.z
+        w: float= (v3.x * self.row0.w) + (v3.y * self.row1.w) + (v3.z * self.row2.w) + self.row3.w
+
+        if not is_one(w):
+            x= x / w
+            y= y / w
+            z= z / w
+            
+        return Vec3(x, y, z)
 
     def transform_v3(self, v3: Vec3):
         x: float= v3.dot(self.row0.xyz()) + self.row0.w
