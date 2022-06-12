@@ -1,11 +1,8 @@
 """Geometry
 """
-from audioop import cross
 from enum import Enum, auto
-from re import M
 
 from py_opengl import maths
-from py_opengl import transform
 
 
 # --- IDs

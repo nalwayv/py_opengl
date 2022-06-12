@@ -3,8 +3,6 @@
 from enum import Enum, auto
 
 from py_opengl import maths
-from py_opengl import shader
-from py_opengl import model
 
 # ---
 

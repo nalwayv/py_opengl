@@ -16,7 +16,6 @@ from py_opengl import color
 from py_opengl import model
 from py_opengl import geometry
 from py_opengl import abtree
-# from py_opengl import gjk
 
 
 # ---
