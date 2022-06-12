@@ -164,7 +164,8 @@ class Camera:
         return maths.Mat4.create_lookat_rh(self.position, self.position + self.front, self.up)
 
     def get_frustum_corners(self) -> list[maths.Vec4]:
-        
+        """Return corners of camera frustum
+        """
         corners: list[maths.Vec4]= [
             maths.Vec4(-1.0, -1.0, -1.0, 1.0),# n bl
             maths.Vec4( 1.0, -1.0, -1.0, 1.0),# n br
