@@ -425,7 +425,7 @@ class Plane3:
 
     def __init__(
         self,
-        normal: maths.Vec3= maths.Vec3(x= 1.0),
+        normal: maths.Vec3= maths.Vec3(),
         direction: float= 0.0
     ) -> None:
         self.normal: maths.Vec3= normal
@@ -449,72 +449,75 @@ class Plane3:
                 return True
         return False
 
-    def __post_init__(self):
-        if not self.normal.is_unit():
-            self.normal.to_unit()
+    @staticmethod
+    def create_from_pts(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plane3':
+        p0: maths.Vec3= b-a
+        p1: maths.Vec3= c-a
+        n: maths.Vec3= p0.cross(p1)
+        
+        if not n.is_unit():
+            n.to_unit()
+
+        d: float= (n * -1.0).dot(a)
+
+        return Plane3(n, d)
 
     @staticmethod
     def create_from_v4(v4: maths.Vec4) -> 'Plane3':
-        n: maths.Vec3= v4.xyz()
-        w: float= v4.w
-        if not n.is_unit():
-            n.to_unit()
-        return Plane3(n, v4.w)
+        return Plane3(v4.xyz(), v4.w).unit()
 
     @staticmethod
     def create_from_normal_and_point(unit_v3: maths.Vec3, pt: maths.Vec3):
         if not unit_v3.is_unit():
             unit_v3.to_unit()
 
-        n: maths.Vec3= unit_v3.copy()
+        n: maths.Vec3= unit_v3
         d: float= n.dot(pt)
 
-        return Plane3(normal=n, direction=d)
+        return Plane3(n, d)
 
     @staticmethod
-    def create_from_points(
-        a: maths.Vec3,
-        b: maths.Vec3,
-        c: maths.Vec3
-    ) -> 'Plane3':
-        v0: maths.Vec3= b - a
-        v1: maths.Vec3= c - a
+    def create_from_points(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plane3':
+        p0: maths.Vec3= b - a
+        p1: maths.Vec3= c - a
 
-        n: maths.Vec3= v0.cross(v1)
+        n: maths.Vec3= p0.cross(p1)
         if not n.is_unit():
             n.to_unit()
 
         d: float= n.dot(a)
-
-        return Plane3(normal= n, direction= d)
+        return Plane3(n, d)
 
     def __str__(self) -> str:
         return f'''
         NORMAL: (X: {self.normal.x}, Y: {self.normal.y}, Z: {self.normal.z})
         DIRECTION: ({self.direction})
         '''
+
     def copy(self) -> 'Plane3':
         """Return a copy of self
         """
-        return Plane3(
-            normal= self.normal.copy(),
-            direction= self.direction
-        )
+        return Plane3(self.normal.copy(), self.direction)
+
+    def to_vec4(self) -> maths.Vec4:
+        """
+        """
+        return maths.Vec4.create_from_v3(self.normal, self.direction)
 
     def dot(self, v4: maths.Vec4) -> float:
-        x: float= self.normal.x * v4.x
-        y: float= self.normal.y * v4.y
-        z: float= self.normal.z * v4.z
-        w: float= self.direction * v4.w
-
-        return x + y + z + w
+        """
+        """
+        return self.to_vec4().dot(v4)
 
     def dot_normal(self, v3: maths.Vec3) -> float:
-        x: float= self.normal.x * v3.x
-        y: float= self.normal.y * v3.y
-        z: float= self.normal.z * v3.z
+        """
+        """
+        return self.normal.dot(v3)
 
-        return x + y + z
+    def classify_pt(self, v3: maths.Vec3) -> float:
+        """
+        """
+        return v3.dot(self.normal) + self.direction
 
     def closest_point(self, point: maths.Vec3) -> maths.Vec3:
         scale: float= (self.normal.dot(point) - self.direction) / self.normal.length_sqr()
@@ -529,25 +532,24 @@ class Plane3:
         """
         len_sqr: float= self.normal.length_sqr()
 
-        normal: maths.Vec3= maths.Vec3.create_unit_x()
-        direction: float= 0.0
+        if maths.is_zero(len_sqr):
+            raise PlainError('length was zero')
 
         if maths.is_one(len_sqr):
-            normal.set_from(self.normal)
-            direction= self.direction
-        else:
-            inv: float= maths.inv_sqrt(len_sqr)
-            normal= self.normal * inv
-            direction= self.direction * inv
+            return self.copy()
 
-        return Plane3(normal, direction)
+        inv: float= maths.inv_sqrt(len_sqr)
+        return Plane3(self.normal * inv, self.direction * inv)
 
     def to_unit(self) -> None:
         """Convert to unit length
         """
         len_sqr: float= self.normal.length_sqr()
-        
+
         if maths.is_zero(len_sqr):
+            raise PlainError('length was zero')
+
+        if maths.is_one(len_sqr):
             return
 
         inv: float= maths.inv_sqrt(len_sqr)
@@ -606,6 +608,11 @@ class Plane3:
 
 
 # --- FRUSTUM
+
+
+class FrustumError(Exception):
+    def __init__(self, msg: str) -> None:
+        super().__init__(msg)
 
 
 class Frustum:
@@ -669,14 +676,52 @@ class Frustum:
         return False
 
     def __str__(self) -> str:
-        return f'''
+        return f"""
         TOP: {self.top}
         BOTTOM: {self.bottom}
         LEFT: {self.left}
         RIGHT: {self.right}
         NEAR: {self.near}
         FAR: {self.far}
-        '''
+        """
+
+    @staticmethod
+    def create_from_viewproject(v_matrix: maths.Mat4, p_matrix: maths.Mat4) -> 'Frustum':
+        vp: maths.Mat4= p_matrix * v_matrix
+        
+        b: Plane3= Plane3.create_from_v4(vp.row3 + vp.row1)
+        t: Plane3= Plane3.create_from_v4(vp.row3 - vp.row1)
+        l: Plane3= Plane3.create_from_v4(vp.row3 + vp.row0)
+        r: Plane3= Plane3.create_from_v4(vp.row3 - vp.row0)
+        n: Plane3= Plane3.create_from_v4(vp.row3 + vp.row2)
+        f: Plane3= Plane3.create_from_v4(vp.row3 - vp.row2)
+
+        b.to_unit()
+        t.to_unit()
+        l.to_unit()
+        r.to_unit()
+        n.to_unit()
+        f.to_unit()
+
+        return Frustum(t, b, l, r, n, f)
+
+    def get_at(self, i: int) -> Plane3:
+        match i:
+            case 0:
+                return self.top
+            case 1:
+                return self.bottom
+            case 2:
+                return self.left
+            case 3:
+                return self.right
+            case 4:
+                return self.near
+            case 5:
+                return self.far
+
+        raise FrustumError('out of range')
+
 
 # --- RAY3D
 

@@ -3,6 +3,7 @@
 from enum import Enum, auto
 
 from py_opengl import maths
+from py_opengl import geometry
 
 # ---
 
@@ -165,23 +166,30 @@ class Camera:
         """Return corners of camera frustum
         """
         corners: list[maths.Vec4]= [
-            maths.Vec4(-1.0, -1.0, -1.0, 1.0),# n bl
-            maths.Vec4( 1.0, -1.0, -1.0, 1.0),# n br
-            maths.Vec4(-1.0,  1.0, -1.0, 1.0),# n tl
-            maths.Vec4( 1.0,  1.0, -1.0, 1.0),# n tr
-
-            maths.Vec4(-1.0, -1.0,  1.0, 1.0),# f bl
-            maths.Vec4( 1.0, -1.0,  1.0, 1.0),# f br
-            maths.Vec4(-1.0,  1.0,  1.0, 1.0),# f tl
-            maths.Vec4( 1.0,  1.0,  1.0, 1.0),# f tr
+            maths.Vec4(-1.0, -1.0, -1.0, 1.0), # n bl
+            maths.Vec4( 1.0, -1.0, -1.0, 1.0), # n br
+            maths.Vec4(-1.0,  1.0, -1.0, 1.0), # n tl
+            maths.Vec4( 1.0,  1.0, -1.0, 1.0), # n tr
+            maths.Vec4(-1.0, -1.0,  1.0, 1.0), # f bl
+            maths.Vec4( 1.0, -1.0,  1.0, 1.0), # f br
+            maths.Vec4(-1.0,  1.0,  1.0, 1.0), # f tl
+            maths.Vec4( 1.0,  1.0,  1.0, 1.0), # f tr
         ]
 
-        iv= self.get_view_matrix().inverse()
-        ip= self.get_projection_matrix().inverse()
-        inv_vp = ip * iv
+        iv: maths.Mat4= self.get_view_matrix().inverse()
+        ip: maths.Mat4= self.get_projection_matrix().inverse()
+        inv_vp: maths.Mat4= ip * iv
 
         for corner in corners:
             corner.set_from(inv_vp.multiply_v4(corner))
             corner.set_from(corner * (1.0 / corner.w))
 
         return corners
+
+    def get_frustum(self) -> geometry.Frustum:
+        """
+        """
+        return geometry.Frustum.create_from_viewproject(
+            self.get_view_matrix(),
+            self.get_projection_matrix()
+        )

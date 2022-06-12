@@ -135,7 +135,7 @@ def main() -> None:
 
         fshape= model.FrustumModel(cam.get_frustum_corners())
         fshape.set_scale(maths.Vec3.create_from_value(0.1))
-        fshape.translate(maths.Vec3(z= 5))
+        fshape.translate(maths.Vec3(z= 5.0))
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)

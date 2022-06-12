@@ -1839,7 +1839,7 @@ class Mat4:
         )
 
     @staticmethod
-    def create_orthographic(
+    def create_orthographic_rh(
         left: float,
         right: float,
         top: float,
@@ -1847,25 +1847,35 @@ class Mat4:
         near: float,
         far: float
     ) -> 'Mat4':
-        """Create a orthographic projection matrix
+        """Create a right hand coord orthographic matrix
         """
-        inv_rl: float= 1.0 / (right - left)
-        inv_tb: float= 1.0 / (top - bottom)
-        inv_fn: float= 1.0 / (far - near)
-
-        rl: float= right + left
-        tb: float= top + bottom
-        fn: float= far + near
+        inv_rl: float=  1.0 / (right - left)
+        inv_tb: float=  1.0 / (top - bottom)
+        inv_fn: float= -1.0 / (far - near)
 
         return Mat4(
             Vec4(x= 2.0 * inv_rl),
             Vec4(y= 2.0 * inv_tb),
-            Vec4(z= -2.0 * inv_fn),
-            Vec4(x= -rl * inv_rl, y= -tb * inv_tb, z= -fn * inv_fn, w= 1.0)
+            Vec4(z= 2.0 * inv_fn),
+            Vec4(
+                -(right + left) * inv_rl,
+                -(top + bottom) * inv_tb,
+                -(far + near) * inv_fn,
+                1.0
+            )
         )
 
     @staticmethod
-    def create_frustum_rh(left,right,bottom,top,near,far):
+    def create_frustum_rh(
+        left: float,
+        right: float,
+        bottom: float,
+        top: float,
+        near: float,
+        far: float
+    ) -> 'Mat4':
+        """Create a right hand coord frustum
+        """
         rl: float= 1.0 / (right-left)
         tb: float= 1.0 / (top-bottom)
         fn: float= 1.0 / (far-near)
