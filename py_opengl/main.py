@@ -133,12 +133,8 @@ def main() -> None:
         scene.add_obj(shape3)
         scene.add_obj(shape4)
 
-        for pl in cam.get_frustum_planes():
-            print(pl)
-        
-        fshape= model.FrustumModel(cam.get_frustum_corners())
-        fshape.set_scale(maths.Vec3.create_from_value(0.1))
-        fshape.translate(maths.Vec3(z= 5.0))
+        fshape= model.FrustumModel(cam.get_frustum_corners(True))
+        fshape.set_position(maths.Vec3(z= 5))
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -162,9 +158,9 @@ def main() -> None:
             shape3.draw(shader0, v_matrix, p_matrix)
             shape4.draw(shader0, v_matrix, p_matrix)
 
+            fshape.draw(shader0, v_matrix, p_matrix, True)
             scene.draw_debug(shader0, v_matrix, p_matrix)
 
-            fshape.draw(shader0, v_matrix, p_matrix, True)
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_I)):
                 shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
@@ -236,9 +232,7 @@ def main() -> None:
         shape2.delete()
         shape3.delete()
         shape4.delete()
-
         fshape.delete()
-
         shader0.delete()
         
         glfw.terminate()

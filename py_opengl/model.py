@@ -225,7 +225,7 @@ class SphereModel(Model):
 
 class FrustumModel(Model):
 
-    def __init__(self, arr: list[maths.Vec3]) -> None:
+    def __init__(self, arr: list[maths.Vec4]) -> None:
 
         super().__init__(
             mesh.FrustumMesh(arr)

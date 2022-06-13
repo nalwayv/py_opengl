@@ -162,7 +162,7 @@ class Camera:
         """
         return maths.Mat4.create_lookat_rh(self.position, self.position + self.front, self.up)
 
-    def get_frustum_corners(self) -> list[maths.Vec4]:
+    def get_frustum_corners(self, to_unit: bool= False) -> list[maths.Vec3]:
         """Return corners of camera frustum
         """
         corners: list[maths.Vec4]= [
@@ -180,13 +180,13 @@ class Camera:
         ip: maths.Mat4= self.get_projection_matrix().inverse()
         inv_vp: maths.Mat4= ip * iv
 
-        result: list[maths.Vec3]= [maths.Vec3()]*8
-        for i, corner in enumerate(corners):
+        for corner in corners:
             corner.set_from(inv_vp.multiply_v4(corner))
             corner.set_from(corner * (1.0 / corner.w))
-            result[i].set_from(corner.xyz())
+            if to_unit:
+                corner.to_unit()
 
-        return result
+        return corners
 
     def get_frustum_planes(self, to_unit: bool= False) -> list[geometry.Plane3]:
         """
