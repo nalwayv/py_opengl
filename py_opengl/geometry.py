@@ -62,7 +62,7 @@ class AABB3:
     def __str__(self) -> str:
         pmin= self.get_min()
         pmax= self.get_max()
-        return f'AABB\n\tMIN_V3({pmin.x}, {pmin.y}, {pmin.z})\n\tMAX_V3({pmax.x}, {pmax.y}, {pmax.z})'
+        return f'[MIN: {pmin}, MAX: {pmax}]'
 
     @staticmethod
     def create_from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'AABB3':
@@ -449,50 +449,38 @@ class Plane3:
                 return True
         return False
 
-    @staticmethod
-    def create_from_pts(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plane3':
-        p0: maths.Vec3= b-a
-        p1: maths.Vec3= c-a
-        n: maths.Vec3= p0.cross(p1)
-        
-        if not n.is_unit():
-            n.to_unit()
-
-        d: float= (n * -1.0).dot(a)
-
-        return Plane3(n, d)
+    def __str__(self) -> str:
+        return f'[N: {self.normal}, D: {self.direction}]'
 
     @staticmethod
     def create_from_v4(v4: maths.Vec4) -> 'Plane3':
-        return Plane3(v4.xyz(), v4.w).unit()
+        n: maths.Vec3= v4.xyz()
+        d: float= v4.w
 
+        if not n.is_unit():
+            n.to_unit()
+
+        return Plane3(n, d)
+        
     @staticmethod
     def create_from_normal_and_point(unit_v3: maths.Vec3, pt: maths.Vec3):
         if not unit_v3.is_unit():
             unit_v3.to_unit()
 
         n: maths.Vec3= unit_v3
-        d: float= n.dot(pt)
+        d: float= unit_v3.dot(pt)
 
         return Plane3(n, d)
 
     @staticmethod
-    def create_from_points(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plane3':
-        p0: maths.Vec3= b - a
-        p1: maths.Vec3= c - a
-
-        n: maths.Vec3= p0.cross(p1)
+    def create_from_pts(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plane3':
+        n: maths.Vec3= (a - c).cross(a - b)        
         if not n.is_unit():
             n.to_unit()
 
         d: float= n.dot(a)
-        return Plane3(n, d)
 
-    def __str__(self) -> str:
-        return f'''
-        NORMAL: (X: {self.normal.x}, Y: {self.normal.y}, Z: {self.normal.z})
-        DIRECTION: ({self.direction})
-        '''
+        return Plane3(n, d)
 
     def copy(self) -> 'Plane3':
         """Return a copy of self
@@ -519,13 +507,10 @@ class Plane3:
         """
         return v3.dot(self.normal) + self.direction
 
-    def closest_point(self, point: maths.Vec3) -> maths.Vec3:
-        scale: float= (self.normal.dot(point) - self.direction) / self.normal.length_sqr()
-        return point - (self.normal * scale)
-
-    def project_point_onto_plain(self, pt: maths.Vec3) -> maths.Vec3:
-        scale: float= pt.dot(self.normal) - self.direction
-        return pt - (self.normal * scale)
+    def distance_to(self, pt: maths.Vec3) -> float:
+        """
+        """
+        return self.normal.dot(pt) - self.direction
 
     def unit(self) -> 'Plane3':
         """Return a copy of self with unit length
@@ -533,10 +518,7 @@ class Plane3:
         len_sqr: float= self.normal.length_sqr()
 
         if maths.is_zero(len_sqr):
-            raise PlainError('length was zero')
-
-        if maths.is_one(len_sqr):
-            return self.copy()
+            return Plane3(maths.Vec3.zero(), 0.0)
 
         inv: float= maths.inv_sqrt(len_sqr)
         return Plane3(self.normal * inv, self.direction * inv)
@@ -547,16 +529,12 @@ class Plane3:
         len_sqr: float= self.normal.length_sqr()
 
         if maths.is_zero(len_sqr):
-            raise PlainError('length was zero')
-
-        if maths.is_one(len_sqr):
-            return
-
-        inv: float= maths.inv_sqrt(len_sqr)
-        self.normal.x *= inv
-        self.normal.y *= inv
-        self.normal.z *= inv
-        self.direction *= inv
+            self.normal.set_from(maths.Vec3.zero())
+            self.direction= 0.0
+        else:
+            inv: float= maths.inv_sqrt(len_sqr)
+            self.normal.set_from(self.normal * inv)
+            self.direction *= inv
 
     def pt_from_intersect_plane(self, other: 'Plane3') -> maths.Vec3:
         d: maths.Vec3= self.normal.cross(other.nomal)
@@ -570,23 +548,28 @@ class Plane3:
         return pt.cross(d) * (1.0 / denom)
 
     def pt_from_intersect_planes(self, p2: 'Plane3', p3: 'Plane3') -> maths.Vec3:
-        u: maths.Vec3= p2.normal.cross(p3.normal)
-        denom: float= self.normal.dot(u)
+        px: maths.Vec3= maths.Vec3(self.normal.x, p2.normal.x, p3.normal.x)
+        py: maths.Vec3= maths.Vec3(self.normal.y, p2.normal.y, p3.normal.y)
+        pz: maths.Vec3= maths.Vec3(self.normal.z, p2.normal.z, p3.normal.z)
+
+        u: maths.Vec3= py.cross(pz)
+        denom: float= px.dot(u)
 
         if maths.absf(denom) < maths.EPSILON:
             return maths.Vec3.zero()
-        
-        pt: maths.Vec3= (p2.normal * p3.direction) - (p3.normal * p2.direction)
-        
-        return (u * self.direction) + self.normal.cross(pt) * (1.0 / denom)
+
+        d: maths.Vec3= maths.Vec3(self.direction, p2.direction, p3.direction)
+        v: maths.Vec3= px.cross(d)
+
+        inv: float= 1.0 / denom
+        return maths.Vec3(d.dot(u)*inv, pz.dot(v)*inv, -py.dot(v)*inv)
 
     def intersect_pane(self, other: 'Plane3') -> bool:
         dis: float= (self.normal.cross(other.nomal)).length_sqr()
         return not maths.is_zero(dis)
 
     def intersect_pt(self, pt: maths.Vec3) -> bool:
-        dot: float= pt.dot(self.normal)
-        return maths.is_zero(dot - self.direction)
+        return maths.is_zero(self.distance_to(pt))
 
     def intersect_sphere(self, sph: 'Sphere3') -> bool:
         close_pt: maths.Vec3= self.closest_point(sph.center)
@@ -676,14 +659,7 @@ class Frustum:
         return False
 
     def __str__(self) -> str:
-        return f"""
-        TOP: {self.top}
-        BOTTOM: {self.bottom}
-        LEFT: {self.left}
-        RIGHT: {self.right}
-        NEAR: {self.near}
-        FAR: {self.far}
-        """
+        return f'[T: {self.top}, B: {self.bottom}, L: {self.left}, R: {self.right}, N: {self.near}, F: {self.far}]'
 
     @staticmethod
     def create_from_viewproject(v_matrix: maths.Mat4, p_matrix: maths.Mat4) -> 'Frustum':
@@ -696,12 +672,12 @@ class Frustum:
         n: Plane3= Plane3.create_from_v4(vp.row3 + vp.row2)
         f: Plane3= Plane3.create_from_v4(vp.row3 - vp.row2)
 
-        b.to_unit()
-        t.to_unit()
-        l.to_unit()
-        r.to_unit()
-        n.to_unit()
-        f.to_unit()
+        # b.to_unit()
+        # t.to_unit()
+        # l.to_unit()
+        # r.to_unit()
+        # n.to_unit()
+        # f.to_unit()
 
         return Frustum(t, b, l, r, n, f)
 
@@ -758,6 +734,9 @@ class Ray3:
             ):
                 return True
         return False
+
+    def __str__(self) -> str:
+        return f'[O: {self.origin}, D: {self.direction}]'
 
     @staticmethod
     def from_points(origin: maths.Vec3, target: maths.Vec3) -> 'Ray3':

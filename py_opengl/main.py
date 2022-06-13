@@ -149,17 +149,19 @@ def main() -> None:
             time.update()
 
             # --
+            v_matrix= cam.get_view_matrix()
+            p_matrix= cam.get_projection_matrix()
 
-            shape1.rotate(maths.Vec3(x=30, z=25) * (1.2 * time.delta))
-            shape0.draw(shader0, cam.get_view_matrix(), cam.get_projection_matrix())
-            shape1.draw(shader0, cam.get_view_matrix(), cam.get_projection_matrix())
-            shape2.draw(shader0, cam.get_view_matrix(), cam.get_projection_matrix())
-            shape3.draw(shader0, cam.get_view_matrix(), cam.get_projection_matrix())
-            shape4.draw(shader0, cam.get_view_matrix(), cam.get_projection_matrix())
+            shape1.rotate(maths.Vec3(x= 30.0, z= 25.0) * (1.2 * time.delta))
+            shape0.draw(shader0, v_matrix, p_matrix)
+            shape1.draw(shader0, v_matrix, p_matrix)
+            shape2.draw(shader0, v_matrix, p_matrix)
+            shape3.draw(shader0, v_matrix, p_matrix)
+            shape4.draw(shader0, v_matrix, p_matrix)
 
-            scene.draw_debug(shader0, cam.get_view_matrix(), cam.get_projection_matrix())
+            scene.draw_debug(shader0, v_matrix, p_matrix)
 
-            fshape.draw(shader0, cam.get_view_matrix(), cam.get_projection_matrix(), True)
+            fshape.draw(shader0, v_matrix, p_matrix, True)
 
             if kb.is_key_held(glwin.get_key_state(glfw.KEY_I)):
                 shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
@@ -221,8 +223,8 @@ def main() -> None:
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
-    except Exception as err:
-        logger.error(f"ERROR: {err}")
+    # except Exception as err:
+    #     logger.error(f"ERROR: {err}")
 
     finally:
         logger.debug('CLOSED')

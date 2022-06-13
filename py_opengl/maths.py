@@ -250,7 +250,7 @@ class Vec2:
         return Vec2(x, y)
 
     def __str__(self) -> str:
-        return f'V2({self.x}, {self.y})'
+        return f'[X: {self.x}, Y: {self.y}]'
 
     @staticmethod
     def one() -> 'Vec2':
@@ -486,7 +486,7 @@ class Vec3:
         return Vec3(x, y, z)
 
     def __str__(self) -> str:
-        return f'V3({self.x}, {self.y}, {self.z})'
+        return f'[X: {self.x}, Y: {self.y}, Z: {self.z}]'
 
     @staticmethod
     def one() -> 'Vec3':
@@ -866,7 +866,7 @@ class Vec4:
         )
 
     def __str__(self) -> str:
-        return f'V4({self.x}, {self.y}, {self.z}, {self.w})'
+        return f'[X: {self.x}, Y: {self.y}, Z: {self.z}, W: {self.w}]'
 
     @staticmethod
     def one() -> 'Vec4':
@@ -1147,6 +1147,9 @@ class Mat3:
 
         return Mat3(r0, r1, r2)
 
+    def __str__(self) -> str:
+        return f'[R0: {self.row0}\nR1: {self.row1}\nR2: {self.row2}]'
+
     @staticmethod
     def create_from_values(
         ax: float, ay: float, az: float,
@@ -1305,7 +1308,11 @@ class Mat3:
     def copy(self) -> 'Mat3':
         """Return a copy of self
         """
-        return Mat3(self.row0.copy(), self.row1.copy(), self.row2.copy)
+        return Mat3.create_from_values(
+            self.row0.x, self.row0.y, self.row0.z,
+            self.row1.x, self.row1.y, self.row1.z,
+            self.row2.x, self.row2.y, self.row2.z
+        )
 
     def scale(self, by: float) -> 'Mat3':
         """Return a scaled copy of self
@@ -1630,7 +1637,7 @@ class Mat4:
         return Mat4(r0, r1, r2, r3)
 
     def __str__(self) -> str:
-        return f'{self.row0}\n{self.row1}\n{self.row2}\n{self.row3}'
+        return f'[R0: {self.row0}\nR1: {self.row1}\nR2: {self.row2}\nR3: {self.row3}]'
 
     @staticmethod
     def create_from_values(
@@ -1993,11 +2000,11 @@ class Mat4:
     def copy(self) -> 'Mat4':
         """Return a copy
         """
-        return Mat4(
-            self.row0.copy(),
-            self.row1.copy(),
-            self.row2.copy(),
-            self.row3.copy(),
+        return Mat4.create_from_values(
+            self.row0.x, self.row0.y, self.row0.z, self.row0.w,
+            self.row1.x, self.row1.y, self.row1.z, self.row1.w,
+            self.row2.x, self.row2.y, self.row2.z, self.row2.w,
+            self.row3.x, self.row3.y, self.row3.z, self.row3.w,
         )
 
     def scale(self, by: float) -> 'Mat4':
@@ -2526,7 +2533,7 @@ class Quaternion:
         )
 
     def __str__(self) -> str:
-        return f'Q({self.x}, {self.y}, {self.z}, {self.w})'
+        return f'[X: {self.x}, Y: {self.y}, Z: {self.z}, W: {self.w}]'
 
     @staticmethod
     def create_from_vec3(v3: Vec3, w: float= 0.0) -> 'Quaternion':

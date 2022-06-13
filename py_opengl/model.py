@@ -31,7 +31,7 @@ class Model:
         return False
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__}:: {self.ID}'
+        return f'[NAME: {self.__class__.__name__}, ID: {self.ID}]'
 
     def set_position(self, v3: maths.Vec3) -> None:
         """Hard set position
