@@ -457,9 +457,6 @@ class Plane3:
         n: maths.Vec3= v4.xyz()
         d: float= v4.w
 
-        if not n.is_unit():
-            n.to_unit()
-
         return Plane3(n, d)
         
     @staticmethod
@@ -588,115 +585,6 @@ class Plane3:
         dis: float= dot - self.direction
 
         return maths.absf(dis) <= len_sq
-
-
-# --- FRUSTUM
-
-
-class FrustumError(Exception):
-    def __init__(self, msg: str) -> None:
-        super().__init__(msg)
-
-
-class Frustum:
-
-    __slots__=(
-        'top',
-        'bottom',
-        'left',
-        'right',
-        'near',
-        'far',
-        'TYPE',
-    )
-
-    def __init__(
-        self,
-        top: Plane3= Plane3(),
-        bottom: Plane3= Plane3(),
-        left: Plane3= Plane3(),
-        right: Plane3= Plane3(),
-        near: Plane3= Plane3(),
-        far: Plane3= Plane3()
-    ) -> None:
-        self.top: Plane3= top
-        self.bottom: Plane3= bottom
-        self.left: Plane3= left
-        self.right: Plane3= right
-        self.near: Plane3= near
-        self.far: Plane3= far
-        self.TYPE = GeometryType.FRUSTUM
-
-    def __hash__(self) -> int:
-        data: tuple[float]= (
-            self.top.normal.x, self.top.normal.y, self.top.normal.z,
-            self.top.direction,
-            self.bottom.normal.x, self.bottom.normal.y, self.bottom.normal.z,
-            self.bottom.direction,
-            self.left.normal.x, self.left.normal.y, self.left.normal.z,
-            self.left.direction,
-            self.right.normal.x, self.right.normal.y, self.right.normal.z,
-            self.right.direction,
-            self.near.normal.x, self.near.normal.y, self.near.normal.z,
-            self.near.direction,
-            self.far.normal.x, self.far.normal.y, self.far.normal.z,
-            self.far.direction,
-        )
-        return hash(data)
-
-    def __eq__(self, other: 'Frustum') -> bool:
-        if isinstance(other, self.__class__):
-            if( 
-                self.top == other.top and
-                self.bottom == other.bottom and 
-                self.left == other.left and
-                self.right == other.right and
-                self.near == other.near and
-                self.far == other.far and
-                self.TYPE == other.TYPE
-            ):
-                return True
-        return False
-
-    def __str__(self) -> str:
-        return f'[T: {self.top}, B: {self.bottom}, L: {self.left}, R: {self.right}, N: {self.near}, F: {self.far}]'
-
-    @staticmethod
-    def create_from_viewproject(v_matrix: maths.Mat4, p_matrix: maths.Mat4) -> 'Frustum':
-        vp: maths.Mat4= p_matrix * v_matrix
-        
-        b: Plane3= Plane3.create_from_v4(vp.row3 + vp.row1)
-        t: Plane3= Plane3.create_from_v4(vp.row3 - vp.row1)
-        l: Plane3= Plane3.create_from_v4(vp.row3 + vp.row0)
-        r: Plane3= Plane3.create_from_v4(vp.row3 - vp.row0)
-        n: Plane3= Plane3.create_from_v4(vp.row3 + vp.row2)
-        f: Plane3= Plane3.create_from_v4(vp.row3 - vp.row2)
-
-        # b.to_unit()
-        # t.to_unit()
-        # l.to_unit()
-        # r.to_unit()
-        # n.to_unit()
-        # f.to_unit()
-
-        return Frustum(t, b, l, r, n, f)
-
-    def get_at(self, i: int) -> Plane3:
-        match i:
-            case 0:
-                return self.top
-            case 1:
-                return self.bottom
-            case 2:
-                return self.left
-            case 3:
-                return self.right
-            case 4:
-                return self.near
-            case 5:
-                return self.far
-
-        raise FrustumError('out of range')
 
 
 # --- RAY3D

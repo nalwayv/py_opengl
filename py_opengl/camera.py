@@ -180,16 +180,34 @@ class Camera:
         ip: maths.Mat4= self.get_projection_matrix().inverse()
         inv_vp: maths.Mat4= ip * iv
 
-        for corner in corners:
+        result: list[maths.Vec3]= [maths.Vec3()]*8
+        for i, corner in enumerate(corners):
             corner.set_from(inv_vp.multiply_v4(corner))
             corner.set_from(corner * (1.0 / corner.w))
+            result[i].set_from(corner.xyz())
 
-        return corners
+        return result
 
-    def get_frustum(self) -> geometry.Frustum:
+    def get_frustum_planes(self, to_unit: bool= False) -> list[geometry.Plane3]:
         """
         """
-        return geometry.Frustum.create_from_viewproject(
-            self.get_view_matrix(),
-            self.get_projection_matrix()
-        )
+        v: maths.Mat4= self.get_view_matrix()
+        p: maths.Mat4= self.get_projection_matrix()
+        vp: maths.Mat4= p * v
+
+        l= geometry.Plane3.create_from_v4(vp.row3 + vp.row0)
+        r= geometry.Plane3.create_from_v4(vp.row3 - vp.row0)
+        t= geometry.Plane3.create_from_v4(vp.row3 - vp.row1)
+        b= geometry.Plane3.create_from_v4(vp.row3 + vp.row1)
+        n= geometry.Plane3.create_from_v4(vp.row3 + vp.row2)
+        f= geometry.Plane3.create_from_v4(vp.row3 - vp.row2)
+
+        if to_unit:
+            l.to_unit()
+            r.to_unit()
+            t.to_unit()
+            b.to_unit()
+            n.to_unit()
+            f.to_unit()
+
+        return [l,r,t,b,n,f]

@@ -1,5 +1,6 @@
 """Main
 """
+from re import L
 import glfw
 from loguru import logger
 from OpenGL import GL
@@ -117,7 +118,6 @@ def main() -> None:
         shape3= model.CubeModelAABB(geometry.AABB3(maths.Vec3(), maths.Vec3.create_from_value(0.3)))
         shape4= model.CubeModel(maths.Vec3.create_from_value(0.5))
 
-
         shape0.translate(maths.Vec3(0.0, 0.0, 0.0))
         shape1.translate(maths.Vec3(1.5, 1.5, -2.5))
         shape2.translate(maths.Vec3(2.5, -2.0, 2.0))
@@ -133,6 +133,9 @@ def main() -> None:
         scene.add_obj(shape3)
         scene.add_obj(shape4)
 
+        for pl in cam.get_frustum_planes():
+            print(pl)
+        
         fshape= model.FrustumModel(cam.get_frustum_corners())
         fshape.set_scale(maths.Vec3.create_from_value(0.1))
         fshape.translate(maths.Vec3(z= 5.0))
@@ -223,8 +226,8 @@ def main() -> None:
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
-    # except Exception as err:
-    #     logger.error(f"ERROR: {err}")
+    except Exception as err:
+        logger.error(f'ERROR: {err}')
 
     finally:
         logger.debug('CLOSED')

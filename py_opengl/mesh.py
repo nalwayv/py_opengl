@@ -678,19 +678,18 @@ class CubeMeshAABB(Mesh):
 class FrustumMesh(Mesh):
 
     
-    def __init__(self, arr: list[maths.Vec4]) -> None:
+    def __init__(self, arr: list[maths.Vec3]) -> None:
         if len(arr) != 8:
             raise MeshError('len of arr was not 8')
 
-        nbl= arr[0].xyz()
-        nbr= arr[1].xyz()
-        ntl= arr[2].xyz()
-        ntr= arr[3].xyz()
-
-        fbl= arr[4].xyz()
-        fbr= arr[5].xyz()
-        ftl= arr[6].xyz()
-        ftr= arr[7].xyz()
+        nbl: maths.Vec3= arr[0]
+        nbr: maths.Vec3= arr[1]
+        ntl: maths.Vec3= arr[2]
+        ntr: maths.Vec3= arr[3]
+        fbl: maths.Vec3= arr[4]
+        fbr: maths.Vec3= arr[5]
+        ftl: maths.Vec3= arr[6]
+        ftr: maths.Vec3= arr[7]
 
         vertices: list[Vertex]= [
             # front
