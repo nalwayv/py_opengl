@@ -2,6 +2,7 @@
 """
 from enum import Enum, auto
 
+from py_opengl import window
 
 # ---
 
@@ -18,10 +19,11 @@ class MouseState(Enum):
 
 class Mouse:
 
-    __slots__= ('states',)
+    __slots__= ('states', 'win')
 
-    def __init__(self) -> None:
-        self.states: list[int]= [0xFF]*3
+    def __init__(self, win: window.GlWindow) -> None:
+        self.states: list[int]= [0xFF] * 3
+        self.win: window.GlWindow|None= win
 
     def _set_current_state_at(self, key: int, value: int) -> None:
         """Set glfw mouse button number stored current state
@@ -47,12 +49,13 @@ class Mouse:
         return 0xFF & (self.states[key] >> 8)
 
 
-    def get_state(self, glfw_mouse_state: tuple[int, int]) -> MouseState:
+    def _get_state(self, glfw_mouse_state: int) -> MouseState:
         """Mouse button pressed
 
         use GlWindow function 'get_mouse_state' for glfw_mouse_state
         """
-        key, current= glfw_mouse_state
+        current= self.win.get_mouse_state(glfw_mouse_state)
+        key= glfw_mouse_state
         result= MouseState.DEFAULT
 
         if key < 3:
@@ -76,17 +79,17 @@ class Mouse:
 
         return result
 
-    def is_button_held(self, key_state: tuple[int, int]) -> bool:
-        """Helper function for mouse button held down state
+    def is_button_held(self, mouse: int) -> bool:
+        """Return true if mouse button is held
         """
-        return self.get_state(key_state) is MouseState.HELD
+        return self._get_state(mouse) is MouseState.HELD
 
-    def is_button_pressed(self, key_state: tuple[int, int]) -> bool:
-        """Helper function for mouse button pressed state
+    def is_button_pressed(self, mouse: int) -> bool:
+        """Return true if mouse button is just being pressed
         """
-        return self.get_state(key_state) is MouseState.PRESSED
+        return self._get_state(mouse) is MouseState.PRESSED
 
-    def is_button_released(self, key_state: tuple[int, int]) -> bool:
-        """Helper function for mouse button released state
+    def is_button_released(self, mouse: int) -> bool:
+        """Return true if mouse button is released
         """
-        return self.get_state(key_state) is MouseState.RELEASED
+        return self._get_state(mouse) is MouseState.RELEASED

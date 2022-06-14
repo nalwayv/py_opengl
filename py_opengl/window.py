@@ -58,28 +58,25 @@ class GlWindow:
 
         glfw.set_window_pos(self.window, x, y)
 
-
     def get_mouse_pos(self) -> tuple[float, float]:
         """Return current mouse screen position
         """
         return glfw.get_cursor_pos(self.window)
 
-
-    def get_mouse_state(self, button: int) -> tuple[int, int]:
-        """Get glfw mouse button state plus return button number passed in
+    def get_mouse_state(self, button: int) -> int:
+        """Return glfw mouse button state
 
         GLFW_RELEASE = 0
         
         GLFW_PRESS = 1
         """
-        return (button, glfw.get_mouse_button(self.window, button))
+        return glfw.get_mouse_button(self.window, button)
 
-
-    def get_key_state(self, key: int) -> tuple[int, int]:
-        """Return glfw key state plus key number passed in
+    def get_key_state(self, key: int) -> int:
+        """Return glfw key state
 
         GLFW_RELEASE = 0
 
         GLFW_PRESS = 1
         """
-        return (key, glfw.get_key(self.window, key))
+        return glfw.get_key(self.window, key)

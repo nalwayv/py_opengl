@@ -3,6 +3,8 @@
 from enum import Enum, auto
 from typing import Final
 
+from py_opengl import window
+
 
 # ---
 
@@ -25,10 +27,11 @@ class KeyState(Enum):
 
 class Keyboard:
 
-    __slots__= ('states')
+    __slots__= ('states', 'win')
     
-    def __init__(self) -> None:
+    def __init__(self, win: window.GlWindow) -> None:
         self.states: list[int]= [0xFF] * KEYBOARD_SIZE
+        self.win: window.GlWindow|None= win
 
     def _set_current_state_at(self, key: int, value: int) -> None:
         self.states[key]= (self.states[key] & 0xFFFFFF00) | value
@@ -42,12 +45,11 @@ class Keyboard:
     def _get_previous_state_at(self, key: int) -> int:
         return 0xFF & (self.states[key] >> 8)
 
-    def get_state(self, glfw_key_state: tuple[int, int]) -> KeyState:
+    def _get_state(self, glfw_key_state: int ) -> KeyState:
         """Get keyboard keystate
-
-        use GlWindow funcfion 'get_key_state' to get glfw_key_state
         """
-        key, current= glfw_key_state
+        key= glfw_key_state
+        current= self.win.get_key_state(glfw_key_state)
         result= KeyState.DEFAULT
 
         if key < KEYBOARD_SIZE:
@@ -71,17 +73,17 @@ class Keyboard:
 
         return result
 
-    def is_key_held(self, key_state: tuple[int, int]) -> bool:
-        """Helper function for key held down state
+    def is_key_held(self, key: int) -> bool:
+        """Return true if key is being held down
         """
-        return self.get_state(key_state) == KeyState.HELD
+        return self._get_state(key) == KeyState.HELD
 
-    def is_key_pressed(self, key_state: tuple[int, int]) -> bool:
-        """Helper function for key pressed state
+    def is_key_pressed(self, key: int) -> bool:
+        """Return true if key if just being pressed
         """
-        return self.get_state(key_state) == KeyState.PRESSED
+        return self._get_state(key) == KeyState.PRESSED
 
-    def is_key_released(self, key_state: tuple[int, int]) -> bool:
-        """Helper function for key released state
+    def is_key_released(self, key: int) -> bool:
+        """Return true if key was released
         """
-        return self.get_state(key_state) == KeyState.RELEASED
+        return self._get_state(key) == KeyState.RELEASED

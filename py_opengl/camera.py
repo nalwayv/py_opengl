@@ -164,6 +164,24 @@ class Camera:
 
     def get_frustum_corners(self, to_unit: bool= False) -> list[maths.Vec3]:
         """Return corners of camera frustum
+
+        [
+            Near bottom left,
+
+            Near bottom right,
+
+            Near top left,
+
+            Near top right,
+            
+            Far bottom left,
+            
+            Far bottom right,
+            
+            Far top left,
+            
+            Far top right
+        ]
         """
         corners: list[maths.Vec4]= [
             maths.Vec4(-1.0, -1.0, -1.0, 1.0), # n bl
@@ -189,7 +207,9 @@ class Camera:
         return corners
 
     def get_frustum_planes(self, to_unit: bool= False) -> list[geometry.Plane3]:
-        """
+        """Return list of frustum planes
+
+        [ Left, Right, Top, Bottom, Near, Far ]
         """
         v: maths.Mat4= self.get_view_matrix()
         p: maths.Mat4= self.get_projection_matrix()
@@ -210,4 +230,4 @@ class Camera:
             n.to_unit()
             f.to_unit()
 
-        return [l,r,t,b,n,f]
+        return [l, r, t, b, n, f]

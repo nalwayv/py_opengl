@@ -104,9 +104,8 @@ def main() -> None:
 
         cam= camera.Camera(maths.Vec3(z= 5.0), float(width / height))
 
-        kb: keyboard.Keyboard= keyboard.Keyboard()
-
-        ms: mouse.Mouse= mouse.Mouse()
+        kb: keyboard.Keyboard= keyboard.Keyboard(glwin)
+        ms: mouse.Mouse= mouse.Mouse(glwin)
         first_move: bool= True
         last_mp: maths.Vec3= maths.Vec3.zero()
 
@@ -162,47 +161,45 @@ def main() -> None:
             scene.draw_debug(shader0, v_matrix, p_matrix)
 
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_I)):
+            if kb.is_key_held(glfw.KEY_I):
                 shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
         
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_K)):
+            if kb.is_key_held(glfw.KEY_K):
                 shape1.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_J)):
+            if kb.is_key_held(glfw.KEY_J):
                 shape1.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_L)):
+            if kb.is_key_held(glfw.KEY_L):
                 shape1.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_O)):
+            if kb.is_key_held(glfw.KEY_O):
                 shape1.translate(maths.Vec3(z= 1.5) * (1.4 * time.delta))
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_U)):
+            if kb.is_key_held(glfw.KEY_U):
                 shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
 
             # --
         
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_W)):
+            if kb.is_key_held(glfw.KEY_W):
                 cam.translate(camera.CameraDirection.IN, time.delta)
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_S)):
+            if kb.is_key_held(glfw.KEY_S):
                 cam.translate(camera.CameraDirection.OUT, time.delta)
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_A)):
+            if kb.is_key_held(glfw.KEY_A):
                 cam.translate(camera.CameraDirection.LEFT, time.delta)
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_D)):
+            if kb.is_key_held(glfw.KEY_D):
                 cam.translate(camera.CameraDirection.RIGHT, time.delta)
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_E)):
+            if kb.is_key_held(glfw.KEY_E):
                 cam.translate(camera.CameraDirection.UP, time.delta)
 
-            if kb.is_key_held(glwin.get_key_state(glfw.KEY_Q)):
+            if kb.is_key_held(glfw.KEY_Q):
                 cam.translate(camera.CameraDirection.DOWN, time.delta)
 
-            if ms.is_button_held(
-                glwin.get_mouse_state(glfw.MOUSE_BUTTON_LEFT)
-            ):
+            if ms.is_button_held(glfw.MOUSE_BUTTON_LEFT):
                 if first_move:
                     mx, my= glwin.get_mouse_pos()
                     last_mp.x= mx
