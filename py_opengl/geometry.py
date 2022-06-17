@@ -42,13 +42,6 @@ class AABB3:
         self.extents: maths.Vec3= extents
         self.TYPE: GeometryType= GeometryType.AABB3
 
-    def __hash__(self) -> int:
-        data: tuple[float]= (
-            self.center.x, self.center.y, self.center.z,
-            self.extents.x, self.extents.y, self.extents.z
-        )
-        return hash(data)
-
     def __eq__(self, other: 'AABB3') -> bool:
         if isinstance(other, self.__class__):
             if(
@@ -251,13 +244,6 @@ class Line3:
         self.end: maths.Vec3= end
         self.TYPE: GeometryType= GeometryType.LINE
 
-    def __hash__(self) -> int:
-        data: tuple[float]= (
-            self.start.x, self.start.y, self.start.z,
-            self.end.x, self.end.y, self.end.z
-        )
-        return hash(data)
-
     def __eq__(self, other: 'Line3') -> bool:
         if isinstance(other, self.__class__):
             if(
@@ -290,14 +276,6 @@ class Triangle3:
         self.p2= p2.copy()
         self.TYPE: GeometryType= GeometryType.TRIANGLE
 
-    def __hash__(self) -> int:
-        data: tuple[float]= (
-            self.p0.x, self.p0.y, self.p0.z,
-            self.p1.x, self.p1.y, self.p1.z,
-            self.p2.x, self.p2.y, self.p2.z
-        )
-        return hash(data)
-
     def __eq__(self, other: 'Triangle3') -> bool:
         if isinstance(other, self.__class__):
             if(
@@ -323,7 +301,7 @@ class Triangle3:
         return (
             v >= 0.0 and
             w >= 0.0 and
-            (v+w) <= 1.0
+            (v + w) <= 1.0
         )
 
 
@@ -342,13 +320,6 @@ class Sphere3:
         self.center: maths.Vec3= center
         self.radius: float= radius
         self.TYPE: GeometryType= GeometryType.SPHERE
-
-    def __hash__(self) -> int:
-        data: tuple[float]= (
-            self.center.x, self.center.y, self.center.z,
-            self.radius
-        )
-        return hash(data)
 
     def __eq__(self, other: 'Sphere3') -> bool:
         if isinstance(other, self.__class__):
@@ -403,7 +374,7 @@ class Sphere3:
 
         return dis < r2
 
-    def intersect_plain(self, plain: 'Plane3'):
+    def intersect_plain(self, plain: 'Plane'):
         close_pt: maths.Vec3= plain.closest_pt(self.center)
         dis: float= (self.center - close_pt).length_sqr()
         r2: float= maths.sqr(self.radius)
@@ -411,15 +382,15 @@ class Sphere3:
         return dis < r2
 
 
-# --- PLAIN
+# --- PLANE
 
 
-class PlainError(Exception):
+class PlaneError(Exception):
     def __init__(self, msg: str):
         super().__init__(msg)
 
 
-class Plane3:
+class Plane:
 
     __slots__= ('normal', 'direction', 'TYPE')
 
@@ -432,14 +403,7 @@ class Plane3:
         self.direction: float= direction
         self.TYPE: GeometryType= GeometryType.PLAIN
 
-    def __hash__(self) -> int:
-        data: tuple[float]= (
-            self.normal.x, self.normal.y, self.normal.z,
-            self.direction
-        )
-        return hash(data)
-
-    def __eq__(self, other: 'Plane3') -> bool:
+    def __eq__(self, other: 'Plane') -> bool:
         if isinstance(other, self.__class__):
             if(
                 self.normal.is_equil(other.normal) and
@@ -453,36 +417,39 @@ class Plane3:
         return f'[N: {self.normal}, D: {self.direction}]'
 
     @staticmethod
-    def create_from_v4(v4: maths.Vec4) -> 'Plane3':
+    def create_from_v4(v4: maths.Vec4) -> 'Plane':
         n: maths.Vec3= v4.xyz()
         d: float= v4.w
 
-        return Plane3(n, d)
-        
+        return Plane(n, d)
+    
     @staticmethod
-    def create_from_normal_and_point(unit_v3: maths.Vec3, pt: maths.Vec3):
-        if not unit_v3.is_unit():
-            unit_v3.to_unit()
+    def create_from_pts(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plane':
+        p0: maths.Vec3= b - a
+        p1: maths.Vec3= c - a
+        n: maths.Vec3= p1.cross(p0)
 
-        n: maths.Vec3= unit_v3
-        d: float= unit_v3.dot(pt)
-
-        return Plane3(n, d)
-
-    @staticmethod
-    def create_from_pts(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plane3':
-        n: maths.Vec3= (a - c).cross(a - b)        
         if not n.is_unit():
             n.to_unit()
 
         d: float= n.dot(a)
 
-        return Plane3(n, d)
+        return Plane(n, d)
+    
+    @staticmethod
+    def create_from_unit_and_pt(unit_v3: maths.Vec3, pt: maths.Vec3):
+        if not unit_v3.is_unit():
+            unit_v3.to_unit()
 
-    def copy(self) -> 'Plane3':
+        n: maths.Vec3= unit_v3.copy()
+        d: float= unit_v3.dot(pt)
+
+        return Plane(n, d)
+
+    def copy(self) -> 'Plane':
         """Return a copy of self
         """
-        return Plane3(self.normal.copy(), self.direction)
+        return Plane(self.normal.copy(), self.direction)
 
     def to_vec4(self) -> maths.Vec4:
         """
@@ -509,16 +476,16 @@ class Plane3:
         """
         return self.normal.dot(pt) - self.direction
 
-    def unit(self) -> 'Plane3':
+    def unit(self) -> 'Plane':
         """Return a copy of self with unit length
         """
         len_sqr: float= self.normal.length_sqr()
 
         if maths.is_zero(len_sqr):
-            return Plane3(maths.Vec3.zero(), 0.0)
+            return Plane(maths.Vec3.zero(), 0.0)
 
         inv: float= maths.inv_sqrt(len_sqr)
-        return Plane3(self.normal * inv, self.direction * inv)
+        return Plane(self.normal * inv, self.direction * inv)
 
     def to_unit(self) -> None:
         """Convert to unit length
@@ -533,7 +500,7 @@ class Plane3:
             self.normal.set_from(self.normal * inv)
             self.direction *= inv
 
-    def pt_from_intersect_plane(self, other: 'Plane3') -> maths.Vec3:
+    def pt_from_intersect_plane(self, other: 'Plane') -> maths.Vec3:
         d: maths.Vec3= self.normal.cross(other.nomal)
         denom: float= d.length_sqr()
 
@@ -544,7 +511,7 @@ class Plane3:
         
         return pt.cross(d) * (1.0 / denom)
 
-    def pt_from_intersect_planes(self, p2: 'Plane3', p3: 'Plane3') -> maths.Vec3:
+    def pt_from_intersect_planes(self, p2: 'Plane', p3: 'Plane') -> maths.Vec3:
         px: maths.Vec3= maths.Vec3(self.normal.x, p2.normal.x, p3.normal.x)
         py: maths.Vec3= maths.Vec3(self.normal.y, p2.normal.y, p3.normal.y)
         pz: maths.Vec3= maths.Vec3(self.normal.z, p2.normal.z, p3.normal.z)
@@ -561,7 +528,7 @@ class Plane3:
         inv: float= 1.0 / denom
         return maths.Vec3(d.dot(u)*inv, pz.dot(v)*inv, -py.dot(v)*inv)
 
-    def intersect_pane(self, other: 'Plane3') -> bool:
+    def intersect_pane(self, other: 'Plane') -> bool:
         dis: float= (self.normal.cross(other.nomal)).length_sqr()
         return not maths.is_zero(dis)
 
@@ -605,13 +572,6 @@ class Ray3:
 
         if not self.direction.is_unit():
             self.direction.to_unit()
-
-    def __hash__(self) -> int:
-        data: tuple[float]= (
-            self.origin.x, self.origin.y, self.origin.z,
-            self.direction.x, self.direction.y, self.direction.z,
-        )
-        return hash(data)
 
     def __eq__(self, other: 'Ray3') -> bool:
         if isinstance(other, self.__class__):
@@ -711,7 +671,7 @@ class Ray3:
 
         return t
 
-    def cast_plain(self, pl: Plane3) -> float:
+    def cast_plain(self, pl: Plane) -> float:
         nd: float= self.direction.dot(pl.normal)
         pn: float= self.origin.dot(pl.normal)
 

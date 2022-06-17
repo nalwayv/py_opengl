@@ -1,6 +1,5 @@
 """Main
 """
-from re import L
 import glfw
 from loguru import logger
 from OpenGL import GL
@@ -147,6 +146,7 @@ def main() -> None:
             time.update()
 
             # --
+            
             v_matrix= cam.get_view_matrix()
             p_matrix= cam.get_projection_matrix()
 

@@ -125,10 +125,12 @@ class Camera:
         """
         match dir:
             case CameraRotation.YAW:
-                self.yaw -= maths.to_rad(value * self.rsensativity * dt)
+                by= maths.to_rad(value * self.rsensativity * dt)
+                self.yaw -= by
 
             case CameraRotation.PITCH:
-                self.pitch += maths.to_rad(maths.clampf(value * self.rsensativity * dt, -89.0, 89.0))
+                by= maths.to_rad(maths.clampf(value * self.rsensativity * dt, -89.0, 89.0))
+                self.pitch += by
 
             case CameraRotation.ROLL:
                 return
@@ -206,7 +208,7 @@ class Camera:
 
         return corners
 
-    def get_frustum_planes(self, to_unit: bool= False) -> list[geometry.Plane3]:
+    def get_frustum_planes(self, to_unit: bool= False) -> list[geometry.Plane]:
         """Return list of frustum planes
 
         [ Left, Right, Top, Bottom, Near, Far ]
@@ -215,12 +217,12 @@ class Camera:
         p: maths.Mat4= self.get_projection_matrix()
         vp: maths.Mat4= p * v
 
-        l= geometry.Plane3.create_from_v4(vp.row3 + vp.row0)
-        r= geometry.Plane3.create_from_v4(vp.row3 - vp.row0)
-        t= geometry.Plane3.create_from_v4(vp.row3 - vp.row1)
-        b= geometry.Plane3.create_from_v4(vp.row3 + vp.row1)
-        n= geometry.Plane3.create_from_v4(vp.row3 + vp.row2)
-        f= geometry.Plane3.create_from_v4(vp.row3 - vp.row2)
+        l= geometry.Plane.create_from_v4(vp.row3 + vp.row0)
+        r= geometry.Plane.create_from_v4(vp.row3 - vp.row0)
+        t= geometry.Plane.create_from_v4(vp.row3 - vp.row1)
+        b= geometry.Plane.create_from_v4(vp.row3 + vp.row1)
+        n= geometry.Plane.create_from_v4(vp.row3 + vp.row2)
+        f= geometry.Plane.create_from_v4(vp.row3 - vp.row2)
 
         if to_unit:
             l.to_unit()

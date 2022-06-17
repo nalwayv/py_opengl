@@ -291,6 +291,12 @@ class Vec2:
             case 1:
                 self.y= value
     
+    def set_from_xy(self, x: float, y: float) -> None:
+        """
+        """
+        self.x= x
+        self.y= y
+
     def set_from(self, other: 'Vec2') -> None:
         self.x= other.x
         self.y= other.y
@@ -354,10 +360,9 @@ class Vec2:
         """
         return Vec2(-self.y, self.x)
 
-    def rotate_by(self, angle_deg: float) -> 'Vec2':
+    def rotate_by(self, angle_rad: float) -> 'Vec2':
         """Return vec2 rotate by angle
         """
-        angle_rad: float= to_rad(angle_deg)
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
 
@@ -688,7 +693,16 @@ class Vec3:
             case 2:
                 self.z= value
 
+    def set_from_xyz(self, x: float, y: float, z: float) -> None:
+        """
+        """
+        self.x= x
+        self.y= y
+        self.z= z
+
     def set_from(self, other: 'Vec3') -> None:
+        """
+        """
         self.x = other.x
         self.y = other.y
         self.z = other.z
@@ -717,18 +731,17 @@ class Vec3:
         """
         return self - self.project(other)
 
-    def rotate_by(self, angle_deg: float, axis: 'Vec3') -> 'Vec3':
+    def rotate_by(self, angle_rad: float, axis: 'Vec3') -> 'Vec3':
         """Rotate by angle along unit axis
         """
-        rad: float = to_rad(angle_deg)
 
         u: Vec3 = axis.copy()
 
         if not u.is_unit():
             u.to_unit()
 
-        c: float= arccos(rad)
-        s: float= arcsin(rad)
+        c: float= arccos(angle_rad)
+        s: float= arcsin(angle_rad)
 
         m1: Vec3= Vec3(
             x= c + u.x * u.x * (1 - c),
@@ -753,12 +766,6 @@ class Vec3:
             self.dot(m2),
             self.dot(m3)
         )
-
-    def transform(self, m4: 'Mat4') -> 'Vec3':
-        x= self.dot(m4.col0().xyz())
-        y= self.dot(m4.col1().xyz())
-        z= self.dot(m4.col2().xyz())
-        return Vec3(x, y, z)
 
     def sum_total(self) -> float:
         """Return sum total of components
@@ -986,7 +993,17 @@ class Vec4:
             case 3:
                 self.w= value
 
+    def set_from_xyzw(self, x: float, y: float, z: float, w: float) -> None:
+        """
+        """
+        self.x= x
+        self.y= y
+        self.z= z
+        self.w= w
+
     def set_from(self, other: 'Vec4') -> None:
+        """
+        """
         self.x = other.x
         self.y = other.y
         self.z = other.z
@@ -1163,18 +1180,17 @@ class Mat3:
         )
 
     @staticmethod
-    def create_from_axis(angle_deg: float, unit_axis: Vec3) -> 'Mat3':
+    def create_from_axis(angle_rad: float, unit_axis: Vec3) -> 'Mat3':
         """Create a rotated matrix
         """
         if not unit_axis.is_unit():
             unit_axis.to_unit()
 
-        rad: float= to_rad(angle_deg)
         x: float= unit_axis.x
         y: float= unit_axis.y
         z: float= unit_axis.z
-        c: float= cos(rad)
-        s: float= sin(rad)
+        c: float= cos(angle_rad)
+        s: float= sin(angle_rad)
         t: float = 1.0 - c
 
         xx: float= t * sqr(x)
@@ -1261,11 +1277,9 @@ class Mat3:
         )
 
     @staticmethod
-    def create_rotation_x(angle_deg: float) -> 'Mat3':
+    def create_rotation_x(angle_rad: float) -> 'Mat3':
         """Create a rotation on x axis matrix
         """
-        angle_rad: float= to_rad(angle_deg)
-
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
 
@@ -1276,11 +1290,9 @@ class Mat3:
         )
 
     @staticmethod
-    def create_rotation_y(angle_deg: float) -> 'Mat3':
+    def create_rotation_y(angle_rad: float) -> 'Mat3':
         """Create a rotation on y axis matrix
         """
-        angle_rad: float= to_rad(angle_deg)
-
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
 
@@ -1291,11 +1303,9 @@ class Mat3:
         )
 
     @staticmethod
-    def create_rotation_z(angle_deg: float) -> 'Mat3':
+    def create_rotation_z(angle_rad: float) -> 'Mat3':
         """Create a rotation on z axis matrix
         """
-        angle_rad: float= to_rad(angle_deg)
-
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
 
@@ -1720,11 +1730,9 @@ class Mat4:
         )
 
     @staticmethod
-    def create_rotation_x(angle_deg: float) -> 'Mat4':
+    def create_rotation_x(angle_rad: float) -> 'Mat4':
         """Create a rotation *X* mat4 matrix
         """
-        angle_rad: float= to_rad(angle_deg)
-
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
 
@@ -1736,11 +1744,9 @@ class Mat4:
         )
 
     @staticmethod
-    def create_rotation_y(angle_deg: float) -> 'Mat4':
-        """Create a rotation *y* mat4 matrix
+    def create_rotation_y(angle_rad: float) -> 'Mat4':
+        """Create a rotation y mat4 matrix
         """
-        angle_rad: float= to_rad(angle_deg)
-
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
 
@@ -1752,11 +1758,9 @@ class Mat4:
         )
 
     @staticmethod
-    def create_rotation_z(angle_deg: float) -> 'Mat4':
+    def create_rotation_z(angle_rad: float) -> 'Mat4':
         """Create a rotation *z* mat4 matrix
         """
-        angle_rad: float= to_rad(angle_deg)
-
         c: float= cos(angle_rad)
         s: float= sin(angle_rad)
 
@@ -1768,18 +1772,17 @@ class Mat4:
         )
 
     @staticmethod
-    def create_from_axis(angle_deg: float, unit_axis: Vec3) -> 'Mat4':
+    def create_from_axis(angle_rad: float, unit_axis: Vec3) -> 'Mat4':
         """Create a rotated matrix
         """
         if not unit_axis.is_unit():
             unit_axis.to_unit()
 
-        rad: float= to_rad(angle_deg)
         x: float= unit_axis.x
         y: float= unit_axis.y
         z: float= unit_axis.z
-        c: float= cos(rad)
-        s: float= sin(rad)
+        c: float= cos(angle_rad)
+        s: float= sin(angle_rad)
         t: float = 1.0 - c
 
         xx: float= t * sqr(x)
@@ -2235,13 +2238,28 @@ class Mat4:
             
         return Vec3(x, y, z)
 
-    def transform_v3(self, v3: Vec3):
-        x: float= v3.dot(self.row0.xyz()) + self.row0.w
-        y: float= v3.dot(self.row1.xyz()) + self.row1.w
-        z: float= v3.dot(self.row2.xyz()) + self.row2.w
-        w: float= v3.dot(self.row3.xyz()) + self.row3.w
+    def transform_v4(self, v4: Vec4) -> Vec4:
+        """
+        """
+        x: float= self.col0().dot(v4)
+        y: float= self.col1().dot(v4)
+        z: float= self.col2().dot(v4)
+        w: float= self.col3().dot(v4)
 
         return Vec4(x, y, z, w)
+
+    def transform_v3(self, v3: Vec3) -> Vec3:
+        """
+        """
+        v4: Vec4= Vec4.create_from_v3(v3, 1.0)
+
+        inv: float= 1.0 / self.col3().dot(v4)
+
+        x: float= self.col0().dot(v4) * inv
+        y: float= self.col1().dot(v4) * inv
+        z: float= self.col2().dot(v4) * inv
+
+        return Vec3(x, y, z)
 
     def col0(self) -> Vec4:
         """Return matrix column
@@ -2549,12 +2567,16 @@ class Quaternion:
         """
         v0: Vec3= v3 * 0.5
 
-        sx: float= sin(to_rad(v0.x))
-        cx: float= cos(to_rad(v0.x))
-        sy: float= sin(to_rad(v0.y))
-        cy: float= cos(to_rad(v0.y))
-        sz: float= sin(to_rad(v0.z))
-        cz: float= cos(to_rad(v0.z))
+        rx: float= to_rad(v0.x)
+        ry: float= to_rad(v0.y)
+        rz: float= to_rad(v0.z)
+
+        sx: float= sin(rx)
+        cx: float= cos(rx)
+        sy: float= sin(ry)
+        cy: float= cos(ry)
+        sz: float= sin(rz)
+        cz: float= cos(rz)
 
         return Quaternion(
             (sx * cy * cz) + (cx * sy * sz),
@@ -2564,15 +2586,14 @@ class Quaternion:
         )
 
     @staticmethod
-    def create_from_axis(angle_deg: float, unit_axis: Vec3) -> 'Quaternion':
+    def create_from_axis(angle_rad: float, unit_axis: Vec3) -> 'Quaternion':
         """Create a quaternion from an angle and axis of rotation
         """
         if not unit_axis.is_unit():
             unit_axis.to_unit()
-
-        angle_rad: float= to_rad(angle_deg * 0.5)
-        c: float= cos(angle_rad)
-        s: float= sin(angle_rad)
+        
+        c: float= cos(angle_rad * 0.5)
+        s: float= sin(angle_rad * 0.5)
 
         return Quaternion(
             unit_axis.x * s,
@@ -2594,7 +2615,7 @@ class Quaternion:
                 v3= Vec3.create_unit_y().cross(start)
 
             v3.to_unit()
-            return Quaternion.create_from_axis(to_deg(PI), v3)
+            return Quaternion.create_from_axis(PI, v3)
 
         if dot > absf(-1.0 + EPSILON):
             return Quaternion(w=1.0)
