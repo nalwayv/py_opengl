@@ -1,5 +1,6 @@
 """Camera
 """
+from audioop import cross
 from enum import Enum, auto
 
 from py_opengl import maths
@@ -58,9 +59,9 @@ class Camera:
 
     def __init__(self, pos: maths.Vec3, aspect: float= 1.0) -> None:
         self.position: maths.Vec3= pos
-        self.front: maths.Vec3= maths.Vec3(z=-1.0)
-        self.up: maths.Vec3= maths.Vec3(y=1.0)
-        self.right: maths.Vec3= maths.Vec3(x=1.0)
+        self.front: maths.Vec3= maths.Vec3(z= -1.0)
+        self.up: maths.Vec3= maths.Vec3(y= 1.0)
+        self.right: maths.Vec3= maths.Vec3(x= 1.0)
         self.aspect: float= aspect
         self.fovy: float= maths.PHI
         self.yaw: float= -maths.PHI
@@ -84,21 +85,21 @@ class Camera:
                 if not u.is_unit():
                     u.to_unit()
                 u.scale(self.sensativity * dt)
-                self.position.add(u)
+                self.position.set_from(self.position + u)
 
             case CameraDirection.DOWN:
                 d: maths.Vec3= (self.position + self.front).cross(self.right)
                 if not d.is_unit():
                     d.to_unit()
                 d.scale(self.sensativity * dt)
-                self.position.add(d)
+                self.position.set_from(self.position + d)
 
             case CameraDirection.RIGHT:
                 r: maths.Vec3= (self.position + self.front).cross(self.up)
                 if not r.is_unit():
                     r.to_unit()
                 r.scale(self.sensativity * dt)
-                self.position.add(r)
+                self.position.set_from(self.position + r)
 
             case CameraDirection.LEFT:
                 l: maths.Vec3= self.up.cross(self.position + self.front)
@@ -106,13 +107,14 @@ class Camera:
                     l.to_unit()
 
                 l.scale(self.sensativity * dt)
-                self.position.add(l)
+                self.position.set_from(self.position + l)
 
             case CameraDirection.OUT:
-                self.position.subtract(self.front * (self.sensativity * dt))
+                self.position.set_from(self.position - (self.front * (self.sensativity * dt)))
 
             case CameraDirection.IN:
-                self.position.add(self.front * (self.sensativity * dt))
+                self.position.set_from(self.position + (self.front * (self.sensativity * dt)))
+
 
         self._update()
     
@@ -147,7 +149,7 @@ class Camera:
         if not self.front.is_unit():
             self.front.to_unit()
 
-        self.right= self.front.cross(maths.Vec3(y=1))
+        self.right= self.front.cross(maths.Vec3(y= 1.0))
         
         if not self.right.is_unit():
             self.right.to_unit()
@@ -163,6 +165,34 @@ class Camera:
         """Return view matrix
         """
         return maths.Mat4.create_lookat_rh(self.position, self.position + self.front, self.up)
+
+    # TODO
+    def get_frustum_planes(self, to_unit: bool= False) -> list[geometry.Plane]:
+        """Return list of frustum planes
+
+        [ Left, Right, Top, Bottom, Near, Far ]
+        """
+
+        v: maths.Mat4= self.get_view_matrix()
+        p: maths.Mat4= self.get_projection_matrix()
+        vp: maths.Mat4= v * p
+        
+        left= geometry.Plane.create_from_v4(vp.col3() + vp.col0())
+        right= geometry.Plane.create_from_v4(vp.col3() - vp.col0())
+        bottom= geometry.Plane.create_from_v4(vp.col3() + vp.col1())
+        top= geometry.Plane.create_from_v4(vp.col3() - vp.col1())
+        near= geometry.Plane.create_from_v4(vp.col3() + vp.col2())
+        far= geometry.Plane.create_from_v4(vp.col3() - vp.col2())
+
+        # if to_unit:
+        #     left.to_unit()
+        #     right.to_unit()
+        #     top.to_unit()
+        #     bottom.to_unit()
+        #     near.to_unit()
+        #     far.to_unit()
+
+        return [left, right, top, bottom, near, far]
 
     def get_frustum_corners(self, to_unit: bool= False) -> list[maths.Vec3]:
         """Return corners of camera frustum
@@ -185,51 +215,45 @@ class Camera:
             Far top right
         ]
         """
-        corners: list[maths.Vec4]= [
-            maths.Vec4(-1.0, -1.0, -1.0, 1.0), # n bl
-            maths.Vec4( 1.0, -1.0, -1.0, 1.0), # n br
-            maths.Vec4(-1.0,  1.0, -1.0, 1.0), # n tl
-            maths.Vec4( 1.0,  1.0, -1.0, 1.0), # n tr
-            maths.Vec4(-1.0, -1.0,  1.0, 1.0), # f bl
-            maths.Vec4( 1.0, -1.0,  1.0, 1.0), # f br
-            maths.Vec4(-1.0,  1.0,  1.0, 1.0), # f tl
-            maths.Vec4( 1.0,  1.0,  1.0, 1.0), # f tr
+        planes= self.get_frustum_planes(to_unit)
+
+        l: int= 0
+        r: int= 1
+        t: int= 2
+        b: int= 3
+        n: int= 4
+        f: int= 5
+
+        return [
+            geometry.Plane.create_intersection_pt(planes[n], planes[b], planes[l]).unit(),
+            geometry.Plane.create_intersection_pt(planes[n], planes[b], planes[r]).unit(),
+            geometry.Plane.create_intersection_pt(planes[n], planes[t], planes[l]).unit(),
+            geometry.Plane.create_intersection_pt(planes[n], planes[t], planes[r]).unit(),
+            geometry.Plane.create_intersection_pt(planes[f], planes[b], planes[l]).unit(),
+            geometry.Plane.create_intersection_pt(planes[f], planes[b], planes[r]).unit(),
+            geometry.Plane.create_intersection_pt(planes[f], planes[t], planes[l]).unit(),
+            geometry.Plane.create_intersection_pt(planes[f], planes[t], planes[r]).unit()
         ]
 
-        iv: maths.Mat4= self.get_view_matrix().inverse()
-        ip: maths.Mat4= self.get_projection_matrix().inverse()
-        inv_vp: maths.Mat4= ip * iv
+        # corners: list[maths.Vec4]= [
+        #     maths.Vec4(-1.0, -1.0, -1.0, 1.0), # n bl
+        #     maths.Vec4( 1.0, -1.0, -1.0, 1.0), # n br
+        #     maths.Vec4(-1.0,  1.0, -1.0, 1.0), # n tl
+        #     maths.Vec4( 1.0,  1.0, -1.0, 1.0), # n tr
+        #     maths.Vec4(-1.0, -1.0,  1.0, 1.0), # f bl
+        #     maths.Vec4( 1.0, -1.0,  1.0, 1.0), # f br
+        #     maths.Vec4(-1.0,  1.0,  1.0, 1.0), # f tl
+        #     maths.Vec4( 1.0,  1.0,  1.0, 1.0), # f tr
+        # ]
 
-        for corner in corners:
-            corner.set_from(inv_vp.multiply_v4(corner))
-            corner.set_from(corner * (1.0 / corner.w))
-            if to_unit:
-                corner.to_unit()
+        # iv: maths.Mat4= self.get_view_matrix().inverse()
+        # ip: maths.Mat4= self.get_projection_matrix().inverse()
+        # inv_vp: maths.Mat4= ip * iv
 
-        return corners
+        # for corner in corners:
+        #     corner.set_from(inv_vp.multiply_v4(corner))
+        #     corner.set_from(corner * (1.0 / corner.w))
+        #     if to_unit:
+        #         corner.to_unit()
 
-    def get_frustum_planes(self, to_unit: bool= False) -> list[geometry.Plane]:
-        """Return list of frustum planes
-
-        [ Left, Right, Top, Bottom, Near, Far ]
-        """
-        v: maths.Mat4= self.get_view_matrix()
-        p: maths.Mat4= self.get_projection_matrix()
-        vp: maths.Mat4= p * v
-
-        l= geometry.Plane.create_from_v4(vp.row3 + vp.row0)
-        r= geometry.Plane.create_from_v4(vp.row3 - vp.row0)
-        t= geometry.Plane.create_from_v4(vp.row3 - vp.row1)
-        b= geometry.Plane.create_from_v4(vp.row3 + vp.row1)
-        n= geometry.Plane.create_from_v4(vp.row3 + vp.row2)
-        f= geometry.Plane.create_from_v4(vp.row3 - vp.row2)
-
-        if to_unit:
-            l.to_unit()
-            r.to_unit()
-            t.to_unit()
-            b.to_unit()
-            n.to_unit()
-            f.to_unit()
-
-        return [l, r, t, b, n, f]
+        # return corners

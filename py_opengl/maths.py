@@ -4,6 +4,7 @@ import math
 from typing import Final
 
 
+
 # --- CONSTANTS
 
 
@@ -631,20 +632,6 @@ class Vec3:
         self.x *= by
         self.y *= by
         self.z *= by
-
-    def add(self, other: 'Vec3') -> None:
-        """Add other vec3's xyz values to self xyz values
-        """
-        self.x += other.x
-        self.y += other.y
-        self.z += other.z
-
-    def subtract(self, other: 'Vec3') -> None:
-        """Subtract other vec3's xyz values to self xyz values
-        """
-        self.x -= other.x
-        self.y -= other.y
-        self.z -= other.z
 
     def to_unit(self) -> None:
         """Convert to unit length
@@ -1911,11 +1898,6 @@ class Mat4:
             far: float
     ) -> 'Mat4':
         """Create a right hand coord projection matrix
-
-        Raises
-        ---
-        Mat4Error
-            if values like aspect equil zero
         """
         r: float= fov * 0.5
         inv_t: float= 1.0 / tan(r)
@@ -1929,24 +1911,65 @@ class Mat4:
         )
 
     @staticmethod
+    def create_projection_lh(
+            fov: float,
+            aspect: float,
+            near: float,
+            far: float
+    ) -> 'Mat4':
+        """Create a left hand coord projection matrix
+        """
+        r: float= fov * 0.5
+        inv_t: float= 1.0 / tan(r)
+        inv_f: float= 1.0 / (near - far)
+
+        return Mat4(
+            Vec4(x= inv_t / aspect),
+            Vec4(y= inv_t),
+            Vec4(z= -(near + far) * inv_f, w= 1.0),
+            Vec4(z= 2.0 * near * far * inv_f)
+        )
+
+    @staticmethod
     def create_lookat_rh(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
         """Create a right hand coords lookat matrix
         """
-        f: Vec3= target-eye
-        if not f.is_unit():
-            f.to_unit()
+        d: Vec3= target - eye
+        if not d.is_unit():
+            d.to_unit()
         
-        s: Vec3= f.cross(up)
+        s: Vec3= d.cross(up)
         if not s.is_unit():
             s.to_unit()
             
-        u: Vec3= s.cross(f)
+        u: Vec3= s.cross(d)
 
         return Mat4(
-            Vec4(s.x, u.x, -f.x, 0.0),
-            Vec4(s.y, u.y, -f.y, 0.0),
-            Vec4(s.z, u.z, -f.z, 0.0),
-            Vec4(-s.dot(eye), -u.dot(eye), f.dot(eye), 1.0)
+            Vec4(s.x, u.x, -d.x, 0.0),
+            Vec4(s.y, u.y, -d.y, 0.0),
+            Vec4(s.z, u.z, -d.z, 0.0),
+            Vec4(-s.dot(eye), -u.dot(eye), d.dot(eye), 1.0)
+        )
+
+    @staticmethod
+    def create_lookat_lh(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
+        """Create a left hand coords lookat matrix
+        """
+        d: Vec3= target - eye
+        if not d.is_unit():
+            d.to_unit()
+        
+        s: Vec3= up.cross(d)
+        if not s.is_unit():
+            s.to_unit()
+            
+        u: Vec3= d.cross(s)
+
+        return Mat4(
+            Vec4(s.x, u.x, d.x, 0.0),
+            Vec4(s.y, u.y, d.y, 0.0),
+            Vec4(s.z, u.z, d.z, 0.0),
+            Vec4(-s.dot(eye), -u.dot(eye), -d.dot(eye), 1.0)
         )
 
     def add(self, other: 'Mat4') -> None:

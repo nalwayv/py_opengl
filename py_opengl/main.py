@@ -132,14 +132,18 @@ def main() -> None:
         scene.add_obj(shape4)
 
         fshape= model.FrustumModel(cam.get_frustum_corners(True))
+        # fshape.set_scale(maths.Vec3.create_from_value(0.01))
         fshape.set_position(maths.Vec3(z= 5))
+
+        # for pl in cam.get_frustum_planes():
+            # print(pl)
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
             GL.glClearColor(*bgcolor.unit_values())
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
             GL.glEnable(GL.GL_DEPTH_TEST)
-            GL.glEnable(GL.GL_CULL_FACE)
+            # GL.glEnable(GL.GL_CULL_FACE)
         
             # --
 

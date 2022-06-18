@@ -425,26 +425,43 @@ class Plane:
     
     @staticmethod
     def create_from_pts(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plane':
-        p0: maths.Vec3= b - a
-        p1: maths.Vec3= c - a
-        n: maths.Vec3= p1.cross(p0)
+        ab: maths.Vec3= b - a
+        ac: maths.Vec3= c - a
+        n: maths.Vec3= ab.cross(ac)
 
         if not n.is_unit():
             n.to_unit()
 
-        d: float= n.dot(a)
+        d: float= -n.dot(a)
 
         return Plane(n, d)
     
+    # @staticmethod
+    # def create_from_unit_and_pt(unit_v3: maths.Vec3, pt: maths.Vec3):
+    #     if not unit_v3.is_unit():
+    #         unit_v3.to_unit()
+
+    #     n: maths.Vec3= unit_v3.copy()
+    #     d: float= unit_v3.dot(pt)
+
+    #     return Plane(n, d)
+
     @staticmethod
-    def create_from_unit_and_pt(unit_v3: maths.Vec3, pt: maths.Vec3):
-        if not unit_v3.is_unit():
-            unit_v3.to_unit()
+    def create_intersection_pt(a: 'Plane', b: 'Plane', c: 'Plane') -> maths.Vec3:
+       
+        bc= b.normal.cross(c.normal)
 
-        n: maths.Vec3= unit_v3.copy()
-        d: float= unit_v3.dot(pt)
+        f= -a.normal.dot(bc)
 
-        return Plane(n, d)
+        v0= b.normal.cross(c.normal) * a.direction
+        v1= c.normal.cross(a.normal) * b.direction
+        v2= a.normal.cross(b.normal) * c.direction
+
+        x= v0.x + v1.x + v2.x
+        y= v0.y + v1.y + v2.y
+        z= v0.z + v1.z + v2.z
+
+        return maths.Vec3(x, y, z) * (1 / f)
 
     def copy(self) -> 'Plane':
         """Return a copy of self
@@ -467,7 +484,14 @@ class Plane:
         return self.normal.dot(v3)
 
     def classify_pt(self, v3: maths.Vec3) -> float:
-        """
+        """Check what side of plane v3 fall on
+        
+        NEGATIVE if x < 0
+        
+        POSITIVE if x > 0
+        
+        else ON PLANE 
+         
         """
         return v3.dot(self.normal) + self.direction
 
@@ -490,43 +514,56 @@ class Plane:
     def to_unit(self) -> None:
         """Convert to unit length
         """
-        len_sqr: float= self.normal.length_sqr()
+        lsq: float= self.normal.length_sqr()
 
-        if maths.is_zero(len_sqr):
-            self.normal.set_from(maths.Vec3.zero())
-            self.direction= 0.0
-        else:
-            inv: float= maths.inv_sqrt(len_sqr)
-            self.normal.set_from(self.normal * inv)
-            self.direction *= inv
+        if maths.is_zero(lsq):
+            return
 
-    def pt_from_intersect_plane(self, other: 'Plane') -> maths.Vec3:
-        d: maths.Vec3= self.normal.cross(other.nomal)
-        denom: float= d.length_sqr()
+        inv: float= maths.inv_sqrt(lsq)
+        self.normal.x *= inv
+        self.normal.y *= inv
+        self.normal.z *= inv
+        self.direction *= inv
 
-        if denom < maths.EPSILON:
-            return maths.Vec3.zero()
+    # def pt_from_intersect_plane(self, other: 'Plane') -> maths.Vec3:
+    #     d: maths.Vec3= self.normal.cross(other.nomal)
+    #     denom: float= d.length_sqr()
+
+    #     if denom < maths.EPSILON:
+    #         return maths.Vec3.zero()
         
-        pt: maths.Vec3= (other.normal * self.direction) - (self.normal * other.direction)
+    #     pt: maths.Vec3= (other.normal * self.direction) - (self.normal * other.direction)
         
-        return pt.cross(d) * (1.0 / denom)
+    #     return pt.cross(d) * (1.0 / denom)
 
-    def pt_from_intersect_planes(self, p2: 'Plane', p3: 'Plane') -> maths.Vec3:
-        px: maths.Vec3= maths.Vec3(self.normal.x, p2.normal.x, p3.normal.x)
-        py: maths.Vec3= maths.Vec3(self.normal.y, p2.normal.y, p3.normal.y)
-        pz: maths.Vec3= maths.Vec3(self.normal.z, p2.normal.z, p3.normal.z)
+    # def pt_from_intersect_planes(self, p2: 'Plane', p3: 'Plane') -> maths.Vec3:
+    #     p1= self
+    #     f= -p1.normal.dot(p2.normal.cross(p3.normal))
+    #     v0= p2.normal.cross(p3.normal) * p1.direction
+    #     v1= p3.normal.cross(p1.normal) * p2.direction
+    #     v2= p1.normal.cross(p2.normal) * p3.direction
 
-        u: maths.Vec3= py.cross(pz)
-        denom: float= px.dot(u)
+    #     x= v0.x + v1.x + v2.x
+    #     y= v0.y + v1.y + v2.y
+    #     z= v0.z + v1.z + v2.z
 
-        if maths.absf(denom) < maths.EPSILON:
-            return maths.Vec3.zero()
+    #     return maths.Vec3(x, y, z) * (1 / f)
 
-        d: maths.Vec3= maths.Vec3(self.direction, p2.direction, p3.direction)
-        v: maths.Vec3= px.cross(d)
+        # px: maths.Vec3= maths.Vec3(self.normal.x, p2.normal.x, p3.normal.x)
+        # py: maths.Vec3= maths.Vec3(self.normal.y, p2.normal.y, p3.normal.y)
+        # pz: maths.Vec3= maths.Vec3(self.normal.z, p2.normal.z, p3.normal.z)
 
-        inv: float= 1.0 / denom
-        return maths.Vec3(d.dot(u)*inv, pz.dot(v)*inv, -py.dot(v)*inv)
+        # u: maths.Vec3= py.cross(pz)
+        # denom: float= px.dot(u)
+
+        # if maths.absf(denom) < maths.EPSILON:
+        #     return maths.Vec3.zero()
+
+        # d: maths.Vec3= maths.Vec3(self.direction, p2.direction, p3.direction)
+        # v: maths.Vec3= px.cross(d)
+
+        # inv: float= 1.0 / denom
+        # return maths.Vec3(d.dot(u) * inv, pz.dot(v) * inv, -py.dot(v) * inv)
 
     def intersect_pane(self, other: 'Plane') -> bool:
         dis: float= (self.normal.cross(other.nomal)).length_sqr()
