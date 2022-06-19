@@ -218,8 +218,8 @@ def main() -> None:
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
-    # except Exception as err:
-    #     logger.error(f'ERROR: {err}')
+    except Exception as err:
+        logger.error(f'ERROR: {err}')
 
     finally:
         logger.debug('CLOSED')
@@ -229,6 +229,7 @@ def main() -> None:
         shape3.delete()
         shape4.delete()
         fshape.delete()
+        
         shader0.delete()
         
         glfw.terminate()
