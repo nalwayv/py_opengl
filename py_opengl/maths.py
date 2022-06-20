@@ -602,7 +602,7 @@ class Vec3:
         result= maxf(result, self.z)
         return result
 
-    def abs(self) -> 'Vec3':
+    def absf(self) -> 'Vec3':
         """Return a copy of self with positive values
         """
         return Vec3(absf(self.x), absf(self.y), absf(self.z))

@@ -1,5 +1,6 @@
 """Geometry
 """
+from typing import Final
 from enum import Enum, auto
 
 from py_opengl import maths
@@ -14,8 +15,8 @@ class GeometryType(Enum):
     TRIANGLE= auto()
     SPHERE= auto()
     PLAIN= auto()
-    FRUSTUM= auto()
     RAY= auto()
+    FRUSTUM= auto()
 
 
 # --- AABB
@@ -247,12 +248,15 @@ class Line3:
     def __eq__(self, other: 'Line3') -> bool:
         if isinstance(other, self.__class__):
             if(
-            self.start.is_equil(other.start) and
-            self.end.is_equil(other.end) and
-            self.TYPE == other.TYPE
+                self.start.is_equil(other.start) and
+                self.end.is_equil(other.end) and
+                self.TYPE == other.TYPE
             ):
                 return True
         return False
+
+    def __str__(self) -> str:
+        return f'[START: {self.start}, END: {self.end}]'
 
     def edge(self) -> maths.Vec3:
         return (self.end - self.start)
@@ -287,6 +291,8 @@ class Triangle3:
                 return True
         return False
 
+    def __str__(self) -> str:
+        return f'[P0: {self.p0}, P1: {self.p1}, P2: {self.p2}]'
 
     def intersect_pt(self, pt: maths.Vec3):
         bc= maths.Vec3.barycentric(
@@ -330,6 +336,9 @@ class Sphere3:
             ):
                 return True
         return False
+
+    def __str__(self) -> str:
+        return f'[CENTER: {self.center}, RADIUS: {self.radius}]'
 
     def area(self) -> float:
         """Return area
@@ -387,29 +396,29 @@ class Sphere3:
 
 class Plane:
 
-    __slots__= ('normal', 'direction', 'TYPE')
+    __slots__= ('normal', 'dir', 'TYPE')
 
     def __init__(
         self,
         normal: maths.Vec3= maths.Vec3(),
-        direction: float= 0.0
+        dir: float= 0.0
     ) -> None:
         self.normal: maths.Vec3= normal
-        self.direction: float= direction
+        self.dir: float= dir
         self.TYPE: GeometryType= GeometryType.PLAIN
 
     def __eq__(self, other: 'Plane') -> bool:
         if isinstance(other, self.__class__):
             if(
                 self.normal.is_equil(other.normal) and
-                maths.is_equil(self.direction, other.direction) and
+                maths.is_equil(self.dir, other.dir) and
                 self.TYPE == other.TYPE 
             ):
                 return True
         return False
 
     def __str__(self) -> str:
-        return f'[N: {self.normal}, D: {self.direction}]'
+        return f'[N: {self.normal}, D: {self.dir}]'
 
     @staticmethod
     def create_from_v4(v4: maths.Vec4) -> 'Plane':
@@ -434,16 +443,17 @@ class Plane:
 
     @staticmethod
     def create_intersection_pt(a: 'Plane', b: 'Plane', c: 'Plane') -> maths.Vec3:
-       
+        """
+        """
         bc: maths.Vec3= b.normal.cross(c.normal)
         f: float= -a.normal.dot(bc)
         
-        # if maths.is_zero(f):
-        #     return maths.Vec3.zero()
+        if maths.is_zero(f):
+            return maths.Vec3.zero()
 
-        v0: maths.Vec3= b.normal.cross(c.normal) * a.direction
-        v1: maths.Vec3= c.normal.cross(a.normal) * b.direction
-        v2: maths.Vec3= a.normal.cross(b.normal) * c.direction
+        v0: maths.Vec3= b.normal.cross(c.normal) * a.dir
+        v1: maths.Vec3= c.normal.cross(a.normal) * b.dir
+        v2: maths.Vec3= a.normal.cross(b.normal) * c.dir
 
         inv: float = 1.0 / f
         x: float= (v0.x + v1.x + v2.x) * inv
@@ -455,12 +465,12 @@ class Plane:
     def copy(self) -> 'Plane':
         """Return a copy of self
         """
-        return Plane(self.normal.copy(), self.direction)
+        return Plane(self.normal.copy(), self.dir)
 
     def to_vec4(self) -> maths.Vec4:
         """
         """
-        return maths.Vec4.create_from_v3(self.normal, self.direction)
+        return maths.Vec4.create_from_v3(self.normal, self.dir)
 
     def dot(self, v4: maths.Vec4) -> float:
         """
@@ -475,21 +485,21 @@ class Plane:
     def classify_pt(self, v3: maths.Vec3) -> float:
         """Check what side of plane v3 fall on
         
-        NEGATIVE if x < 0
+        NEGATIVE if x < 0.0
         
-        POSITIVE if x > 0
+        POSITIVE if x > 0.0
         
         else ON PLANE 
          
         """
-        return v3.dot(self.normal) + self.direction
+        return self.dot_normal(v3) + self.dir
 
     def unit(self) -> 'Plane':
         """Return a copy of self with unit length
         """
         lsq: float= self.normal.length_sqr()
         inv: float= maths.inv_sqrt(lsq)
-        return Plane(self.normal * inv, self.direction)
+        return Plane(self.normal * inv, self.dir)
 
     def to_unit(self) -> None:
         """Convert to unit length
@@ -499,32 +509,157 @@ class Plane:
         self.normal.x *= inv
         self.normal.y *= inv
         self.normal.z *= inv
-        self.direction
+        self.dir
 
-    # def intersect_pane(self, other: 'Plane') -> bool:
-    #     dis: float= (self.normal.cross(other.nomal)).length_sqr()
-    #     return not maths.is_zero(dis)
 
-    # def intersect_pt(self, pt: maths.Vec3) -> bool:
-    #     return maths.is_zero(self.distance_to(pt))
+# ---
 
-    # def intersect_sphere(self, sph: 'Sphere3') -> bool:
-    #     close_pt: maths.Vec3= self.closest_point(sph.center)
-    #     len_sq: float= (sph.center - close_pt).length_sqr()
 
-    #     return len_sq < maths.sqr(sph.radius)
+class Frustum:
+    
+    __slots__= ('planes', 'TYPE' )
 
-    # def intersect_aabb(self, aabb: 'AABB3') -> bool:
-    #     len_sq: float = (
-    #         aabb.extents.x * maths.absf(self.normal.x) +
-    #         aabb.extents.y * maths.absf(self.normal.y) +
-    #         aabb.extents.z * maths.absf(self.normal.z)
-    #     )
+    def __init__(self) -> None:
+        self.planes: list[Plane]= [Plane()] * 6
+        self.TYPE: GeometryType= GeometryType.FRUSTUM
 
-    #     dot: float= self.normal.dot(aabb.center)
-    #     dis: float= dot - self.direction
+    @staticmethod
+    def create_from_matrix(vp_matrix: maths.Mat4, to_unit: bool= False) -> 'Frustum':
+        """Create frustum from view projection matrix
+        """
+        result: Frustum= Frustum()
+        
+        # near
+        result.planes[0]= Plane.create_from_xyzw(
+            -vp_matrix.get_at(0, 2),
+            -vp_matrix.get_at(1, 2),
+            -vp_matrix.get_at(2, 2),
+            -vp_matrix.get_at(3, 2),
+        )
 
-    #     return maths.absf(dis) <= len_sq
+        # far
+        result.planes[1]= Plane.create_from_xyzw(
+            vp_matrix.get_at(0, 2) - vp_matrix.get_at(0, 3),
+            vp_matrix.get_at(1, 2) - vp_matrix.get_at(1, 3),
+            vp_matrix.get_at(2, 2) - vp_matrix.get_at(2, 3),
+            vp_matrix.get_at(3, 2) - vp_matrix.get_at(3, 3)
+        )
+
+        # left
+        result.planes[2]= Plane.create_from_xyzw(
+            -vp_matrix.get_at(0, 3) - vp_matrix.get_at(0, 0),
+            -vp_matrix.get_at(1, 3) - vp_matrix.get_at(1, 0),
+            -vp_matrix.get_at(2, 3) - vp_matrix.get_at(2, 0),
+            -vp_matrix.get_at(3, 3) - vp_matrix.get_at(3, 0)
+        )
+
+        # right
+        result.planes[3]= Plane.create_from_xyzw(
+            vp_matrix.get_at(0, 0) - vp_matrix.get_at(0, 3),
+            vp_matrix.get_at(1, 0) - vp_matrix.get_at(1, 3),
+            vp_matrix.get_at(2, 0) - vp_matrix.get_at(2, 3),
+            vp_matrix.get_at(3, 0) - vp_matrix.get_at(3, 3)
+        )
+
+        # top
+        result.planes[4]= Plane.create_from_xyzw(
+            vp_matrix.get_at(0, 1) - vp_matrix.get_at(0, 3),
+            vp_matrix.get_at(1, 1) - vp_matrix.get_at(1, 3),
+            vp_matrix.get_at(2, 1) - vp_matrix.get_at(2, 3),
+            vp_matrix.get_at(3, 1) - vp_matrix.get_at(3, 3)
+        )
+        
+        # bottom
+        result.planes[5]= Plane.create_from_xyzw(
+            -vp_matrix.get_at(0, 3) - vp_matrix.get_at(0, 1),
+            -vp_matrix.get_at(1, 3) - vp_matrix.get_at(1, 1),
+            -vp_matrix.get_at(2, 3) - vp_matrix.get_at(2, 1),
+            -vp_matrix.get_at(3, 3) - vp_matrix.get_at(3, 1)
+        )
+
+        if to_unit:
+            result.planes[0].to_unit()
+            result.planes[1].to_unit()
+            result.planes[2].to_unit()
+            result.planes[3].to_unit()
+            result.planes[4].to_unit()
+            result.planes[5].to_unit()
+    
+        return result
+
+    def get_near(self) -> Plane:
+        """Return near Plane
+        """
+        return self.planes[0]
+
+    def get_far(self) -> Plane:
+        """Return far Plane
+        """
+        return self.planes[1]
+
+    def get_left(self) -> Plane:
+        """Return left Plane
+        """
+        return self.planes[2]
+
+    def get_right(self) -> Plane:
+        """Return right Plane
+        """
+        return self.planes[3]
+    
+    def get_top(self) -> Plane:
+        """Return top Plane
+        """
+        return self.planes[4]
+    
+    def get_bottom(self) -> Plane:
+        """Return bottom Plane
+        """
+        return self.planes[5]
+
+    def get_corners(self, to_unit: bool= False) -> list[maths.Vec3]:
+        """Return corners of camera frustum
+
+        [ nbl, nbr, ntl, ntr, fbl, fbr, ftl, ftr ]
+        """
+        n: Final[int]= 0
+        f: Final[int]= 1
+        l: Final[int]= 2
+        r: Final[int]= 3
+        t: Final[int]= 4
+        b: Final[int]= 5
+
+        corners: list[maths.Vec3]= [
+            Plane.create_intersection_pt(
+                self.planes[n], self.planes[b], self.planes[l]
+            ),
+            Plane.create_intersection_pt(
+                self.planes[n], self.planes[b], self.planes[r]
+            ),
+            Plane.create_intersection_pt(
+                self.planes[n], self.planes[t], self.planes[l]
+            ),
+            Plane.create_intersection_pt(
+                self.planes[n], self.planes[t], self.planes[r]
+            ),
+            Plane.create_intersection_pt(
+                self.planes[f], self.planes[b], self.planes[l]
+            ),
+            Plane.create_intersection_pt(
+                self.planes[f], self.planes[b], self.planes[r]
+            ),
+            Plane.create_intersection_pt(
+                self.planes[f], self.planes[t], self.planes[l]
+            ),
+            Plane.create_intersection_pt(
+                self.planes[f], self.planes[t], self.planes[r]
+            )
+        ]
+        if to_unit:
+            for c in corners:
+                c.to_unit()
+
+        return corners
 
 
 # --- RAY3D
@@ -644,14 +779,14 @@ class Ray3:
 
         return t
 
-    def cast_plain(self, pl: Plane) -> float:
+    def cast_plane(self, pl: Plane) -> float:
         nd: float= self.direction.dot(pl.normal)
         pn: float= self.origin.dot(pl.normal)
 
         if nd >= 0.0:
             return -1.0
 
-        t: float= (pl.direction - pn) / nd
+        t: float= (pl.dir - pn) / nd
 
         if t >= 0.0:
             return t

@@ -166,7 +166,7 @@ class Camera:
         """
         return maths.Mat4.create_lookat_rh(self.position, self.position + self.front, self.up)
 
-    def get_frustum_planes(self, to_unit: bool) -> list[geometry.Plane]:
+    def get_frustum(self, to_unit: bool= False) -> geometry.Frustum:
         """Return list of frustum planes
 
         [ near, far, left, right, top, bottom ]
@@ -175,84 +175,13 @@ class Camera:
         p: maths.Mat4= self.get_projection_matrix()
         vp: maths.Mat4= v * p
         
-        planes: list[geometry.Plane]= [
-            # near
-            geometry.Plane.create_from_xyzw(
-                -vp.get_at(0, 2),
-                -vp.get_at(1, 2),
-                -vp.get_at(2, 2),
-                -vp.get_at(3, 2),
-            ),
-            # far
-            geometry.Plane.create_from_xyzw(
-                vp.get_at(0, 2) - vp.get_at(0, 3),
-                vp.get_at(1, 2) - vp.get_at(1, 3),
-                vp.get_at(2, 2) - vp.get_at(2, 3),
-                vp.get_at(3, 2) - vp.get_at(3, 3)
-            ),
-            # left
-            geometry.Plane.create_from_xyzw(
-                -vp.get_at(0, 3) - vp.get_at(0, 0),
-                -vp.get_at(1, 3) - vp.get_at(1, 0),
-                -vp.get_at(2, 3) - vp.get_at(2, 0),
-                -vp.get_at(3, 3) - vp.get_at(3, 0)
-            ),
-            # right
-            geometry.Plane.create_from_xyzw(
-                vp.get_at(0, 0) - vp.get_at(0, 3),
-                vp.get_at(1, 0) - vp.get_at(1, 3),
-                vp.get_at(2, 0) - vp.get_at(2, 3),
-                vp.get_at(3, 0) - vp.get_at(3, 3)
-            ),
-            # top
-            geometry.Plane.create_from_xyzw(
-                vp.get_at(0, 1) - vp.get_at(0, 3),
-                vp.get_at(1, 1) - vp.get_at(1, 3),
-                vp.get_at(2, 1) - vp.get_at(2, 3),
-                vp.get_at(3, 1) - vp.get_at(3, 3)
-            ),
-            # bottom
-            geometry.Plane.create_from_xyzw(
-                -vp.get_at(0, 3) - vp.get_at(0, 1),
-                -vp.get_at(1, 3) - vp.get_at(1, 1),
-                -vp.get_at(2, 3) - vp.get_at(2, 1),
-                -vp.get_at(3, 3) - vp.get_at(3, 1)
-            )
-        ]
+        return geometry.Frustum.create_from_matrix(vp, to_unit)
 
-        if to_unit:
-            planes[0].to_unit()
-            planes[1].to_unit()
-            planes[2].to_unit()
-            planes[3].to_unit()
-            planes[4].to_unit()
-            planes[5].to_unit()
-
-        return planes
 
     def get_frustum_corners(self, to_unit: bool= False) -> list[maths.Vec3]:
         """Return corners of camera frustum
 
         [ nbl, nbr, ntl, ntr, fbl, fbr, ftl, ftr ]
         """
-        planes: list[geometry.Plane]= self.get_frustum_planes(to_unit)
-
-        n: Final[int]= 0
-        f: Final[int]= 1
-        l: Final[int]= 2
-        r: Final[int]= 3
-        t: Final[int]= 4
-        b: Final[int]= 5
-
-        corners: list[maths.Vec3]= [
-            geometry.Plane.create_intersection_pt(planes[n], planes[b], planes[l]),
-            geometry.Plane.create_intersection_pt(planes[n], planes[b], planes[r]),
-            geometry.Plane.create_intersection_pt(planes[n], planes[t], planes[l]),
-            geometry.Plane.create_intersection_pt(planes[n], planes[t], planes[r]),
-            geometry.Plane.create_intersection_pt(planes[f], planes[b], planes[l]),
-            geometry.Plane.create_intersection_pt(planes[f], planes[b], planes[r]),
-            geometry.Plane.create_intersection_pt(planes[f], planes[t], planes[l]),
-            geometry.Plane.create_intersection_pt(planes[f], planes[t], planes[r])
-        ]
-
-        return corners
+        fr= self.get_frustum()
+        return fr.get_corners(to_unit)
