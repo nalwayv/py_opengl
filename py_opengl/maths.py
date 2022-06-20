@@ -101,8 +101,10 @@ def to_deg(radians: float) -> float:
 def sqr(val: float) -> float:
     return val * val
 
+
 def cube(val: float) -> float:
     return val * val * val
+
 
 def sqrt(val: float) -> float:
     return math.sqrt(val)
@@ -118,6 +120,10 @@ def inv_sqrt(val: float) -> float:
 
 def maxf(x: float, y: float) -> float:
     return float(x) if x > y else float(y)
+
+
+def max3f(x: float, y: float, z: float) -> float:
+    return maxf(x, maxf(y, z))
 
 
 def maxi(x: int, y: int) -> int:
@@ -492,7 +498,7 @@ class Vec3:
         return Vec3(x, y, z)
 
     def __str__(self) -> str:
-        return f'[X: {self.x}, Y: {self.y}, Z: {self.z}]'
+        return f'[X: {self.x:.3f}, Y: {self.y:.3f}, Z: {self.z:.3f}]'
 
     @staticmethod
     def one() -> 'Vec3':
@@ -625,13 +631,6 @@ class Vec3:
         """Return 'xy' components
         """
         return Vec2(self.x, self.y)
-
-    def scale(self, by: float) -> None:
-        """Scale self by
-        """
-        self.x *= by
-        self.y *= by
-        self.z *= by
 
     def to_unit(self) -> None:
         """Convert to unit length
@@ -2261,6 +2260,31 @@ class Mat4:
             
         return Vec3(x, y, z)
 
+    def transform_v2(self, v2: Vec2) -> Vec4:
+        """
+        """
+        v4: Vec4= Vec4.create_from_v2(v2, 1.0, 1.0)
+
+        x: float= self.col0().dot(v4)
+        y: float= self.col1().dot(v4)
+        z: float= self.col2().dot(v4)
+        w: float= self.col3().dot(v4)
+
+        return Vec4(x, y, z, w)
+
+    def transform_v3(self, v3: Vec3) -> Vec4:
+        """
+        """
+        
+        v4: Vec4= Vec4.create_from_v3(v3, 1.0)
+
+        x: float= self.col0().dot(v4)
+        y: float= self.col1().dot(v4)
+        z: float= self.col2().dot(v4)
+        w: float= self.col3().dot(v4)
+
+        return Vec4(x, y, z, w)
+
     def transform_v4(self, v4: Vec4) -> Vec4:
         """
         """
@@ -2270,19 +2294,6 @@ class Mat4:
         w: float= self.col3().dot(v4)
 
         return Vec4(x, y, z, w)
-
-    def transform_v3(self, v3: Vec3) -> Vec3:
-        """
-        """
-        v4: Vec4= Vec4.create_from_v3(v3, 1.0)
-
-        inv: float= 1.0 / self.col3().dot(v4)
-
-        x: float= self.col0().dot(v4) * inv
-        y: float= self.col1().dot(v4) * inv
-        z: float= self.col2().dot(v4) * inv
-
-        return Vec3(x, y, z)
 
     def col0(self) -> Vec4:
         """Return matrix column

@@ -418,7 +418,7 @@ class Plane:
         return False
 
     def __str__(self) -> str:
-        return f'[N: {self.normal}, D: {self.dir}]'
+        return f'[N: {self.normal}, D: {self.dir:.3f}]'
 
     @staticmethod
     def create_from_v4(v4: maths.Vec4) -> 'Plane':
@@ -462,6 +462,14 @@ class Plane:
 
         return maths.Vec3(x, y, z)
 
+    @staticmethod
+    def create_transformed_plane(unit_plane: 'Plane', m4: maths.Mat4):
+        t_m4= m4.inverse()
+        t_m4= t_m4.transpose()
+        v4= unit_plane.to_vec4()
+
+        return Plane.create_from_v4(t_m4.transform_v4(v4))
+
     def copy(self) -> 'Plane':
         """Return a copy of self
         """
@@ -494,12 +502,15 @@ class Plane:
         """
         return self.dot_normal(v3) + self.dir
 
+    def is_unit(self) -> bool:
+        return self.normal.is_unit()
+
     def unit(self) -> 'Plane':
         """Return a copy of self with unit length
         """
-        lsq: float= self.normal.length_sqr()
-        inv: float= maths.inv_sqrt(lsq)
-        return Plane(self.normal * inv, self.dir)
+        lsq= self.normal.length_sqr()
+        inv= maths.inv_sqrt(lsq)
+        return Plane(self.normal * inv, 1.0 * maths.signum(self.dir))
 
     def to_unit(self) -> None:
         """Convert to unit length
@@ -509,7 +520,7 @@ class Plane:
         self.normal.x *= inv
         self.normal.y *= inv
         self.normal.z *= inv
-        self.dir
+        self.dir = 1.0 * maths.signum(self.dir)
 
 
 # ---
@@ -578,12 +589,8 @@ class Frustum:
         )
 
         if to_unit:
-            result.planes[0].to_unit()
-            result.planes[1].to_unit()
-            result.planes[2].to_unit()
-            result.planes[3].to_unit()
-            result.planes[4].to_unit()
-            result.planes[5].to_unit()
+            for p in result.planes:
+                p.to_unit()
     
         return result
 

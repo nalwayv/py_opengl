@@ -84,29 +84,28 @@ class Camera:
                 u: maths.Vec3= self.right.cross(self.position + self.front)
                 if not u.is_unit():
                     u.to_unit()
-                u.scale(self.sensativity * dt)
+                u= u * (self.sensativity * dt)
                 self.position.set_from(self.position + u)
 
             case CameraDirection.DOWN:
                 d: maths.Vec3= (self.position + self.front).cross(self.right)
                 if not d.is_unit():
                     d.to_unit()
-                d.scale(self.sensativity * dt)
+                d= d * (self.sensativity * dt)
                 self.position.set_from(self.position + d)
 
             case CameraDirection.RIGHT:
                 r: maths.Vec3= (self.position + self.front).cross(self.up)
                 if not r.is_unit():
                     r.to_unit()
-                r.scale(self.sensativity * dt)
+                r= r * (self.sensativity * dt)
                 self.position.set_from(self.position + r)
 
             case CameraDirection.LEFT:
                 l: maths.Vec3= self.up.cross(self.position + self.front)
                 if not l.is_unit():
                     l.to_unit()
-
-                l.scale(self.sensativity * dt)
+                l= l * (self.sensativity * dt)
                 self.position.set_from(self.position + l)
 
             case CameraDirection.OUT:
@@ -183,5 +182,5 @@ class Camera:
 
         [ nbl, nbr, ntl, ntr, fbl, fbr, ftl, ftr ]
         """
-        fr= self.get_frustum()
-        return fr.get_corners(to_unit)
+        fr= self.get_frustum(to_unit)
+        return fr.get_corners()
