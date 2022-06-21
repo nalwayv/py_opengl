@@ -1,5 +1,6 @@
 """Geometry
 """
+from re import L
 from typing import Final
 from enum import Enum, auto
 
@@ -396,29 +397,29 @@ class Sphere3:
 
 class Plane:
 
-    __slots__= ('normal', 'dir', 'TYPE')
+    __slots__= ('normal', 'd', 'TYPE')
 
     def __init__(
         self,
         normal: maths.Vec3= maths.Vec3(),
-        dir: float= 0.0
+        d: float= 0.0
     ) -> None:
         self.normal: maths.Vec3= normal
-        self.dir: float= dir
+        self.d: float= d
         self.TYPE: GeometryType= GeometryType.PLAIN
 
     def __eq__(self, other: 'Plane') -> bool:
         if isinstance(other, self.__class__):
             if(
                 self.normal.is_equil(other.normal) and
-                maths.is_equil(self.dir, other.dir) and
+                maths.is_equil(self.d, other.d) and
                 self.TYPE == other.TYPE 
             ):
                 return True
         return False
 
     def __str__(self) -> str:
-        return f'[N: {self.normal}, D: {self.dir:.3f}]'
+        return f'[N: {self.normal}, D: {self.d:.3f}]'
 
     @staticmethod
     def create_from_v4(v4: maths.Vec4) -> 'Plane':
@@ -426,7 +427,9 @@ class Plane:
 
     @staticmethod
     def create_from_xyzw(x: float, y: float, z: float, w: float) -> 'Plane':
-        return Plane(maths.Vec3(x, y, z), w)
+        n: maths.Vec3= maths.Vec3(x,y,z)
+        d: float= w
+        return Plane(n, d)
 
     @staticmethod
     def create_from_pts(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plane':
@@ -442,6 +445,10 @@ class Plane:
         return Plane(n, d)
 
     @staticmethod
+    def create_from_unit(unit_v3: maths.Vec3, pt: maths.Vec3):
+        return Plane(unit_v3, unit_v3.dot(pt))
+
+    @staticmethod
     def create_intersection_pt(a: 'Plane', b: 'Plane', c: 'Plane') -> maths.Vec3:
         """
         """
@@ -451,9 +458,9 @@ class Plane:
         if maths.is_zero(f):
             return maths.Vec3.zero()
 
-        v0: maths.Vec3= b.normal.cross(c.normal) * a.dir
-        v1: maths.Vec3= c.normal.cross(a.normal) * b.dir
-        v2: maths.Vec3= a.normal.cross(b.normal) * c.dir
+        v0: maths.Vec3= b.normal.cross(c.normal) * a.d
+        v1: maths.Vec3= c.normal.cross(a.normal) * b.d
+        v2: maths.Vec3= a.normal.cross(b.normal) * c.d
 
         inv: float = 1.0 / f
         x: float= (v0.x + v1.x + v2.x) * inv
@@ -462,24 +469,15 @@ class Plane:
 
         return maths.Vec3(x, y, z)
 
-    # @staticmethod
-    # def create_transformed_plane(unit_plane: 'Plane', m4: maths.Mat4):
-    #     t_m4= m4.inverse()
-    #     t_m4= t_m4.transpose()
-    #     v4= unit_plane.to_vec4()
-
-    #     return Plane.create_from_v4(t_m4.transform_v4(v4))
-
-
     def copy(self) -> 'Plane':
         """Return a copy of self
         """
-        return Plane(self.normal.copy(), self.dir)
+        return Plane(self.normal.copy(), self.d)
 
     def to_vec4(self) -> maths.Vec4:
         """
         """
-        return maths.Vec4.create_from_v3(self.normal, self.dir)
+        return maths.Vec4.create_from_v3(self.normal, self.d)
 
     def dot(self, v4: maths.Vec4) -> float:
         """
@@ -501,7 +499,7 @@ class Plane:
 
             0
         """
-        result: float= self.dot_normal(v3) + self.dir
+        result: float= self.dot_normal(v3) + self.d
         return int(result)
 
     def classify_ab3(self, ab3: AABB3) -> int:
@@ -541,33 +539,40 @@ class Plane:
             dmin += self.normal.z * pmax.z
             dmax += self.normal.z * pmin.z
 
-        if dmin >= self.dir:
+        if dmin >= self.d:
             return 1
-        if dmax <= self.dir:
+        if dmax <= self.d:
             return -1
         return 0
 
     def unit(self) -> 'Plane':
         """Return a copy of self with unit length
         """
-        lsq= self.normal.length_sqr()
-        inv= maths.inv_sqrt(lsq)
+        ls= self.normal.length_sqrt()
+
+        if maths.is_zero(ls):
+            return Plane(maths.Vec3.zero(), 0.0)
         
-        n= self.normal * inv
-        d= -n.dot(self.normal)
+        inv: float = 1.0 / ls
+        n: maths.Vec3 = self.normal * inv
+        d: float= maths.clampf(self.d * inv, -1.0, 1.0)
 
         return Plane(n, d)
 
     def to_unit(self) -> None:
         """Convert to unit length
         """
-        lsq: float= self.normal.length_sqr()
-        inv: float= maths.inv_sqrt(lsq)
-        cpy= self.normal.copy()
+        ls: float= self.normal.length_sqrt()
+
+        if maths.is_zero(ls):
+            return
+
+        inv: float = 1.0 / ls
         self.normal.x *= inv
         self.normal.y *= inv
         self.normal.z *= inv
-        self.dir= -self.normal.dot(cpy)
+        self.d= maths.clampf(self.d * inv, -1.0, 1.0)
+
 
 # ---
 
@@ -585,54 +590,68 @@ class Frustum:
         """Create frustum from view projection matrix
         """
         result: Frustum= Frustum()
-        
+
         # near
-        result.planes[0]= Plane.create_from_xyzw(
-            -vp_matrix.get_at(0, 2),
-            -vp_matrix.get_at(1, 2),
-            -vp_matrix.get_at(2, 2),
-            -vp_matrix.get_at(3, 2),
-        )
-
+        result.planes[0]= Plane.create_from_v4(vp_matrix.col3() + vp_matrix.col2())
         # far
-        result.planes[1]= Plane.create_from_xyzw(
-            vp_matrix.get_at(0, 2) - vp_matrix.get_at(0, 3),
-            vp_matrix.get_at(1, 2) - vp_matrix.get_at(1, 3),
-            vp_matrix.get_at(2, 2) - vp_matrix.get_at(2, 3),
-            vp_matrix.get_at(3, 2) - vp_matrix.get_at(3, 3)
-        )
-
+        result.planes[1]= Plane.create_from_v4(vp_matrix.col3() - vp_matrix.col2())
         # left
-        result.planes[2]= Plane.create_from_xyzw(
-            -vp_matrix.get_at(0, 3) - vp_matrix.get_at(0, 0),
-            -vp_matrix.get_at(1, 3) - vp_matrix.get_at(1, 0),
-            -vp_matrix.get_at(2, 3) - vp_matrix.get_at(2, 0),
-            -vp_matrix.get_at(3, 3) - vp_matrix.get_at(3, 0)
-        )
-
+        result.planes[2]= Plane.create_from_v4(vp_matrix.col3() + vp_matrix.col0())
         # right
-        result.planes[3]= Plane.create_from_xyzw(
-            vp_matrix.get_at(0, 0) - vp_matrix.get_at(0, 3),
-            vp_matrix.get_at(1, 0) - vp_matrix.get_at(1, 3),
-            vp_matrix.get_at(2, 0) - vp_matrix.get_at(2, 3),
-            vp_matrix.get_at(3, 0) - vp_matrix.get_at(3, 3)
-        )
-
+        result.planes[3]= Plane.create_from_v4(vp_matrix.col3() - vp_matrix.col0())
         # top
-        result.planes[4]= Plane.create_from_xyzw(
-            vp_matrix.get_at(0, 1) - vp_matrix.get_at(0, 3),
-            vp_matrix.get_at(1, 1) - vp_matrix.get_at(1, 3),
-            vp_matrix.get_at(2, 1) - vp_matrix.get_at(2, 3),
-            vp_matrix.get_at(3, 1) - vp_matrix.get_at(3, 3)
-        )
-        
+        result.planes[4]= Plane.create_from_v4(vp_matrix.col3() - vp_matrix.col1())
         # bottom
-        result.planes[5]= Plane.create_from_xyzw(
-            -vp_matrix.get_at(0, 3) - vp_matrix.get_at(0, 1),
-            -vp_matrix.get_at(1, 3) - vp_matrix.get_at(1, 1),
-            -vp_matrix.get_at(2, 3) - vp_matrix.get_at(2, 1),
-            -vp_matrix.get_at(3, 3) - vp_matrix.get_at(3, 1)
-        )
+        result.planes[5]= Plane.create_from_v4(vp_matrix.col3() + vp_matrix.col1())
+
+
+        # # near
+        # result.planes[0]= Plane.create_from_xyzw(
+        #     -vp_matrix.get_at(0, 2),
+        #     -vp_matrix.get_at(1, 2),
+        #     -vp_matrix.get_at(2, 2),
+        #     -vp_matrix.get_at(3, 2),
+        # )
+
+        # # far
+        # result.planes[1]= Plane.create_from_xyzw(
+        #     vp_matrix.get_at(0, 2) - vp_matrix.get_at(0, 3),
+        #     vp_matrix.get_at(1, 2) - vp_matrix.get_at(1, 3),
+        #     vp_matrix.get_at(2, 2) - vp_matrix.get_at(2, 3),
+        #     vp_matrix.get_at(3, 2) - vp_matrix.get_at(3, 3)
+        # )
+
+        # # left
+        # result.planes[2]= Plane.create_from_xyzw(
+        #     -vp_matrix.get_at(0, 3) - vp_matrix.get_at(0, 0),
+        #     -vp_matrix.get_at(1, 3) - vp_matrix.get_at(1, 0),
+        #     -vp_matrix.get_at(2, 3) - vp_matrix.get_at(2, 0),
+        #     -vp_matrix.get_at(3, 3) - vp_matrix.get_at(3, 0)
+        # )
+
+        # # right
+        # result.planes[3]= Plane.create_from_xyzw(
+        #     vp_matrix.get_at(0, 0) - vp_matrix.get_at(0, 3),
+        #     vp_matrix.get_at(1, 0) - vp_matrix.get_at(1, 3),
+        #     vp_matrix.get_at(2, 0) - vp_matrix.get_at(2, 3),
+        #     vp_matrix.get_at(3, 0) - vp_matrix.get_at(3, 3)
+        # )
+
+        # # top
+        # result.planes[4]= Plane.create_from_xyzw(
+        #     vp_matrix.get_at(0, 1) - vp_matrix.get_at(0, 3),
+        #     vp_matrix.get_at(1, 1) - vp_matrix.get_at(1, 3),
+        #     vp_matrix.get_at(2, 1) - vp_matrix.get_at(2, 3),
+        #     vp_matrix.get_at(3, 1) - vp_matrix.get_at(3, 3)
+        # )
+        
+        # # bottom
+        # result.planes[5]= Plane.create_from_xyzw(
+        #     -vp_matrix.get_at(0, 3) - vp_matrix.get_at(0, 1),
+        #     -vp_matrix.get_at(1, 3) - vp_matrix.get_at(1, 1),
+        #     -vp_matrix.get_at(2, 3) - vp_matrix.get_at(2, 1),
+        #     -vp_matrix.get_at(3, 3) - vp_matrix.get_at(3, 1)
+        # )
         
         if to_unit:
             for p in result.planes:
@@ -836,7 +855,7 @@ class Ray3:
         if nd >= 0.0:
             return -1.0
 
-        t: float= (pl.dir - pn) / nd
+        t: float= (pl.d - pn) / nd
 
         if t >= 0.0:
             return t

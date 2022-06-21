@@ -333,23 +333,25 @@ class Vec2:
     def to_unit(self) -> None:
         """Convert to unit length
         """
-        lsq: float= self.length_sqr()
+        ls: float= self.length_sqrt()
 
-        if is_zero(lsq):
+        if is_zero(ls):
             return
 
-        inv: float= inv_sqrt(lsq)
+        inv: float= 1.0 / ls
+
         self.x *= inv
         self.y *= inv
 
     def unit(self) -> 'Vec2':
         """Return a copy of self with unit length
         """
-        lsq: float= self.length_sqr()
-        if is_zero(lsq):
-            return self.copy()
+        ls= self.length_sqrt()
 
-        return self * inv_sqrt(lsq)
+        if is_zero(ls):
+            return Vec2.zero()
+
+        return self * (1.0 / ls)
 
     def scale(self, by: float) -> None:
         """Scale self by
@@ -635,30 +637,24 @@ class Vec3:
     def to_unit(self) -> None:
         """Convert to unit length
         """
-        lsq: float= self.length_sqr()
+        ls: float= self.length_sqrt()
 
-        if is_zero(lsq):
+        if is_zero(ls):
             return
-
-        inv: float= inv_sqrt(lsq)
+        inv: float= 1.0 / ls
         self.x *= inv
         self.y *= inv
         self.z *= inv
 
     def unit(self) -> 'Vec3':
         """Return a copy of this vec3 with a normal length
-
-        Raises
-        ---
-        Vec3Error
-            if length is zero
         """
-        lsq: float= self.length_sqr()
+        ls: float= self.length_sqrt()
 
-        if is_zero(lsq):
+        if is_zero(ls):
             return Vec3.zero()
 
-        return self * inv_sqrt(lsq)
+        return self * (1.0 / ls)
 
     def get_at(self, idx: int) -> float:
         if idx == 0:
@@ -1008,12 +1004,12 @@ class Vec4:
     def to_unit(self) -> None:
         """Convert to unit length
         """
-        lsq: float= self.length_sqr()
+        ls: float= self.length_sqrt()
 
-        if is_zero(lsq):
+        if is_zero(ls):
             return
     
-        inv: float= inv_sqrt(lsq)
+        inv: float= 1.0 / ls
         self.x *= inv
         self.y *= inv
         self.z *= inv
@@ -1022,12 +1018,12 @@ class Vec4:
     def unit(self) -> 'Vec4':
         """Return self with unit length
         """
-        lsq: float = self.length_sqr()
+        ls: float = self.length_sqrt()
 
-        if is_zero(lsq):
-            raise Vec4Error('length of this vec4 was zero')
+        if is_zero(ls):
+            return Vec4.zero()
 
-        return self * inv_sqrt(lsq)
+        return self * (1.0 / ls)
 
     def barycentric(self, b: 'Vec4', c: 'Vec4', u: float, v: float) -> 'Vec4':
         a: Vec4= self.copy()
@@ -1602,6 +1598,7 @@ class Mat4:
     def __mul__(self, other):
         if not isinstance(other, Mat4):
             raise Mat4Error('not of type Mat4')
+
         r0: Vec4 = Vec4(
             self.row0.dot(other.col0()),
             self.row0.dot(other.col1()),
@@ -2830,12 +2827,12 @@ class Quaternion:
     def to_unit(self) -> None:
         """Convert to unit length
         """
-        lsq: float= self.length_sqr()
+        ls: float= self.length_sqrt()
 
-        if is_zero(lsq):
+        if is_zero(ls):
             return
 
-        inv: float= inv_sqrt(lsq)
+        inv: float= 1.0 / ls
         self.x *= inv
         self.y *= inv
         self.z *= inv
