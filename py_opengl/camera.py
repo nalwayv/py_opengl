@@ -1,6 +1,5 @@
 """Camera
 """
-from typing import Final
 from enum import Enum, auto
 
 from py_opengl import maths

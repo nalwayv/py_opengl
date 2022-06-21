@@ -462,13 +462,14 @@ class Plane:
 
         return maths.Vec3(x, y, z)
 
-    @staticmethod
-    def create_transformed_plane(unit_plane: 'Plane', m4: maths.Mat4):
-        t_m4= m4.inverse()
-        t_m4= t_m4.transpose()
-        v4= unit_plane.to_vec4()
+    # @staticmethod
+    # def create_transformed_plane(unit_plane: 'Plane', m4: maths.Mat4):
+    #     t_m4= m4.inverse()
+    #     t_m4= t_m4.transpose()
+    #     v4= unit_plane.to_vec4()
 
-        return Plane.create_from_v4(t_m4.transform_v4(v4))
+    #     return Plane.create_from_v4(t_m4.transform_v4(v4))
+
 
     def copy(self) -> 'Plane':
         """Return a copy of self
@@ -490,38 +491,83 @@ class Plane:
         """
         return self.normal.dot(v3)
 
-    def classify_pt(self, v3: maths.Vec3) -> float:
+    def classify_pt(self, v3: maths.Vec3) -> int:
         """Check what side of plane v3 fall on
         
-        NEGATIVE if x < 0.0
+        results:
+            <0 
         
-        POSITIVE if x > 0.0
-        
-        else ON PLANE 
-         
-        """
-        return self.dot_normal(v3) + self.dir
+            >0
 
-    def is_unit(self) -> bool:
-        return self.normal.is_unit()
+            0
+        """
+        result: float= self.dot_normal(v3) + self.dir
+        return int(result)
+
+    def classify_ab3(self, ab3: AABB3) -> int:
+        """Check what side of plane ab3 fall on
+        
+        results:
+            <0 
+        
+            >0
+
+            0
+        """
+        pmin: maths.Vec3= ab3.get_min()
+        pmax: maths.Vec3= ab3.get_min()
+
+        dmin: float= 0.0
+        dmax: float= 0.0
+
+        if self.normal.x > 0.0:
+            dmin += self.normal.x * pmin.x
+            dmax += self.normal.x * pmax.x
+        else:
+            dmin += self.normal.x * pmax.x
+            dmax += self.normal.x * pmin.x
+
+        if self.normal.y > 0.0:
+            dmin += self.normal.y * pmin.y
+            dmax += self.normal.y * pmax.y
+        else:
+            dmin += self.normal.y * pmax.y
+            dmax += self.normal.y * pmin.y
+
+        if self.normal.z > 0.0:
+            dmin += self.normal.z * pmin.z
+            dmax += self.normal.z * pmax.z
+        else:
+            dmin += self.normal.z * pmax.z
+            dmax += self.normal.z * pmin.z
+
+        if dmin >= self.dir:
+            return 1
+        if dmax <= self.dir:
+            return -1
+        return 0
 
     def unit(self) -> 'Plane':
         """Return a copy of self with unit length
         """
         lsq= self.normal.length_sqr()
         inv= maths.inv_sqrt(lsq)
-        return Plane(self.normal * inv, 1.0 * maths.signum(self.dir))
+        
+        n= self.normal * inv
+        d= -n.dot(self.normal)
+
+        return Plane(n, d)
 
     def to_unit(self) -> None:
         """Convert to unit length
         """
         lsq: float= self.normal.length_sqr()
         inv: float= maths.inv_sqrt(lsq)
+        cpy= self.normal.copy()
         self.normal.x *= inv
         self.normal.y *= inv
         self.normal.z *= inv
-        self.dir = 1.0 * maths.signum(self.dir)
-
+        self.dir= -self.normal.dot(cpy)
 
 # ---
 
@@ -587,7 +633,7 @@ class Frustum:
             -vp_matrix.get_at(2, 3) - vp_matrix.get_at(2, 1),
             -vp_matrix.get_at(3, 3) - vp_matrix.get_at(3, 1)
         )
-
+        
         if to_unit:
             for p in result.planes:
                 p.to_unit()
@@ -624,7 +670,7 @@ class Frustum:
         """
         return self.planes[5]
 
-    def get_corners(self, to_unit: bool= False) -> list[maths.Vec3]:
+    def get_corners(self) -> list[maths.Vec3]:
         """Return corners of camera frustum
 
         [ nbl, nbr, ntl, ntr, fbl, fbr, ftl, ftr ]
@@ -662,9 +708,6 @@ class Frustum:
                 self.planes[f], self.planes[t], self.planes[r]
             )
         ]
-        if to_unit:
-            for c in corners:
-                c.to_unit()
 
         return corners
 

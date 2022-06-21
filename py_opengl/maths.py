@@ -1,7 +1,7 @@
 """Maths
 """
-import math
 from typing import Final
+import math
 
 
 
