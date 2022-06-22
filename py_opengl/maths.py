@@ -500,7 +500,7 @@ class Vec3:
         return Vec3(x, y, z)
 
     def __str__(self) -> str:
-        return f'[X: {self.x:.3f}, Y: {self.y:.3f}, Z: {self.z:.3f}]'
+        return f'[X: {self.x:.4f}, Y: {self.y:.4f}, Z: {self.z:.4f}]'
 
     @staticmethod
     def one() -> 'Vec3':
@@ -1630,7 +1630,7 @@ class Mat4:
         return Mat4(r0, r1, r2, r3)
 
     def __str__(self) -> str:
-        return f'[R0: {self.row0}\nR1: {self.row1}\nR2: {self.row2}\nR3: {self.row3}]'
+        return f'[\nR0: {self.row0}\nR1: {self.row1}\nR2: {self.row2}\nR3: {self.row3}]'
 
     @staticmethod
     def create_from_values(
@@ -2230,31 +2230,6 @@ class Mat4:
         y: float= self.row1.xyz().length_sqrt()
         z: float= self.row2.xyz().length_sqrt()
 
-        return Vec3(x, y, z)
-
-    def multiply_v4(self, v4: Vec4) -> Vec4:
-        """Return matrix multiplyed by vec4
-        """
-        x: float= v4.dot(self.col0())
-        y: float= v4.dot(self.col1())
-        z: float= v4.dot(self.col2())
-        w: float= v4.dot(self.col3())
-
-        return Vec4(x, y, z, w)
-
-    def multiply_v3(self, v3: Vec3) -> Vec3:
-        """Return matrix multiplyed by vec3
-        """
-        x: float= (v3.x * self.row0.x) + (v3.y * self.row1.x) + (v3.z * self.row2.x) + self.row3.x
-        y: float= (v3.x * self.row0.y) + (v3.y * self.row1.y) + (v3.z * self.row2.y) + self.row3.y
-        z: float= (v3.x * self.row0.z) + (v3.y * self.row1.z) + (v3.z * self.row2.z) + self.row3.z
-        w: float= (v3.x * self.row0.w) + (v3.y * self.row1.w) + (v3.z * self.row2.w) + self.row3.w
-
-        if not is_one(w):
-            x= x / w
-            y= y / w
-            z= z / w
-            
         return Vec3(x, y, z)
 
     def transform_v2(self, v2: Vec2) -> Vec4:

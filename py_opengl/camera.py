@@ -164,22 +164,23 @@ class Camera:
         """
         return maths.Mat4.create_lookat_rh(self.position, self.position + self.front, self.up)
 
-    def get_frustum(self, to_unit: bool= False) -> geometry.Frustum:
+    def get_frustum(self) -> geometry.Frustum:
         """Return list of frustum planes
 
         [ near, far, left, right, top, bottom ]
         """
         v: maths.Mat4= self.get_view_matrix()
         p: maths.Mat4= self.get_projection_matrix()
+ 
         vp: maths.Mat4= v * p
         
-        return geometry.Frustum.create_from_matrix(vp, to_unit)
+        return geometry.Frustum.create_from_matrix(vp)
 
 
-    def get_frustum_corners(self, to_unit: bool= False) -> list[maths.Vec3]:
+    def get_frustum_corners(self) -> list[maths.Vec3]:
         """Return corners of camera frustum
 
         [ nbl, nbr, ntl, ntr, fbl, fbr, ftl, ftr ]
         """
-        fr= self.get_frustum(to_unit)
+        fr= self.get_frustum()
         return fr.get_corners()

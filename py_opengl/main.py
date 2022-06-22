@@ -130,8 +130,9 @@ def main() -> None:
         scene.add_obj(shape2)
         scene.add_obj(shape3)
         scene.add_obj(shape4)
-
-        fshape= model.FrustumModel(cam.get_frustum_corners(True))
+        
+        # TODO
+        fshape= model.FrustumModel(cam.get_frustum_corners())
         fshape.translate(maths.Vec3(z= 5))
 
         while not glwin.should_close():

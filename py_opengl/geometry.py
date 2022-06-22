@@ -1,5 +1,7 @@
 """Geometry
 """
+from audioop import cross
+from pydoc import plain
 from re import L
 from typing import Final
 from enum import Enum, auto
@@ -399,12 +401,8 @@ class Plane:
 
     __slots__= ('normal', 'd', 'TYPE')
 
-    def __init__(
-        self,
-        normal: maths.Vec3= maths.Vec3(),
-        d: float= 0.0
-    ) -> None:
-        self.normal: maths.Vec3= normal
+    def __init__(self, norm: maths.Vec3=maths.Vec3(), d: float= 0.0) -> None:
+        self.normal: maths.Vec3= norm
         self.d: float= d
         self.TYPE: GeometryType= GeometryType.PLAIN
 
@@ -419,17 +417,11 @@ class Plane:
         return False
 
     def __str__(self) -> str:
-        return f'[N: {self.normal}, D: {self.d:.3f}]'
+        return f'[N: {self.normal}, D: {self.d:.4f}]'
 
     @staticmethod
     def create_from_v4(v4: maths.Vec4) -> 'Plane':
         return Plane(v4.xyz(), v4.w)
-
-    @staticmethod
-    def create_from_xyzw(x: float, y: float, z: float, w: float) -> 'Plane':
-        n: maths.Vec3= maths.Vec3(x,y,z)
-        d: float= w
-        return Plane(n, d)
 
     @staticmethod
     def create_from_pts(a: maths.Vec3, b: maths.Vec3, c: maths.Vec3) -> 'Plane':
@@ -441,7 +433,6 @@ class Plane:
             n.to_unit()
 
         d: float= -n.dot(a)
-
         return Plane(n, d)
 
     @staticmethod
@@ -452,33 +443,24 @@ class Plane:
     def create_intersection_pt(a: 'Plane', b: 'Plane', c: 'Plane') -> maths.Vec3:
         """
         """
-        bc: maths.Vec3= b.normal.cross(c.normal)
-        f: float= -a.normal.dot(bc)
-        
-        if maths.is_zero(f):
+        na: maths.Vec3= a.normal
+        nb: maths.Vec3= b.normal
+        nc: maths.Vec3= c.normal
+        den: float= -na.cross(nb).dot(nc)
+
+        if maths.is_zero(den):
             return maths.Vec3.zero()
 
-        v0: maths.Vec3= b.normal.cross(c.normal) * a.d
-        v1: maths.Vec3= c.normal.cross(a.normal) * b.d
-        v2: maths.Vec3= a.normal.cross(b.normal) * c.d
+        inv: float= 1.0 / den
+        p0: maths.Vec3= nb.cross(nc) * a.d
+        p1: maths.Vec3= nc.cross(na) * b.d
+        p2: maths.Vec3= na.cross(nb) * c.d
 
-        inv: float = 1.0 / f
-        x: float= (v0.x + v1.x + v2.x) * inv
-        y: float= (v0.y + v1.y + v2.y) * inv
-        z: float= (v0.z + v1.z + v2.z) * inv
+        return (p0 + p1 + p2) * inv
 
-        return maths.Vec3(x, y, z)
-
-    def copy(self) -> 'Plane':
-        """Return a copy of self
-        """
-        return Plane(self.normal.copy(), self.d)
-
-    def to_vec4(self) -> maths.Vec4:
-        """
-        """
-        return maths.Vec4.create_from_v3(self.normal, self.d)
-
+    def xyzd(self)->maths.Vec4:
+        return maths.Vec4(self.normal.x, self.normal.y, self.normal.z, self.d)
+    
     def dot(self, v4: maths.Vec4) -> float:
         """
         """
@@ -548,15 +530,16 @@ class Plane:
     def unit(self) -> 'Plane':
         """Return a copy of self with unit length
         """
+        if maths.is_one(self.normal.length_sqr()):
+            return
         ls= self.normal.length_sqrt()
 
         if maths.is_zero(ls):
-            return Plane(maths.Vec3.zero(), 0.0)
-        
-        inv: float = 1.0 / ls
-        n: maths.Vec3 = self.normal * inv
-        d: float= maths.clampf(self.d * inv, -1.0, 1.0)
+            return Plane()
 
+        inv: float = 1.0 / ls
+        n= self.normal * inv
+        d= self.d * inv if self.d >= 1.0 else self.d
         return Plane(n, d)
 
     def to_unit(self) -> None:
@@ -571,7 +554,10 @@ class Plane:
         self.normal.x *= inv
         self.normal.y *= inv
         self.normal.z *= inv
-        self.d= maths.clampf(self.d * inv, -1.0, 1.0)
+
+        # get bad scaling if value is less then 1
+        if self.d >= 1.0:
+            self.d *= inv
 
 
 # ---
@@ -586,7 +572,7 @@ class Frustum:
         self.TYPE: GeometryType= GeometryType.FRUSTUM
 
     @staticmethod
-    def create_from_matrix(vp_matrix: maths.Mat4, to_unit: bool= False) -> 'Frustum':
+    def create_from_matrix(vp_matrix: maths.Mat4) -> 'Frustum':
         """Create frustum from view projection matrix
         """
         result: Frustum= Frustum()
@@ -603,60 +589,11 @@ class Frustum:
         result.planes[4]= Plane.create_from_v4(vp_matrix.col3() - vp_matrix.col1())
         # bottom
         result.planes[5]= Plane.create_from_v4(vp_matrix.col3() + vp_matrix.col1())
-
-
-        # # near
-        # result.planes[0]= Plane.create_from_xyzw(
-        #     -vp_matrix.get_at(0, 2),
-        #     -vp_matrix.get_at(1, 2),
-        #     -vp_matrix.get_at(2, 2),
-        #     -vp_matrix.get_at(3, 2),
-        # )
-
-        # # far
-        # result.planes[1]= Plane.create_from_xyzw(
-        #     vp_matrix.get_at(0, 2) - vp_matrix.get_at(0, 3),
-        #     vp_matrix.get_at(1, 2) - vp_matrix.get_at(1, 3),
-        #     vp_matrix.get_at(2, 2) - vp_matrix.get_at(2, 3),
-        #     vp_matrix.get_at(3, 2) - vp_matrix.get_at(3, 3)
-        # )
-
-        # # left
-        # result.planes[2]= Plane.create_from_xyzw(
-        #     -vp_matrix.get_at(0, 3) - vp_matrix.get_at(0, 0),
-        #     -vp_matrix.get_at(1, 3) - vp_matrix.get_at(1, 0),
-        #     -vp_matrix.get_at(2, 3) - vp_matrix.get_at(2, 0),
-        #     -vp_matrix.get_at(3, 3) - vp_matrix.get_at(3, 0)
-        # )
-
-        # # right
-        # result.planes[3]= Plane.create_from_xyzw(
-        #     vp_matrix.get_at(0, 0) - vp_matrix.get_at(0, 3),
-        #     vp_matrix.get_at(1, 0) - vp_matrix.get_at(1, 3),
-        #     vp_matrix.get_at(2, 0) - vp_matrix.get_at(2, 3),
-        #     vp_matrix.get_at(3, 0) - vp_matrix.get_at(3, 3)
-        # )
-
-        # # top
-        # result.planes[4]= Plane.create_from_xyzw(
-        #     vp_matrix.get_at(0, 1) - vp_matrix.get_at(0, 3),
-        #     vp_matrix.get_at(1, 1) - vp_matrix.get_at(1, 3),
-        #     vp_matrix.get_at(2, 1) - vp_matrix.get_at(2, 3),
-        #     vp_matrix.get_at(3, 1) - vp_matrix.get_at(3, 3)
-        # )
         
-        # # bottom
-        # result.planes[5]= Plane.create_from_xyzw(
-        #     -vp_matrix.get_at(0, 3) - vp_matrix.get_at(0, 1),
-        #     -vp_matrix.get_at(1, 3) - vp_matrix.get_at(1, 1),
-        #     -vp_matrix.get_at(2, 3) - vp_matrix.get_at(2, 1),
-        #     -vp_matrix.get_at(3, 3) - vp_matrix.get_at(3, 1)
-        # )
-        
-        if to_unit:
-            for p in result.planes:
-                p.to_unit()
-    
+        for pl in result.planes:
+            if not pl.normal.is_unit():
+                pl.to_unit()
+
         return result
 
     def get_near(self) -> Plane:
