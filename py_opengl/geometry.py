@@ -451,10 +451,16 @@ class Plane:
         if maths.is_zero(den):
             return maths.Vec3.zero()
 
+        #TODO() scaling by d causes bad scalinf
+
         inv: float= 1.0 / den
-        p0: maths.Vec3= nb.cross(nc) * a.d
-        p1: maths.Vec3= nc.cross(na) * b.d
-        p2: maths.Vec3= na.cross(nb) * c.d
+        # p0: maths.Vec3= nb.cross(nc) * a.d
+        # p1: maths.Vec3= nc.cross(na) * b.d
+        # p2: maths.Vec3= na.cross(nb) * c.d
+
+        p0: maths.Vec3= nb.cross(nc)
+        p1: maths.Vec3= nc.cross(na)
+        p2: maths.Vec3= na.cross(nb)
 
         return (p0 + p1 + p2) * inv
 
@@ -546,7 +552,6 @@ class Plane:
         """Convert to unit length
         """
         ls: float= self.normal.length_sqrt()
-
         if maths.is_zero(ls):
             return
 
@@ -554,11 +559,7 @@ class Plane:
         self.normal.x *= inv
         self.normal.y *= inv
         self.normal.z *= inv
-
-        # get bad scaling if value is less then 1
-        if self.d >= 1.0:
-            self.d *= inv
-
+        self.d *= inv
 
 # ---
 
@@ -577,22 +578,22 @@ class Frustum:
         """
         result: Frustum= Frustum()
 
-        # near
-        result.planes[0]= Plane.create_from_v4(vp_matrix.col3() + vp_matrix.col2())
-        # far
-        result.planes[1]= Plane.create_from_v4(vp_matrix.col3() - vp_matrix.col2())
-        # left
-        result.planes[2]= Plane.create_from_v4(vp_matrix.col3() + vp_matrix.col0())
-        # right
-        result.planes[3]= Plane.create_from_v4(vp_matrix.col3() - vp_matrix.col0())
-        # top
-        result.planes[4]= Plane.create_from_v4(vp_matrix.col3() - vp_matrix.col1())
-        # bottom
-        result.planes[5]= Plane.create_from_v4(vp_matrix.col3() + vp_matrix.col1())
+        near: maths.Vec4= vp_matrix.col3() + vp_matrix.col2()
+        far: maths.Vec4= vp_matrix.col3() - vp_matrix.col2()
+        left: maths.Vec4= vp_matrix.col3() + vp_matrix.col0()
+        right: maths.Vec4= vp_matrix.col3() - vp_matrix.col0()
+        top: maths.Vec4= vp_matrix.col3() - vp_matrix.col1()
+        bottom: maths.Vec4= vp_matrix.col3() + vp_matrix.col1()
+
+        result.planes[0]= Plane.create_from_v4(near)
+        result.planes[1]= Plane.create_from_v4(far)
+        result.planes[2]= Plane.create_from_v4(left)
+        result.planes[3]= Plane.create_from_v4(right)
+        result.planes[4]= Plane.create_from_v4(top)
+        result.planes[5]= Plane.create_from_v4(bottom)
         
         for pl in result.planes:
-            if not pl.normal.is_unit():
-                pl.to_unit()
+            pl.to_unit()
 
         return result
 

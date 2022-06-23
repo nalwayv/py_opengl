@@ -855,7 +855,7 @@ class Vec4:
         )
 
     def __str__(self) -> str:
-        return f'[X: {self.x}, Y: {self.y}, Z: {self.z}, W: {self.w}]'
+        return f'[X: {self.x:.4f}, Y: {self.y:.4f}, Z: {self.z:.4f}, W: {self.w:.4f}]'
 
     @staticmethod
     def one() -> 'Vec4':
@@ -1630,7 +1630,7 @@ class Mat4:
         return Mat4(r0, r1, r2, r3)
 
     def __str__(self) -> str:
-        return f'[\nR0: {self.row0}\nR1: {self.row1}\nR2: {self.row2}\nR3: {self.row3}]'
+        return f'[\n\tR0: {self.row0}\n\tR1: {self.row1}\n\tR2: {self.row2}\n\tR3: {self.row3}\n]'
 
     @staticmethod
     def create_from_values(
@@ -2472,11 +2472,6 @@ class SphericalCoord:
         return SphericalCoord(r, t, p)
 
     def to_coords(self) -> Vec3:
-        # x: float= self.rho * sin(self.phi) * cos(self.theta),
-        # y: float= self.rho * sin(self.phi) * sin(self.theta),
-        # z: float= self.rho * cos(self.phi)
-        # return Vec3(x, y, z)
-
         x: float= self.rho * cos(self.phi) * cos(self.theta)
         y: float= self.rho * cos(self.phi) * sin(self.theta)
         z: float= self.rho * sin(self.phi)
