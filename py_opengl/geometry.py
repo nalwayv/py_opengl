@@ -449,19 +449,13 @@ class Plane:
         den: float= -na.cross(nb).dot(nc)
 
         if maths.is_zero(den):
-            return maths.Vec3.zero()
-
-        #TODO() scaling by d causes bad scalinf
+            return maths.Vec3.one()
 
         inv: float= 1.0 / den
-        # p0: maths.Vec3= nb.cross(nc) * a.d
-        # p1: maths.Vec3= nc.cross(na) * b.d
-        # p2: maths.Vec3= na.cross(nb) * c.d
 
-        p0: maths.Vec3= nb.cross(nc)
-        p1: maths.Vec3= nc.cross(na)
-        p2: maths.Vec3= na.cross(nb)
-
+        p0: maths.Vec3= nb.cross(nc) * a.d
+        p1: maths.Vec3= nc.cross(na) * b.d
+        p2: maths.Vec3= na.cross(nb) * c.d
         return (p0 + p1 + p2) * inv
 
     def xyzd(self)->maths.Vec4:
@@ -536,26 +530,21 @@ class Plane:
     def unit(self) -> 'Plane':
         """Return a copy of self with unit length
         """
-        if maths.is_one(self.normal.length_sqr()):
+        lsq= self.normal.length_sqr()
+        if (lsq - 1.0) < 2.220446049250313e-16:
             return
-        ls= self.normal.length_sqrt()
 
-        if maths.is_zero(ls):
-            return Plane()
-
-        inv: float = 1.0 / ls
-        n= self.normal * inv
-        d= self.d * inv if self.d >= 1.0 else self.d
-        return Plane(n, d)
+        inv= maths.inv_sqrt(lsq)
+        return Plane(self.normal * inv, self.d * inv)
 
     def to_unit(self) -> None:
         """Convert to unit length
         """
-        ls: float= self.normal.length_sqrt()
-        if maths.is_zero(ls):
+        lsq= self.normal.length_sqr()
+        if (lsq - 1.0) < 2.220446049250313e-16:
             return
 
-        inv: float = 1.0 / ls
+        inv= maths.inv_sqrt(lsq)
         self.normal.x *= inv
         self.normal.y *= inv
         self.normal.z *= inv
@@ -627,7 +616,7 @@ class Frustum:
         """
         return self.planes[5]
 
-    def get_corners(self) -> list[maths.Vec3]:
+    def get_corners(self, to_unit: bool) -> list[maths.Vec3]:
         """Return corners of camera frustum
 
         [ nbl, nbr, ntl, ntr, fbl, fbr, ftl, ftr ]
@@ -665,7 +654,9 @@ class Frustum:
                 self.planes[f], self.planes[t], self.planes[r]
             )
         ]
-
+        if to_unit:
+            for c in corners:
+                c.to_unit()
         return corners
 
 

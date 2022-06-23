@@ -65,7 +65,7 @@ class Camera:
         self.fovy: float= maths.PHI
         self.yaw: float= -maths.PHI
         self.pitch: float= 0.0
-        self.znear: float= 0.01
+        self.znear: float= 0.1
         self.zfar: float= 110.0
         self.sensativity: float= 3.2
         self.rsensativity: float = 18.2
@@ -177,10 +177,10 @@ class Camera:
         return geometry.Frustum.create_from_matrix(vp)
 
 
-    def get_frustum_corners(self) -> list[maths.Vec3]:
+    def get_frustum_corners(self, to_unit: bool=False) -> list[maths.Vec3]:
         """Return corners of camera frustum
 
         [ nbl, nbr, ntl, ntr, fbl, fbr, ftl, ftr ]
         """
         fr= self.get_frustum()
-        return fr.get_corners()
+        return fr.get_corners(to_unit)
