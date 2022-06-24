@@ -50,8 +50,8 @@ class Scene:
     def raycast(self, ray: geometry.Ray3) -> model.Model|None:
         return self.tree.raycast(ray)
     
-    def query(self, ab: geometry.AABB3) -> list[model.Model|None]:
-        return self.tree.query(ab)
+    def query(self, ab3: geometry.AABB3) -> list[model.Model|None]:
+        return self.tree.query(ab3)
 
     def draw_debug(self, s: shader.Shader, view:maths.Mat4, projection:maths.Mat4) -> None:
         self.tree.debug(s, view, projection)
@@ -133,7 +133,9 @@ def main() -> None:
         
         # TODO
         fshape= model.FrustumModel(cam.get_frustum_corners(True))
-        fshape.translate(maths.Vec3(z= 5))
+        # fshape.translate(maths.Vec3(z= 5))
+
+        fr= cam.get_frustum()
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -162,23 +164,30 @@ def main() -> None:
             scene.draw_debug(shader0, v_matrix, p_matrix)
 
 
-            # if kb.is_key_held(glfw.KEY_I):
-            #     shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
+            if kb.is_key_pressed(glfw.KEY_P):
+                ab3= shape1.compute_aabb()
+                if fr.intersect_ab3(ab3):
+                    print('pass')
+                else:
+                    print('fail')
+
+            if kb.is_key_held(glfw.KEY_I):
+                shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
         
-            # if kb.is_key_held(glfw.KEY_K):
-            #     shape1.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_K):
+                shape1.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_held(glfw.KEY_J):
-            #     shape1.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_J):
+                shape1.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_held(glfw.KEY_L):
-            #     shape1.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_L):
+                shape1.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_held(glfw.KEY_O):
-            #     shape1.translate(maths.Vec3(z= 1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_O):
+                shape1.translate(maths.Vec3(z= 1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_held(glfw.KEY_U):
-            #     shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_U):
+                shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
 
             # --
         

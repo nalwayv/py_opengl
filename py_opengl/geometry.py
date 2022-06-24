@@ -1,15 +1,12 @@
 """Geometry
 """
-from audioop import cross
-from pydoc import plain
-from re import L
 from typing import Final
 from enum import Enum, auto
 
 from py_opengl import maths
 
 
-# --- IDs
+# ---
 
 
 class GeometryType(Enum):
@@ -22,7 +19,7 @@ class GeometryType(Enum):
     FRUSTUM= auto()
 
 
-# --- AABB
+# ---
 
 
 class AABB3:
@@ -230,7 +227,7 @@ class AABB3:
         return True
 
 
-# --- Line
+# ---
 
 
 class Line3:
@@ -263,7 +260,7 @@ class Line3:
         return (self.end - self.start)
 
 
-# --- Triangle
+# ---
 
 
 class Triangle3:
@@ -312,7 +309,7 @@ class Triangle3:
         )
 
 
-# --- SPHERE
+# ---
 
 
 class Sphere3:
@@ -395,7 +392,7 @@ class Sphere3:
         return dis < r2
 
 
-# --- PLANE
+# ---
 
 
 class Plane:
@@ -482,60 +479,51 @@ class Plane:
 
             0
         """
-        result: float= self.dot_normal(v3) + self.d
+        result: float= self.dot_normal(v3) - self.d
         return int(result)
 
     def classify_ab3(self, ab3: AABB3) -> int:
         """Check what side of plane ab3 fall on
         
         results:
-            <0 
+            <0 == back
         
-            >0
+            >0 == front
 
-            0
+            0 == intersect
         """
-        # r= (
-        #     maths.absf(ab3.extents.x * self.normal.x) +
-        #     maths.absf(ab3.extents.y * self.normal.y) +
-        #     maths.absf(ab3.extents.z * self.normal.z) 
-        # )
-        # d= self.normal.dot(ab3.center)+self.d
-        # if maths.absf(d) < r:
-        #     return 0
-        # if d < 0.0:
-        #     return d+r
-        # return d-r
         pmin: maths.Vec3= ab3.get_min()
         pmax: maths.Vec3= ab3.get_min()
 
-        dmin: float= 0.0
-        dmax: float= 0.0
+        dmin= maths.Vec3()
+        dmax= maths.Vec3()
 
-        if self.normal.x > 0.0:
-            dmin += self.normal.x * pmin.x
-            dmax += self.normal.x * pmax.x
+        if self.normal.x >= 0.0:
+            dmin.x= pmin.x
+            dmax.x= pmax.x
         else:
-            dmin += self.normal.x * pmax.x
-            dmax += self.normal.x * pmin.x
+            dmin.x= pmax.x
+            dmax.x= pmin.x
 
-        if self.normal.y > 0.0:
-            dmin += self.normal.y * pmin.y
-            dmax += self.normal.y * pmax.y
+        if self.normal.y >= 0.0:
+            dmin.y= pmin.y
+            dmax.y= pmax.y
         else:
-            dmin += self.normal.y * pmax.y
-            dmax += self.normal.y * pmin.y
+            dmin.y= pmax.y
+            dmax.y= pmin.y
 
-        if self.normal.z > 0.0:
-            dmin += self.normal.z * pmin.z
-            dmax += self.normal.z * pmax.z
+        if self.normal.z >= 0.0:
+            dmin.z= pmin.z
+            dmax.z= pmax.z
         else:
-            dmin += self.normal.z * pmax.z
-            dmax += self.normal.z * pmin.z
+            dmin.z= pmax.z
+            dmax.z= pmin.z
 
-        if dmin >= self.d:
+        dis= self.normal.dot(dmin) + self.d
+        if dis > 0:
             return 1
-        if dmax <= self.d:
+        dis= self.normal.dot(dmax) + self.d
+        if dis < 0:
             return -1
         return 0
 
@@ -561,6 +549,7 @@ class Plane:
         self.normal.y *= inv
         self.normal.z *= inv
         self.d *= inv
+
 
 # ---
 
@@ -674,11 +663,12 @@ class Frustum:
 
     def intersect_ab3(self, ab3: AABB3)->bool:
         for p in self.planes:
-            if p.classify_ab3(ab3) < 0.0:
+            if p.classify_ab3(ab3) < 0:
                 return False
         return True
 
-# --- RAY3D
+
+# ---
 
 
 class Ray3:

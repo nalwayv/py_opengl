@@ -444,7 +444,7 @@ class ABTree:
                         closest_o= current.obj
         return closest_o
 
-    def query(self, ab: geometry.AABB3) -> list[T|None]:
+    def query(self, ab3: geometry.AABB3) -> list[T|None]:
         """
         """
         que: list[Node|None]= [self.root]
@@ -460,7 +460,7 @@ class ABTree:
                 que.append(current.left)
                 que.append(current.right)
 
-            if ab.intersect_aabb(current.aabb):
+            if ab3.intersect_aabb(current.aabb):
                 if current.has_obj():
                     result.append(current.obj)
 
