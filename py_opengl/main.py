@@ -169,23 +169,23 @@ def main() -> None:
             #     else:
             #         print('.')
 
-            if kb.is_key_held(glfw.KEY_I):
-                shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
+            # if kb.is_key_held(glfw.KEY_I):
+            #     shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
         
-            if kb.is_key_held(glfw.KEY_K):
-                shape1.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
+            # if kb.is_key_held(glfw.KEY_K):
+            #     shape1.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
 
-            if kb.is_key_held(glfw.KEY_J):
-                shape1.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
+            # if kb.is_key_held(glfw.KEY_J):
+            #     shape1.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
 
-            if kb.is_key_held(glfw.KEY_L):
-                shape1.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
+            # if kb.is_key_held(glfw.KEY_L):
+            #     shape1.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
 
-            if kb.is_key_held(glfw.KEY_O):
-                shape1.translate(maths.Vec3(z= 1.5) * (1.4 * time.delta))
+            # if kb.is_key_held(glfw.KEY_O):
+            #     shape1.translate(maths.Vec3(z= 1.5) * (1.4 * time.delta))
 
-            if kb.is_key_held(glfw.KEY_U):
-                shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
+            # if kb.is_key_held(glfw.KEY_U):
+            #     shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
 
             # --
         
