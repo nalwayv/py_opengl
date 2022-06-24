@@ -131,7 +131,8 @@ class CubeModelAABB(Model):
         """OVERRIDE:: Compute AABB3
         """
         result: geometry.AABB3= self.bounds.copy()
-        result.translate(self._transform.position)
+        m4= maths.Mat4.create_translation(self._transform.position)
+        result.transform(m4)
         return result
 
 

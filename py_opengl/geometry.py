@@ -115,11 +115,6 @@ class AABB3:
         self.center.set_from(expand.center)
         self.extents.set_from(expand.extents)
 
-    def translate(self, v3: maths.Vec3) -> None:
-        """Translate by
-        """
-        self.center.set_from(self.center + v3)
-
     def transform(self, m4: maths.Mat4) -> None:
         self.center.set_from(self.center.transform(m4))
 

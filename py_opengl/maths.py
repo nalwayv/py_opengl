@@ -797,6 +797,8 @@ class Vec3:
         )
 
     def transform(self, m4: 'Mat4') -> 'Vec3':
+        """ Transform by mat4
+        """
         x: float= (self.x * m4.get_at(0, 0)) + (self.y * m4.get_at(1, 0)) + (self.z * m4.get_at(2, 0)) + m4.get_at(3, 0)
         y: float= (self.x * m4.get_at(0, 1)) + (self.y * m4.get_at(1, 1)) + (self.z * m4.get_at(2, 1)) + m4.get_at(3, 1)
         z: float= (self.x * m4.get_at(0, 2)) + (self.y * m4.get_at(1, 2)) + (self.z * m4.get_at(2, 2)) + m4.get_at(3, 2)
