@@ -161,23 +161,31 @@ def main() -> None:
             fshape.draw(shader0, v_matrix, p_matrix, True)
             scene.draw_debug(shader0, v_matrix, p_matrix)
 
-            # if kb.is_key_held(glfw.KEY_I):
-            #     shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
+            # if kb.is_key_pressed(glfw.KEY_P):
+            #     ab3= shape1.compute_aabb()
+            #     fr= cam.get_frustum()
+            #     if fr.intersect_ab3(ab3):
+            #         print('ok')
+            #     else:
+            #         print('.')
+
+            if kb.is_key_held(glfw.KEY_I):
+                shape1.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
         
-            # if kb.is_key_held(glfw.KEY_K):
-            #     shape1.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_K):
+                shape1.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_held(glfw.KEY_J):
-            #     shape1.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_J):
+                shape1.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_held(glfw.KEY_L):
-            #     shape1.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_L):
+                shape1.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_held(glfw.KEY_O):
-            #     shape1.translate(maths.Vec3(z= 1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_O):
+                shape1.translate(maths.Vec3(z= 1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_held(glfw.KEY_U):
-            #     shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_U):
+                shape1.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
 
             # --
         

@@ -398,7 +398,8 @@ class ABTree:
                 que.append(current.left)
                 que.append(current.right)
             
-            current.aabb.translate(shift_by)
+            # current.aabb.translate(shift_by)
+            current.aabb.transform(maths.Mat4.create_translation(shift_by))
 
     def debug(self, s: shader.Shader, view: maths.Mat4, projection: maths.Mat4) -> None:
         que: list[Node|None]= [self.root]

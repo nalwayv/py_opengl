@@ -69,7 +69,7 @@ class Model:
         """Compute AABB3
         """
         result= self._mesh.compute_aabb()
-        result.translate(self._transform.position)
+        result.transform(self._transform.get_transform_matrix())
         return result
 
     def draw(

@@ -796,6 +796,13 @@ class Vec3:
             is_equil(self.z, other.z)
         )
 
+    def transform(self, m4: 'Mat4') -> 'Vec3':
+        x: float= (self.x * m4.get_at(0, 0)) + (self.y * m4.get_at(1, 0)) + (self.z * m4.get_at(2, 0)) + m4.get_at(3, 0)
+        y: float= (self.x * m4.get_at(0, 1)) + (self.y * m4.get_at(1, 1)) + (self.z * m4.get_at(2, 1)) + m4.get_at(3, 1)
+        z: float= (self.x * m4.get_at(0, 2)) + (self.y * m4.get_at(1, 2)) + (self.z * m4.get_at(2, 2)) + m4.get_at(3, 2)
+
+        return Vec3(x, y, z)
+
 
 # --- VECTOR_4 (X, Y, Z, W)
 
@@ -1080,6 +1087,13 @@ class Vec4:
             is_zero(self.w)
         )
         
+    def transform(self, m4: 'Mat4') -> 'Vec4':
+        x: float= (self.x * m4.get_at(0, 0)) + (self.y * m4.get_at(1, 0)) + (self.z * m4.get_at(2, 0)) + (self.w * m4.get_at(3, 0))
+        y: float= (self.x * m4.get_at(0, 1)) + (self.y * m4.get_at(1, 1)) + (self.z * m4.get_at(2, 1)) + (self.w * m4.get_at(3, 1))
+        z: float= (self.x * m4.get_at(0, 2)) + (self.y * m4.get_at(1, 2)) + (self.z * m4.get_at(2, 2)) + (self.w * m4.get_at(3, 2))
+        w: float= (self.x * m4.get_at(0, 3)) + (self.y * m4.get_at(1, 3)) + (self.z * m4.get_at(2, 3)) + (self.w * m4.get_at(3, 3))
+
+        return Vec4(x, y, z, w)
 
 
 # --- MATRIX_3
@@ -2231,41 +2245,6 @@ class Mat4:
         z: float= self.row2.xyz().length_sqrt()
 
         return Vec3(x, y, z)
-
-    def transform_v2(self, v2: Vec2) -> Vec4:
-        """
-        """
-        v4: Vec4= Vec4.create_from_v2(v2, 1.0, 1.0)
-
-        x: float= self.col0().dot(v4)
-        y: float= self.col1().dot(v4)
-        z: float= self.col2().dot(v4)
-        w: float= self.col3().dot(v4)
-
-        return Vec4(x, y, z, w)
-
-    def transform_v3(self, v3: Vec3) -> Vec4:
-        """
-        """
-        
-        v4: Vec4= Vec4.create_from_v3(v3, 1.0)
-
-        x: float= self.col0().dot(v4)
-        y: float= self.col1().dot(v4)
-        z: float= self.col2().dot(v4)
-        w: float= self.col3().dot(v4)
-
-        return Vec4(x, y, z, w)
-
-    def transform_v4(self, v4: Vec4) -> Vec4:
-        """
-        """
-        x: float= self.col0().dot(v4)
-        y: float= self.col1().dot(v4)
-        z: float= self.col2().dot(v4)
-        w: float= self.col3().dot(v4)
-
-        return Vec4(x, y, z, w)
 
     def col0(self) -> Vec4:
         """Return matrix column

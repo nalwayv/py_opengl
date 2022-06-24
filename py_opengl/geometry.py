@@ -120,6 +120,9 @@ class AABB3:
         """
         self.center.set_from(self.center + v3)
 
+    def transform(self, m4: maths.Mat4) -> None:
+        self.center.set_from(self.center.transform(m4))
+
     def copy(self) -> 'AABB3':
         """Return a copy of self
         """
@@ -353,6 +356,9 @@ class Sphere3:
         """
         return Sphere3(self.center.copy(), self.radius)
 
+    def transform(self, m4: maths.Mat4) -> None:
+        self.center.set_from(self.center.transform(m4))
+
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         point: maths.Vec3= pt - self.center
         
@@ -494,6 +500,17 @@ class Plane:
 
             0
         """
+        # r= (
+        #     maths.absf(ab3.extents.x * self.normal.x) +
+        #     maths.absf(ab3.extents.y * self.normal.y) +
+        #     maths.absf(ab3.extents.z * self.normal.z) 
+        # )
+        # d= self.normal.dot(ab3.center)+self.d
+        # if maths.absf(d) < r:
+        #     return 0
+        # if d < 0.0:
+        #     return d+r
+        # return d-r
         pmin: maths.Vec3= ab3.get_min()
         pmax: maths.Vec3= ab3.get_min()
 
@@ -659,6 +676,12 @@ class Frustum:
                 c.to_unit()
         return corners
 
+
+    def intersect_ab3(self, ab3: AABB3)->bool:
+        for p in self.planes:
+            if p.classify_ab3(ab3) < 0.0:
+                return False
+        return True
 
 # --- RAY3D
 
