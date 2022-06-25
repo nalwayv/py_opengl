@@ -74,14 +74,14 @@ def main() -> None:
         shape0= model.CubeModel(maths.Vec3.create_from_value(0.5))
         shape1= model.PyramidModel(0.3)
         shape2= model.CubeModel(maths.Vec3(0.2, 0.5, 0.2))
-        shape3= model.CubeModelAABB(geometry.AABB3(maths.Vec3.zero(), maths.Vec3.create_from_value(0.3)))
+        shape3= model.CubeModel(maths.Vec3.create_from_value(0.3))
         shape4= model.CubeModel(maths.Vec3.create_from_value(0.5))
 
-        shape0.translate(maths.Vec3(0.0, 0.0, 0.0))
-        shape1.translate(maths.Vec3(1.5, 1.5, -2.5))
-        shape2.translate(maths.Vec3(2.5, -2.0, 2.0))
-        shape3.translate(maths.Vec3(1.5, 1.0, 1.0))
-        shape4.translate(maths.Vec3(-1.0, -1.0, 1.0))
+        shape0.translate(maths.Vec3(1.0, 2.5, 0.5))
+        shape1.translate(maths.Vec3(-1.5, -1.5, -1.5))
+        shape2.translate(maths.Vec3(0, 0, 1.5))
+        shape3.translate(maths.Vec3(-2.5, 0, -2.5))
+        shape4.translate(maths.Vec3(0, 1.5, 0))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
         
@@ -113,7 +113,6 @@ def main() -> None:
 
             v_matrix= cam.get_view_matrix()
             p_matrix= cam.get_projection_matrix()
-            # fr= cam.get_frustum()
 
             shape1.rotate(maths.Vec3(x= 30.0, z= 25.0) * (1.2 * time.delta))
             shape0.draw(shader0, v_matrix, p_matrix)
@@ -125,31 +124,24 @@ def main() -> None:
 
             fshape.draw(shader0, v_matrix, p_matrix, True)
             tree.debug(shader0, v_matrix, p_matrix)
+            tree.update(shape0)
+            if kb.is_key_held(glfw.KEY_I):
+                shape0.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_pressed(glfw.KEY_P):
-            #     ab3= shape2.compute_aabb()
-            #     if fr.intersect_ab3(ab3):
-            #         print('pass')
-            #     else:
-            #         print('fail')
+            if kb.is_key_held(glfw.KEY_K):
+                shape0.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_held(glfw.KEY_I):
-            #     shape3.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_J):
+                shape0.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_held(glfw.KEY_K):
-            #     shape3.translate(maths.Vec3(y= -1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_L):
+                shape0.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_held(glfw.KEY_J):
-            #     shape3.translate(maths.Vec3(x= -1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_O):
+                shape0.translate(maths.Vec3(z= 1.5) * (1.4 * time.delta))
 
-            # if kb.is_key_held(glfw.KEY_L):
-            #     shape3.translate(maths.Vec3(x= 1.5) * (1.4 * time.delta))
-
-            # if kb.is_key_held(glfw.KEY_O):
-            #     shape3.translate(maths.Vec3(z= 1.5) * (1.4 * time.delta))
-
-            # if kb.is_key_held(glfw.KEY_U):
-            #     shape3.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
+            if kb.is_key_held(glfw.KEY_U):
+                shape0.translate(maths.Vec3(z= -1.5) * (1.4 * time.delta))
 
             # --
 

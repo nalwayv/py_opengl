@@ -50,10 +50,10 @@ class Transform:
         r: maths.Mat4= maths.Mat4.create_from_quaternion(self.rotation)
         return (s * r * t)
 
-    def get_transformed_matrix(self, v3: maths.Vec3) -> maths.Mat4:
-        """
-        """
-        t: maths.Mat4= maths.Mat4.create_translation(self.position + v3)
-        s: maths.Mat4= maths.Mat4.create_scaler(self.scale)
-        r: maths.Mat4= maths.Mat4.create_from_quaternion(self.rotation)
-        return (s * r * t)
+    # def get_transformed_matrix(self, v3: maths.Vec3) -> maths.Mat4:
+    #     """
+    #     """
+    #     t: maths.Mat4= maths.Mat4.create_translation(self.position + v3)
+    #     s: maths.Mat4= maths.Mat4.create_scaler(self.scale)
+    #     r: maths.Mat4= maths.Mat4.create_from_quaternion(self.rotation)
+    #     return (s * r * t)
