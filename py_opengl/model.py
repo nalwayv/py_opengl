@@ -98,20 +98,20 @@ class Model:
 
 class CubeModel(Model):
 
-    __slots__= ('size',)
+    __slots__= ('extents',)
 
-    def __init__(self, size: maths.Vec3) -> None:
-        self.size: float= size
+    def __init__(self, extents: maths.Vec3) -> None:
+        self.extents: float= extents
 
         super().__init__(
-            mesh.CubeMesh(self.size)
+            mesh.CubeMesh(self.extents)
         )
 
     def compute_aabb(self) -> geometry.AABB3:
         """OVERRIDE:: Compute AABB3
         """
         c= self._transform.get_transform_matrix().get_translation()
-        e= self.size
+        e= self.extents
         return geometry.AABB3(c, e)
 
 
