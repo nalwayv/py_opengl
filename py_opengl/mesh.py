@@ -25,9 +25,9 @@ class Vertex:
     __slots__= ('position', 'normal', 'color')
 
     def __init__(self,
-        pos: maths.Vec3,
-        norm: maths.Vec3,
-        col: maths.Vec3,
+        pos: maths.Vec3= maths.Vec3(),
+        norm: maths.Vec3= maths.Vec3(),
+        col: maths.Vec3= maths.Vec3(),
     ) -> None:
         self.position: maths.Vec3= pos
         self.normal: maths.Vec3= norm
@@ -672,7 +672,6 @@ class CubeMeshAABB(Mesh):
         super().__init__(vertices, indices)
 
 # ---
-
 
 
 class FrustumMesh(Mesh):

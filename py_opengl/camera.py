@@ -39,7 +39,7 @@ class CameraZoom(Enum):
 
 
 class Camera:
-    
+
     __slots__= (
         'position',
         'front',
@@ -80,32 +80,32 @@ class Camera:
         """
         match dir:
             case CameraDirection.UP:
-                u: maths.Vec3= self.right.cross(self.position + self.front)
-                if not u.is_unit():
-                    u.to_unit()
-                u= u * (self.sensativity * dt)
-                self.position.set_from(self.position + u)
+                up: maths.Vec3= self.right.cross(self.position + self.front)
+                if not up.is_unit():
+                    up.to_unit()
+                up= up * (self.sensativity * dt)
+                self.position.set_from(self.position + up)
 
             case CameraDirection.DOWN:
-                d: maths.Vec3= (self.position + self.front).cross(self.right)
-                if not d.is_unit():
-                    d.to_unit()
-                d= d * (self.sensativity * dt)
-                self.position.set_from(self.position + d)
+                down: maths.Vec3= (self.position + self.front).cross(self.right)
+                if not down.is_unit():
+                    down.to_unit()
+                down= down * (self.sensativity * dt)
+                self.position.set_from(self.position + down)
 
             case CameraDirection.RIGHT:
-                r: maths.Vec3= (self.position + self.front).cross(self.up)
-                if not r.is_unit():
-                    r.to_unit()
-                r= r * (self.sensativity * dt)
-                self.position.set_from(self.position + r)
+                right: maths.Vec3= (self.position + self.front).cross(self.up)
+                if not right.is_unit():
+                    right.to_unit()
+                right= right * (self.sensativity * dt)
+                self.position.set_from(self.position + right)
 
             case CameraDirection.LEFT:
-                l: maths.Vec3= self.up.cross(self.position + self.front)
-                if not l.is_unit():
-                    l.to_unit()
-                l= l * (self.sensativity * dt)
-                self.position.set_from(self.position + l)
+                left: maths.Vec3= self.up.cross(self.position + self.front)
+                if not left.is_unit():
+                    left.to_unit()
+                left= left * (self.sensativity * dt)
+                self.position.set_from(self.position + left)
 
             case CameraDirection.OUT:
                 self.position.set_from(self.position - (self.front * (self.sensativity * dt)))
@@ -113,9 +113,8 @@ class Camera:
             case CameraDirection.IN:
                 self.position.set_from(self.position + (self.front * (self.sensativity * dt)))
 
-
         self._update()
-    
+
     def rotate(self, dir: CameraRotation, value: float, dt: float) -> None:
         """Rotate camera by value
 
@@ -148,10 +147,10 @@ class Camera:
             self.front.to_unit()
 
         self.right= self.front.cross(maths.Vec3(y= 1.0))
-        
+
         if not self.right.is_unit():
             self.right.to_unit()
-        
+
         self.up= self.right.cross(self.front)
 
     def get_projection_matrix(self) -> maths.Mat4:
@@ -171,11 +170,9 @@ class Camera:
         """
         v: maths.Mat4= self.get_view_matrix()
         p: maths.Mat4= self.get_projection_matrix()
- 
         vp: maths.Mat4= v * p
-        
-        return geometry.Frustum.create_from_matrix(vp)
 
+        return geometry.Frustum.create_from_matrix(vp)
 
     def get_frustum_corners(self, to_unit: bool=False) -> list[maths.Vec3]:
         """Return corners of camera frustum

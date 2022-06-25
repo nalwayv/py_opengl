@@ -335,7 +335,7 @@ class ABTree:
                 return
 
         self._remove_leaf(node)
-        node.aabb= obj_bounds
+        node.aabb= obj_bounds.expand(0.1)
         self._insert_leaf(node)
 
     def _is_valid(self, node: Node) -> bool:

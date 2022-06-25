@@ -4,7 +4,6 @@ from typing import Final
 import math
 
 
-
 # --- CONSTANTS
 
 
@@ -297,7 +296,7 @@ class Vec2:
                 self.x= value
             case 1:
                 self.y= value
-    
+
     def set_from_xy(self, x: float, y: float) -> None:
         """
         """
@@ -358,11 +357,6 @@ class Vec2:
         """
         self.x *= by
         self.y *= by
-        
-    def copy(self) -> 'Vec2':
-        """Return a copy of the self
-        """
-        return Vec2(self.x, self.y)
 
     def perpendicular(self) -> 'Vec2':
         """Return the perpendicular of self
@@ -463,7 +457,7 @@ class Vec3Error(Exception):
 class Vec3:
 
     __slots__= ('x', 'y', 'z')
-    
+
     def __init__(self, x: float= 0.0, y: float= 0.0, z: float= 0.0) -> None:
         self.x: float= x
         self.y: float= y
@@ -555,7 +549,7 @@ class Vec3:
     @staticmethod
     def catmullrom(a: 'Vec3', b: 'Vec3', c: 'Vec3', d: 'Vec3', dt: float) -> 'Vec3':
         result: Vec3= Vec3(0.0, 0.0, 0.0)
-        if dt <= 0.0: 
+        if dt <= 0.0:
             result.set_from(b)
         elif dt >= 1.0:
             result.set_from(c)
@@ -667,7 +661,7 @@ class Vec3:
         raise Vec3Error('out of range')
 
     def set_at(self, idx: int, value: float) -> None:
-         match idx:
+        match idx:
             case 0:
                 self.x= value
             case 1:
@@ -771,7 +765,7 @@ class Vec3:
         y: float= other.y - self.y
         z: float= other.z - self.z
         return sqr(x) + sqr(y) + sqr(z)
-        
+
     def dot(self, other: 'Vec3') -> float:
         """Return the dot product between self and other vec3
         """
@@ -1017,7 +1011,7 @@ class Vec4:
 
         if is_zero(ls):
             return
-    
+
         inv: float= 1.0 / ls
         self.x *= inv
         self.y *= inv
@@ -1088,7 +1082,7 @@ class Vec4:
             is_zero(self.z) and
             is_zero(self.w)
         )
-        
+
     def transform(self, m4: 'Mat4') -> 'Vec4':
         x: float= (self.x * m4.get_at(0, 0)) + (self.y * m4.get_at(1, 0)) + (self.z * m4.get_at(2, 0)) + (self.w * m4.get_at(3, 0))
         y: float= (self.x * m4.get_at(0, 1)) + (self.y * m4.get_at(1, 1)) + (self.z * m4.get_at(2, 1)) + (self.w * m4.get_at(3, 1))
@@ -1858,8 +1852,8 @@ class Mat4:
     ) -> 'Mat4':
         """Create a right hand coord orthographic matrix
         """
-        inv_rl: float=  1.0 / (right - left)
-        inv_tb: float=  1.0 / (top - bottom)
+        inv_rl: float= 1.0 / (right - left)
+        inv_tb: float= 1.0 / (top - bottom)
         inv_fn: float= -1.0 / (far - near)
 
         return Mat4(
@@ -1885,9 +1879,9 @@ class Mat4:
     ) -> 'Mat4':
         """Create a right hand coord frustum
         """
-        rl: float= 1.0 / (right-left)
-        tb: float= 1.0 / (top-bottom)
-        fn: float= 1.0 / (far-near)
+        rl: float= 1.0 / (right - left)
+        tb: float= 1.0 / (top - bottom)
+        fn: float= 1.0 / (far - near)
         nv: float= 2.0 * near
 
         return Mat4(
@@ -1949,11 +1943,11 @@ class Mat4:
         d: Vec3= target - eye
         if not d.is_unit():
             d.to_unit()
-        
+
         s: Vec3= d.cross(up)
         if not s.is_unit():
             s.to_unit()
-            
+
         u: Vec3= s.cross(d)
 
         return Mat4(
@@ -1970,11 +1964,11 @@ class Mat4:
         d: Vec3= target - eye
         if not d.is_unit():
             d.to_unit()
-        
+
         s: Vec3= up.cross(d)
         if not s.is_unit():
             s.to_unit()
-            
+
         u: Vec3= d.cross(s)
 
         return Mat4(
@@ -2134,22 +2128,22 @@ class Mat4:
 
         inv: float= 1.0 / det
 
-        ax: float= ( a11 * b11 - a12 * b10 + a13 * b09) * inv
+        ax: float= (a11 * b11 - a12 * b10 + a13 * b09) * inv
         ay: float= (-a01 * b11 + a02 * b10 - a03 * b09) * inv
-        az: float= ( a31 * b05 - a32 * b04 + a33 * b03) * inv
+        az: float= (a31 * b05 - a32 * b04 + a33 * b03) * inv
         aw: float= (-a21 * b05 + a22 * b04 - a23 * b03) * inv
         bx: float= (-a10 * b11 + a12 * b08 - a13 * b07) * inv
-        by: float= ( a00 * b11 - a02 * b08 + a03 * b07) * inv
+        by: float= (a00 * b11 - a02 * b08 + a03 * b07) * inv
         bz: float= (-a30 * b05 + a32 * b02 - a33 * b01) * inv
-        bw: float= ( a20 * b05 - a22 * b02 + a23 * b01) * inv
-        cx: float= ( a10 * b10 - a11 * b08 + a13 * b06) * inv
+        bw: float= (a20 * b05 - a22 * b02 + a23 * b01) * inv
+        cx: float= (a10 * b10 - a11 * b08 + a13 * b06) * inv
         cy: float= (-a00 * b10 + a01 * b08 - a03 * b06) * inv
-        cz: float= ( a30 * b04 - a31 * b02 + a33 * b00) * inv
+        cz: float= (a30 * b04 - a31 * b02 + a33 * b00) * inv
         cw: float= (-a20 * b04 + a21 * b02 - a23 * b00) * inv
         dx: float= (-a10 * b09 + a11 * b07 - a12 * b06) * inv
-        dy: float= ( a00 * b09 - a01 * b07 + a02 * b06) * inv
+        dy: float= (a00 * b09 - a01 * b07 + a02 * b06) * inv
         dz: float= (-a30 * b03 + a31 * b01 - a32 * b00) * inv
-        dw: float= ( a20 * b03 - a21 * b01 + a22 * b00) * inv
+        dw: float= (a20 * b03 - a21 * b01 + a22 * b00) * inv
 
         return Mat4(
             Vec4(ax, ay, az, aw),
@@ -2573,7 +2567,7 @@ class Quaternion:
         """
         if not unit_axis.is_unit():
             unit_axis.to_unit()
-        
+
         c: float= cos(angle_rad * 0.5)
         s: float= sin(angle_rad * 0.5)
 

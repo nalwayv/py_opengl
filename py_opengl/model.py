@@ -1,5 +1,6 @@
 """Model
 """
+from ctypes import sizeof
 from uuid import uuid4
 
 from py_opengl import maths
@@ -110,7 +111,10 @@ class CubeModel(Model):
     def compute_aabb(self) -> geometry.AABB3:
         """OVERRIDE:: Compute AABB3
         """
-        return geometry.AABB3(self._transform.position, self.size)
+        ab3= geometry.AABB3()
+        ab3.center= ab3.center.transform(self._transform.get_transform_matrix())
+        ab3.extents= self.size
+        return ab3
 
 
 # ---
@@ -131,8 +135,7 @@ class CubeModelAABB(Model):
         """OVERRIDE:: Compute AABB3
         """
         result: geometry.AABB3= self.bounds.copy()
-        m4= maths.Mat4.create_translation(self._transform.position)
-        result.transform(m4)
+        result.transform(self._transform.get_transform_matrix())
         return result
 
 
@@ -166,21 +169,21 @@ class TriModel(Model):
             mesh.Traingle(self.tri)
         )
 
-    def compute_aabb(self) -> geometry.AABB3:
-        """OVERRIDE:: Compute AABB3
-        """
-        p0: maths.Vec3= self._transform.rotation.multiply_v3(self.p0) + self._transform.position
-        p1: maths.Vec3= self._transform.rotation.multiply_v3(self.p1) + self._transform.position
-        p2: maths.Vec3= self._transform.rotation.multiply_v3(self.p2) + self._transform.position
+    # def compute_aabb(self) -> geometry.AABB3:
+    #     """OVERRIDE:: Compute AABB3
+    #     """
+    #     p0: maths.Vec3= self._transform.rotation.multiply_v3(self.p0) + self._transform.position
+    #     p1: maths.Vec3= self._transform.rotation.multiply_v3(self.p1) + self._transform.position
+    #     p2: maths.Vec3= self._transform.rotation.multiply_v3(self.p2) + self._transform.position
 
-        v0= maths.Vec3(p0.x, p1.x, p2.x)
-        v1= maths.Vec3(p0.y, p1.y, p2.y)
-        v2= maths.Vec3(p0.z, p1.z, p2.z)
+    #     v0= maths.Vec3(p0.x, p1.x, p2.x)
+    #     v1= maths.Vec3(p0.y, p1.y, p2.y)
+    #     v2= maths.Vec3(p0.z, p1.z, p2.z)
 
-        return geometry.AABB3.create_from_min_max(
-            maths.Vec3(v0.get_min_value(), v1.get_min_value(), v2.get_min_value()),
-            maths.Vec3(v0.get_max_value(), v1.get_max_value(), v2.get_max_value()),
-        )
+    #     return geometry.AABB3.create_from_min_max(
+    #         maths.Vec3(v0.get_min_value(), v1.get_min_value(), v2.get_min_value()),
+    #         maths.Vec3(v0.get_max_value(), v1.get_max_value(), v2.get_max_value()),
+    #     )
 
 
 # ---
@@ -212,13 +215,13 @@ class SphereModel(Model):
             mesh.SphereMesh(self.radius)
         )
 
-    def compute_aabb(self) -> geometry.AABB3:
-        """OVERRIDE:: Compute AABB3
-        """
-        return geometry.AABB3.create_from_min_max(
-            self._transform.position - maths.Vec3.create_from_value(self.radius),
-            self._transform.position + maths.Vec3.create_from_value(self.radius)
-        )
+    # def compute_aabb(self) -> geometry.AABB3:
+    #     """OVERRIDE:: Compute AABB3
+    #     """
+    #     return geometry.AABB3.create_from_min_max(
+    #         self._transform.position - maths.Vec3.create_from_value(self.radius),
+    #         self._transform.position + maths.Vec3.create_from_value(self.radius)
+    #     )
 
 
 # ---

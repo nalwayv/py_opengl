@@ -197,8 +197,8 @@ class AABB3:
         bmax: maths.Vec3= other.get_max()
 
         return (
-            (amin.x <= bmin.x and amax.x >= bmax.x) and 
-            (amin.y <= bmin.y and amax.y >= bmax.y) and 
+            (amin.x <= bmin.x and amax.x >= bmax.x) and
+            (amin.y <= bmin.y and amax.y >= bmax.y) and
             (amin.z <= bmin.z and amax.z >= bmax.z)
         )
 
@@ -207,7 +207,7 @@ class AABB3:
         amax: maths.Vec3= self.get_max()
         bmin: maths.Vec3= other.get_min()
         bmax: maths.Vec3= other.get_max()
-        
+
         return (
             (amin.x <= bmax.x and amax.x >= bmin.x) and
             (amin.y <= bmax.y and amax.y >= bmin.y) and
@@ -353,7 +353,7 @@ class Sphere3:
 
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         point: maths.Vec3= pt - self.center
-        
+
         if not point.is_unit():
             point.to_unit()
 
@@ -362,7 +362,7 @@ class Sphere3:
     def furthest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         if not pt.is_unit():
             pt.to_unit()
-        
+
         return self.center + (pt * self.radius)
 
     def intersect_sphere(self, other: 'Sphere3') -> bool:
@@ -458,7 +458,7 @@ class Plane:
 
     def xyzd(self)->maths.Vec4:
         return maths.Vec4(self.normal.x, self.normal.y, self.normal.z, self.d)
-    
+
     def dot(self, v4: maths.Vec4) -> float:
         """
         """
@@ -471,23 +471,23 @@ class Plane:
 
     def classify_pt(self, v3: maths.Vec3) -> int:
         """Check what side of plane v3 fall on
-        
-        results:
-            <0 
-        
-            >0
 
-            0
+        results:
+            <0 == back
+
+            >0 == front
+
+            0 == intersect
         """
         result: float= self.dot_normal(v3) - self.d
         return int(result)
 
     def classify_ab3(self, ab3: AABB3) -> int:
         """Check what side of plane ab3 fall on
-        
+
         results:
             <0 == back
-        
+
             >0 == front
 
             0 == intersect
@@ -495,8 +495,8 @@ class Plane:
         pmin: maths.Vec3= ab3.get_min()
         pmax: maths.Vec3= ab3.get_min()
 
-        dmin= maths.Vec3()
-        dmax= maths.Vec3()
+        dmin= maths.Vec3.zero()
+        dmax= maths.Vec3.zero()
 
         if self.normal.x >= 0.0:
             dmin.x= pmin.x
@@ -519,32 +519,33 @@ class Plane:
             dmin.z= pmax.z
             dmax.z= pmin.z
 
-        dis= self.normal.dot(dmin) + self.d
-        if dis > 0:
+        dis: float= self.normal.dot(dmin) + self.d
+        if dis > 0.0:
             return 1
-        dis= self.normal.dot(dmax) + self.d
-        if dis < 0:
+
+        dis: float= self.normal.dot(dmax) + self.d
+        if dis < 0.0:
             return -1
         return 0
 
     def unit(self) -> 'Plane':
         """Return a copy of self with unit length
         """
-        lsq= self.normal.length_sqr()
+        lsq: float= self.normal.length_sqr()
         if (lsq - 1.0) < 2.220446049250313e-16:
             return
 
-        inv= maths.inv_sqrt(lsq)
+        inv: float= maths.inv_sqrt(lsq)
         return Plane(self.normal * inv, self.d * inv)
 
     def to_unit(self) -> None:
         """Convert to unit length
         """
-        lsq= self.normal.length_sqr()
+        lsq: float= self.normal.length_sqr()
         if (lsq - 1.0) < 2.220446049250313e-16:
             return
 
-        inv= maths.inv_sqrt(lsq)
+        inv: float= maths.inv_sqrt(lsq)
         self.normal.x *= inv
         self.normal.y *= inv
         self.normal.z *= inv
@@ -555,8 +556,8 @@ class Plane:
 
 
 class Frustum:
-    
-    __slots__= ('planes', 'TYPE' )
+
+    __slots__= ('planes', 'TYPE')
 
     def __init__(self) -> None:
         self.planes: list[Plane]= [Plane()] * 6
@@ -581,7 +582,7 @@ class Frustum:
         result.planes[3]= Plane.create_from_v4(right)
         result.planes[4]= Plane.create_from_v4(top)
         result.planes[5]= Plane.create_from_v4(bottom)
-        
+
         for pl in result.planes:
             pl.to_unit()
 
@@ -606,12 +607,12 @@ class Frustum:
         """Return right Plane
         """
         return self.planes[3]
-    
+
     def get_top(self) -> Plane:
         """Return top Plane
         """
         return self.planes[4]
-    
+
     def get_bottom(self) -> Plane:
         """Return bottom Plane
         """
@@ -660,7 +661,6 @@ class Frustum:
                 c.to_unit()
         return corners
 
-
     def intersect_ab3(self, ab3: AABB3)->bool:
         for p in self.planes:
             if p.classify_ab3(ab3) < 0:
@@ -692,7 +692,7 @@ class Ray3:
             if(
                 self.origin.is_equil(other.origin) and
                 self.direction.is_equil(other.direction) and
-                self.TYPE == other.TYPE 
+                self.TYPE == other.TYPE
             ):
                 return True
         return False
@@ -708,10 +708,7 @@ class Ray3:
         if not d.is_unit():
             d.to_unit()
 
-        return Ray3(
-            origin= o,
-            direction= d
-        )
+        return Ray3(o, d)
 
     def set_direction(self, unit_dir: maths.Vec3) -> None:
         if unit_dir.is_zero():
@@ -743,7 +740,7 @@ class Ray3:
         for idx in range(3):
             if maths.is_zero(self.direction.get_at(idx)):
                 if(
-                    self.origin.get_at(idx) < pmin.get_at(idx) or 
+                    self.origin.get_at(idx) < pmin.get_at(idx) or
                     self.origin.get_at(idx) > pmax.get_at(idx)
                 ):
                     return -1.0
