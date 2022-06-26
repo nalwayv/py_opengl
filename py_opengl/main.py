@@ -71,14 +71,13 @@ def main() -> None:
 
         shader0= shader.Shader('debug_shader.vert', 'debug_shader.frag')
 
-        # shape0= model.CubeModel(maths.Vec3.create_from_value(0.5))
-        shape0= model.SphereModel(0.5)
+        shape0= model.CubeModel(maths.Vec3.create_from_value(0.5))
+        # shape0= model.SphereModel(0.5)
         shape1= model.PyramidModel(0.3)
         shape2= model.CubeModel(maths.Vec3(0.2, 0.5, 0.2))
         shape3= model.CubeModel(maths.Vec3.create_from_value(0.3))
         shape4= model.CubeModel(maths.Vec3.create_from_value(0.5))
 
-        # shape0.translate(maths.Vec3(1.0, 2.5, 0.5))
         shape0.translate(maths.Vec3(1.0, 2.5, 0.5))
         shape1.translate(maths.Vec3(-1.5, -1.5, -1.5))
         shape2.translate(maths.Vec3(0, 0, 1.5))
@@ -185,8 +184,8 @@ def main() -> None:
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
-    # except Exception as err:
-    #     logger.error(f'ERROR: {err}')
+    except Exception as err:
+        logger.error(f'ERROR: {err}')
 
     finally:
         logger.debug('CLOSED')
