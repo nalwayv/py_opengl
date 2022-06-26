@@ -521,6 +521,10 @@ class Vec3:
         return Vec3(v2.x, v2.y, z)
 
     @staticmethod
+    def create_max() -> 'Vec3':
+        return Vec3(MAX_FLOAT, MAX_FLOAT, MAX_FLOAT)
+
+    @staticmethod
     def create_from_max(a: 'Vec3', b: 'Vec3') -> 'Vec3':
         """Vec3 with the max 'xyz' component values from ever a or b
         """
@@ -529,6 +533,10 @@ class Vec3:
             maxf(a.y, b.y),
             maxf(a.z, b.z)
         )
+
+    @staticmethod
+    def create_min() -> 'Vec3':
+        return Vec3(MIN_FLOAT, MIN_FLOAT, MIN_FLOAT)
 
     @staticmethod
     def create_from_min(a: 'Vec3', b: 'Vec3') -> 'Vec3':

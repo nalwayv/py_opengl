@@ -72,6 +72,24 @@ class AABB3:
             maths.Vec3.create_from_max(a.get_max(), b.get_max())
         )
 
+    @staticmethod
+    def create_translate(ab3: 'AABB3', offset: maths.Vec3) -> 'AABB3':
+        ptmin= ab3.get_min() + offset
+        ptmax= ab3.get_max() + offset
+        return AABB3.create_from_min_max(ptmin, ptmax)
+
+    @staticmethod
+    def create_transform(ab3: 'AABB3', m4: maths.Mat4) -> 'AABB3':
+        pmin= maths.Vec3.create_max()
+        pmax= maths.Vec3.create_min()
+
+        for c in ab3.get_corners():
+            pt= c.transform(m4)
+            pmin= maths.Vec3.create_from_min(pmin, pt)
+            pmax= maths.Vec3.create_from_max(pmax, pt)
+
+        return AABB3.create_from_min_max(pmin, pmax)
+
     def combined_with(self, a: 'AABB3') -> None:
         """Set self to the union of self and a"""
         aabb= AABB3.create_from_min_max(
@@ -111,9 +129,6 @@ class AABB3:
         expand= self.expand(by)
         self.center.set_from(expand.center)
         self.extents.set_from(expand.extents)
-
-    def transform(self, m4: maths.Mat4) -> None:
-        self.center.set_from(self.center.transform(m4))
 
     def copy(self) -> 'AABB3':
         """Return a copy of self
@@ -307,7 +322,7 @@ class Triangle3:
             w >= 0.0 and
             (v + w) <= 1.0
         )
-
+        
 
 # ---
 
@@ -337,6 +352,28 @@ class Sphere3:
 
     def __str__(self) -> str:
         return f'[CENTER: {self.center}, RADIUS: {self.radius}]'
+
+    @staticmethod
+    def create_translate(sph3: 'Sphere3', offset: maths.Vec3) -> 'Sphere3':
+        c= sph3.center + offset
+        r= sph3.radius
+        return Sphere3(c, r)
+
+    @staticmethod
+    def create_transform(sph3: 'Sphere3', m4: maths.Mat4) -> 'Sphere3':
+        cen: maths.Vec3= sph3.center.transform(m4)
+
+        r0: maths.Vec3= m4.row0.xyz()
+        r1: maths.Vec3= m4.row1.xyz()
+        r2: maths.Vec3= m4.row2.xyz()
+
+        a: float= maths.sqr(r0.x) + maths.sqr(r0.y) + maths.sqr(r0.z)
+        b: float= maths.sqr(r1.x) + maths.sqr(r1.y) + maths.sqr(r1.z)
+        c: float= maths.sqr(r2.x) + maths.sqr(r2.y) + maths.sqr(r2.z)
+
+        r: float= maths.sqrt(maths.max3f(a, b, c))
+
+        return Sphere3(cen, r)
 
     def area(self) -> float:
         """Return area
@@ -434,7 +471,7 @@ class Plane:
         return Plane(n, d)
 
     @staticmethod
-    def create_from_unit(unit_v3: maths.Vec3, pt: maths.Vec3):
+    def create_from_unit(unit_v3: maths.Vec3, pt: maths.Vec3) -> 'Plane':
         return Plane(unit_v3, unit_v3.dot(pt))
 
     @staticmethod
@@ -456,7 +493,17 @@ class Plane:
         p2: maths.Vec3= na.cross(nb) * c.d
         return (p0 + p1 + p2) * inv
 
+    @staticmethod
+    def create_transform(pl: 'Plane', m4: maths.Mat4) -> 'Plane':
+        """Create transformed plane
+        """
+        inv_m4: maths.Mat4= m4.inverse()
+        trans_v4: maths.Vec4= pl.xyzd().transform(inv_m4)
+        return Plane.create_from_v4(trans_v4)
+
     def xyzd(self)->maths.Vec4:
+        """Return x y z d as vec4
+        """
         return maths.Vec4(self.normal.x, self.normal.y, self.normal.z, self.d)
 
     def dot(self, v4: maths.Vec4) -> float:

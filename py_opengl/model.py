@@ -68,9 +68,10 @@ class Model:
     def compute_aabb(self) -> geometry.AABB3:
         """Compute AABB3
         """
-        result= self._mesh.compute_aabb()
-        result.transform(self._transform.get_transform_matrix())
-        return result
+        return geometry.AABB3.create_transform(
+            self._mesh.compute_aabb(),
+            self._transform.get_transform_matrix()
+        )
 
     def draw(
         self,
@@ -176,6 +177,13 @@ class SphereModel(Model):
         )
 
 
+    def compute_aabb(self) -> geometry.AABB3:
+        """OVERRIDE:: Compute AABB3
+        """
+        c: maths.Vec3= self._transform.get_transform_matrix().get_translation()
+        pmin= maths.Vec3(c.x - self.radius, c.y - self.radius, c.z - self.radius)
+        pmax= maths.Vec3(c.x + self.radius, c.y + self.radius, c.z + self.radius)
+        return geometry.AABB3.create_from_min_max(pmin, pmax)
 
 # ---
 
