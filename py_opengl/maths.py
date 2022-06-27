@@ -1,5 +1,6 @@
 """Maths
 """
+from re import X
 from typing import Final
 import math
 
@@ -1850,34 +1851,7 @@ class Mat4:
         )
 
     @staticmethod
-    def create_orthographic_rh(
-        left: float,
-        right: float,
-        top: float,
-        bottom: float,
-        near: float,
-        far: float
-    ) -> 'Mat4':
-        """Create a right hand coord orthographic matrix
-        """
-        inv_rl: float= 1.0 / (right - left)
-        inv_tb: float= 1.0 / (top - bottom)
-        inv_fn: float= -1.0 / (far - near)
-
-        return Mat4(
-            Vec4(x= 2.0 * inv_rl),
-            Vec4(y= 2.0 * inv_tb),
-            Vec4(z= 2.0 * inv_fn),
-            Vec4(
-                -(right + left) * inv_rl,
-                -(top + bottom) * inv_tb,
-                -(far + near) * inv_fn,
-                1.0
-            )
-        )
-
-    @staticmethod
-    def create_frustum_rh(
+    def create_perspective_offcenter(
         left: float,
         right: float,
         bottom: float,
@@ -1885,105 +1859,49 @@ class Mat4:
         near: float,
         far: float
     ) -> 'Mat4':
-        """Create a right hand coord frustum
         """
-        rl: float= 1.0 / (right - left)
-        tb: float= 1.0 / (top - bottom)
-        fn: float= 1.0 / (far - near)
-        nv: float= 2.0 * near
-
+        """
+        x: float= 2.0 * near / (right - left)
+        y: float= 2.0 * near / (top - bottom)
+        a: float= (right + left) / (right - left)
+        b: float= (top + bottom) / (top - bottom)
+        c: float= -(far + near) / (far - near)
+        d: float= -(2.0 * far * near) / (far - near)
         return Mat4(
-            Vec4(x= nv * rl),
-            Vec4(y= nv * tb),
-            Vec4(
-                (right + left) * rl,
-                (top + bottom) * tb,
-                (far + near) * fn,
-                -1.0
-            ),
-            Vec4(z= far * nv * fn),
+            Vec4(x= x),
+            Vec4(y= y),
+            Vec4(a, b, c, -1.0),
+            Vec4(z= d)
         )
 
     @staticmethod
-    def create_projection_rh(
-            fov: float,
-            aspect: float,
-            near: float,
-            far: float
-    ) -> 'Mat4':
-        """Create a right hand coord projection matrix
+    def create_perspective_fov(fov: float, aspect: float, near: float, far: float) -> 'Mat4':
         """
-        r: float= fov * 0.5
-        inv_t: float= 1.0 / tan(r)
-        inv_f: float= 1.0 / (near - far)
+        """
+        max_y: float= near * tan(fov * 0.5)
+        min_y: float= -max_y
+        min_x: float= min_y * aspect
+        max_x: float= max_y * aspect
+        return Mat4.create_perspective_offcenter(min_x, max_x, min_y, max_y, near, far)
+
+    def create_lookat(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
+        """
+        """
+        z: Vec3= eye-target
+        if not z.is_unit():
+            z.to_unit()
+        
+        x: Vec3= up.cross(z)
+        if not x.is_unit():
+            x.to_unit()
+
+        y: Vec3= z.cross(x)
 
         return Mat4(
-            Vec4(x= inv_t / aspect),
-            Vec4(y= inv_t),
-            Vec4(z= (near + far) * inv_f, w= -1.0),
-            Vec4(z= 2.0 * near * far * inv_f)
-        )
-
-    @staticmethod
-    def create_projection_lh(
-            fov: float,
-            aspect: float,
-            near: float,
-            far: float
-    ) -> 'Mat4':
-        """Create a left hand coord projection matrix
-        """
-        r: float= fov * 0.5
-        inv_t: float= 1.0 / tan(r)
-        inv_f: float= 1.0 / (near - far)
-
-        return Mat4(
-            Vec4(x= inv_t / aspect),
-            Vec4(y= inv_t),
-            Vec4(z= -(near + far) * inv_f, w= 1.0),
-            Vec4(z= 2.0 * near * far * inv_f)
-        )
-
-    @staticmethod
-    def create_lookat_rh(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
-        """Create a right hand coords lookat matrix
-        """
-        d: Vec3= target - eye
-        if not d.is_unit():
-            d.to_unit()
-
-        s: Vec3= d.cross(up)
-        if not s.is_unit():
-            s.to_unit()
-
-        u: Vec3= s.cross(d)
-
-        return Mat4(
-            Vec4(s.x, u.x, -d.x, 0.0),
-            Vec4(s.y, u.y, -d.y, 0.0),
-            Vec4(s.z, u.z, -d.z, 0.0),
-            Vec4(-s.dot(eye), -u.dot(eye), d.dot(eye), 1.0)
-        )
-
-    @staticmethod
-    def create_lookat_lh(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
-        """Create a left hand coords lookat matrix
-        """
-        d: Vec3= target - eye
-        if not d.is_unit():
-            d.to_unit()
-
-        s: Vec3= up.cross(d)
-        if not s.is_unit():
-            s.to_unit()
-
-        u: Vec3= d.cross(s)
-
-        return Mat4(
-            Vec4(s.x, u.x, d.x, 0.0),
-            Vec4(s.y, u.y, d.y, 0.0),
-            Vec4(s.z, u.z, d.z, 0.0),
-            Vec4(-s.dot(eye), -u.dot(eye), -d.dot(eye), 1.0)
+            Vec4(x.x, y.x, z.x, 0.0),
+            Vec4(x.y, y.y, z.y, 0.0),
+            Vec4(x.z, y.z, z.z, 0.0),
+            Vec4(-x.dot(eye), -y.dot(eye), -z.dot(eye), 1.0)
         )
 
     def add(self, other: 'Mat4') -> None:

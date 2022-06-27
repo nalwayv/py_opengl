@@ -19,7 +19,7 @@ class Model:
     def __init__(self, mesh_data: mesh.Mesh) -> None:
         self._mesh= mesh_data
         self._transform= transform.Transform()
-        self.ID:str= uuid4().hex
+        self.ID: str= uuid4().hex
 
     def __hash__(self) -> int:
         return hash(self.ID)
@@ -137,7 +137,7 @@ class LineModel(Model):
 
 class TriModel(Model):
     
-    __slots__= ('tri')
+    __slots__= ('tri',)
     
     def __init__(self, tri: geometry.Triangle3) -> None:
         self.tri:geometry.Triangle3= tri
@@ -176,7 +176,6 @@ class SphereModel(Model):
             mesh.SphereMesh(self.radius)
         )
 
-
     def compute_aabb(self) -> geometry.AABB3:
         """OVERRIDE:: Compute AABB3
         """
@@ -184,6 +183,7 @@ class SphereModel(Model):
         pmin= maths.Vec3(c.x - self.radius, c.y - self.radius, c.z - self.radius)
         pmax= maths.Vec3(c.x + self.radius, c.y + self.radius, c.z + self.radius)
         return geometry.AABB3.create_from_min_max(pmin, pmax)
+
 
 # ---
 

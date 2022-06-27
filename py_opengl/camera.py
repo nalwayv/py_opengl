@@ -73,10 +73,6 @@ class Camera:
 
     def translate(self, dir: CameraDirection, dt: float) -> None:
         """Move camera
-
-        Raises
-        ---
-        CameraError
         """
         match dir:
             case CameraDirection.UP:
@@ -117,10 +113,6 @@ class Camera:
 
     def rotate(self, dir: CameraRotation, value: float, dt: float) -> None:
         """Rotate camera by value
-
-        Raises
-        ---
-        CameraError
         """
         match dir:
             case CameraRotation.YAW:
@@ -156,12 +148,12 @@ class Camera:
     def get_projection_matrix(self) -> maths.Mat4:
         """Return projection matrix
         """
-        return maths.Mat4.create_projection_rh(self.fovy, self.aspect, self.znear, self.zfar)
+        return maths.Mat4.create_perspective_fov(self.fovy, self.aspect, self.znear, self.zfar)
 
     def get_view_matrix(self) -> maths.Mat4:
         """Return view matrix
         """
-        return maths.Mat4.create_lookat_rh(self.position, self.position + self.front, self.up)
+        return maths.Mat4.create_lookat(self.position, self.position + self.front, self.up)
 
     def get_frustum(self) -> geometry.Frustum:
         """Return list of frustum planes
