@@ -666,6 +666,13 @@ class Vec3:
 
         raise Vec3Error('out of range')
 
+    def scale(self, by: float) -> None:
+        """
+        """
+        self.x *= by
+        self.y *= by
+        self.z *= by
+
     def set_at(self, idx: int, value: float) -> None:
         match idx:
             case 0:
@@ -796,12 +803,22 @@ class Vec3:
             is_equil(self.z, other.z)
         )
 
-    def transform(self, m4: 'Mat4') -> 'Vec3':
+    def transform_m3(self, m3: 'Mat3') -> 'Vec3':
         """ Transform by mat4
         """
-        x: float= (self.x * m4.get_at(0, 0)) + (self.y * m4.get_at(1, 0)) + (self.z * m4.get_at(2, 0)) + m4.get_at(3, 0)
-        y: float= (self.x * m4.get_at(0, 1)) + (self.y * m4.get_at(1, 1)) + (self.z * m4.get_at(2, 1)) + m4.get_at(3, 1)
-        z: float= (self.x * m4.get_at(0, 2)) + (self.y * m4.get_at(1, 2)) + (self.z * m4.get_at(2, 2)) + m4.get_at(3, 2)
+        x: float= self.dot(m3.col0())
+        y: float= self.dot(m3.col1())
+        z: float= self.dot(m3.col2())
+
+        return Vec3(x, y, z)
+
+    def transform_m4(self, m4: 'Mat4') -> 'Vec3':
+        """ Transform by mat4
+        """
+        v4: Vec4= Vec4.create_from_v3(self, 1.0)
+        x: float= v4.dot(m4.col0())
+        y: float= v4.dot(m4.col1())
+        z: float= v4.dot(m4.col2())
 
         return Vec3(x, y, z)
 
@@ -1311,6 +1328,13 @@ class Mat3:
             Vec3(z= 1.0)
         )
 
+    def set_from(self, other: 'Mat3') -> None:
+        """
+        """
+        self.row0.set_from(other.row0)
+        self.row1.set_from(other.row1)
+        self.row2.set_from(other.row2)
+
     def copy(self) -> 'Mat3':
         """Return a copy of self
         """
@@ -1320,7 +1344,14 @@ class Mat3:
             self.row2.x, self.row2.y, self.row2.z
         )
 
-    def scale(self, by: float) -> 'Mat3':
+    def scale(self, by: float) -> None:
+        """
+        """
+        self.row0.set_from(self.row0 * by)
+        self.row1.set_from(self.row1 * by)
+        self.row2.set_from(self.row2 * by)
+
+    def scaled(self, by: float) -> 'Mat3':
         """Return a scaled copy of self
         """
         r0: Vec3= self.row0 * by
@@ -1337,7 +1368,18 @@ class Mat3:
             self.row2.sum()
         )
 
-    def transpose(self) -> 'Mat3':
+    def transpose(self) -> None:
+        """
+        """
+        r0: Vec3= self.col0()
+        r1: Vec3= self.col1()
+        r2: Vec3= self.col2()
+
+        self.row0.set_from(r0)
+        self.row1.set_from(r1)
+        self.row2.set_from(r2)
+
+    def transposed(self) -> 'Mat3':
         """Return a transposed copy of self
         """
         r0: Vec3= self.col0()
@@ -1509,6 +1551,8 @@ class Mat3:
         raise Mat3Error('out of range')
 
     def set_at(self, row: int, col: int, value: float) -> None:
+        """
+        """
         if row == 0:
             self.row0.set_at(col, value)
             return
@@ -1523,11 +1567,40 @@ class Mat3:
 
         raise Mat3Error('out of range')
 
-    # def orthonormalize(self) -> None:
-    #     x= self.row0.copy()
-    #     y= self.row1.copy()
-    #     z= self.row2.copy()
-    #     x.normalize()
+    def set_col(self, at: int, value: Vec3) -> None:
+        """
+        """
+        if at == 0:
+            self.row0.x= value.x
+            self.row1.x= value.y
+            self.row2.x= value.z
+        if at == 2:
+            self.row0.y= value.x
+            self.row1.y= value.y
+            self.row2.y= value.z
+        if at == 3:
+            self.row0.z= value.x
+            self.row1.z= value.y
+            self.row2.z= value.z
+
+        raise Mat3Error('out of range')
+
+    def orthonormalize(self) -> None:
+        """
+        """
+        x= self.col0()
+        y= self.col1()
+        z= self.col2()
+
+        x.normalize()
+        y.set_from(y - x * (x.dot(y)))
+        y.normalize()
+        z.set_from(z - x * (x.dot(z)) - y * (y.dot(z)))
+        z.normalize()
+
+        self.set_col(0, x)
+        self.set_col(1, y)
+        self.set_col(2, z)
 
     def determinant(self) -> float:
         """Return the determinant of self
@@ -1976,7 +2049,18 @@ class Mat4:
 
         return Mat4(r0, r1, r2, r3)
 
-    def transpose(self) -> 'Mat4':
+    def transpose(self) -> None:
+        r0: Vec4= self.col0()
+        r1: Vec4= self.col1()
+        r2: Vec4= self.col2()
+        r3: Vec4= self.col3()
+
+        self.row0.set_from(r0)
+        self.row1.set_from(r1)
+        self.row2.set_from(r2)
+        self.row3.set_from(r3)
+
+    def transposed(self) -> 'Mat4':
         """Return the transpose of self matrix
         """
         r0: Vec4= self.col0()

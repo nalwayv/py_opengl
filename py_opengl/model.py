@@ -18,7 +18,7 @@ class Model:
 
     def __init__(self, mesh_data: mesh.Mesh) -> None:
         self._mesh= mesh_data
-        self._transform= transform.Transform()
+        self._transform= transform.Transform3()
         self.ID: str= uuid4().hex
 
     def __hash__(self) -> int:
@@ -38,11 +38,6 @@ class Model:
         """
         self._transform.set_position(v3)
 
-    def set_scale(self, v3: maths.Vec3) -> None:
-        """Hard set scale
-        """
-        self._transform.set_scale(v3)
-
     def get_position(self) -> maths.Vec3:
         """Return current position
         """
@@ -53,10 +48,8 @@ class Model:
         """
         self._transform.translate(v3)
 
-    def rotate(self, euler: maths.Vec3) -> None:
-        """Rotate model by 'xyz'
-        """
-        self._transform.rotate_euler(euler)
+    def rotate(self, angle_rad: float, unit_axis: maths.Vec3):
+        self._transform.rotate(angle_rad, unit_axis)
 
     def get_furthest_pt(self, dir: maths.Vec3) -> maths.Vec3:
         """Return furthest pt

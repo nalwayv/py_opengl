@@ -84,7 +84,7 @@ class AABB3:
         pmax= maths.Vec3.create_min()
 
         for c in ab3.get_corners():
-            pt= c.transform(m4)
+            pt= c.transform_m4(m4)
             pmin= maths.Vec3.create_from_min(pmin, pt)
             pmax= maths.Vec3.create_from_max(pmax, pt)
 
@@ -361,7 +361,7 @@ class Sphere3:
 
     @staticmethod
     def create_transform(sph3: 'Sphere3', m4: maths.Mat4) -> 'Sphere3':
-        cen: maths.Vec3= sph3.center.transform(m4)
+        cen: maths.Vec3= sph3.center.transform_m4(m4)
 
         r0: maths.Vec3= m4.row0.xyz()
         r1: maths.Vec3= m4.row1.xyz()
@@ -386,7 +386,7 @@ class Sphere3:
         return Sphere3(self.center.copy(), self.radius)
 
     def transform(self, m4: maths.Mat4) -> None:
-        self.center.set_from(self.center.transform(m4))
+        self.center.set_from(self.center.transform_m4(m4))
 
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         point: maths.Vec3= pt - self.center
