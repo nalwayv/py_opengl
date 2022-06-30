@@ -197,7 +197,7 @@ class Minkowskisum:
     def get_dir(self) -> maths.Vec3:
         """ Return direction between model types
 
-        if model types are none then return unit x vec3
+        if model types are none then return normalized x vec3
         """
         if (self.m0 == None) or (self.m1 == None):
             return maths.Vec3(x= 1.0)
@@ -206,8 +206,8 @@ class Minkowskisum:
         p1: maths.Vec3= self.m1.get_position()
         dir: maths.Vec3= p0 - p1
 
-        if not dir.is_unit():
-            dir.to_unit()
+        if not dir.is_normalized():
+            dir.normalize()
 
         return dir
 

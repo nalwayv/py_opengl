@@ -192,8 +192,8 @@ class Mesh:
         return geometry.AABB3.create_from_min_max(pmin, pmax)
 
     def get_furthest_pt(self, dir: maths.Vec3) -> maths.Vec3:
-        if not dir.is_unit():
-            dir.to_unit()
+        if not dir.is_normalized():
+            dir.normalize()
     
         max_pt: maths.Vec3= maths.Vec3.zero()
         max_dis: float= maths.MIN_FLOAT

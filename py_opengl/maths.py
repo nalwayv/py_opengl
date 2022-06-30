@@ -330,23 +330,21 @@ class Vec2:
 
         return Vec2(x, y)
 
-    def to_unit(self) -> None:
-        """Convert to unit length
+    def normalize(self) -> None:
+        """Convert to normalized length
         """
-        ls: float= self.length_sqrt()
-
-        if is_zero(ls):
+        ls_sq= self.length_squared()
+        if is_zero(ls_sq):
             return
-
-        inv: float= 1.0 / ls
-
+        inv= inv_sqrt(ls_sq)
         self.x *= inv
         self.y *= inv
 
-    def unit(self) -> 'Vec2':
-        """Return a copy of self with unit length
+
+    def normalized(self) -> 'Vec2':
+        """Return a copy of self with normalized length
         """
-        ls= self.length_sqrt()
+        ls= self.length()
 
         if is_zero(ls):
             return Vec2.zero()
@@ -391,7 +389,7 @@ class Vec2:
         """Return angle in radians between self and other
         """
         return arccos(
-            self.dot(other) / (self.length_sqrt() * other.length_sqrt())
+            self.dot(other) / (self.length() * other.length())
         )
 
     def sum_total(self) -> float:
@@ -407,32 +405,32 @@ class Vec2:
     def project(self, other: 'Vec2') -> 'Vec2':
         """Return the projection between self and other vec3
         """
-        return other * (self.dot(other) / other.length_sqr())
+        return other * (self.dot(other) / other.length_squared())
 
     def reject(self, other: 'Vec2') -> 'Vec2':
         """Return the reject between self and other vec3
         """
         return self - self.project(other)
 
-    def length_sqr(self) -> float:
+    def length_squared(self) -> float:
         """Return the squared length
         """
         return sqr(self.x) + sqr(self.y)
 
-    def length_sqrt(self) -> float:
+    def length(self) -> float:
         """Return the square root length
         """
-        return sqrt(self.length_sqr())
+        return sqrt(self.length_squared())
 
     def dot(self, other: 'Vec2') -> float:
         """Return the dot product between self and other vec2
         """
         return (self.x * other.x) + (self.y * other.y)
 
-    def is_unit(self) -> bool:
-        """Check if the current length of self is unit
+    def is_normalized(self) -> bool:
+        """Check if the current length of self is normalized
         """
-        return is_one(self.length_sqr())
+        return is_one(self.length_squared())
 
     def is_zero(self) -> bool:
         """Check if the 'xy' components have a zero value
@@ -556,7 +554,7 @@ class Vec3:
         return Vec3(value, value, value)
 
     @staticmethod
-    def catmullrom(a: 'Vec3', b: 'Vec3', c: 'Vec3', d: 'Vec3', dt: float) -> 'Vec3':
+    def create_catmullrom(a: 'Vec3', b: 'Vec3', c: 'Vec3', d: 'Vec3', dt: float) -> 'Vec3':
         result: Vec3= Vec3(0.0, 0.0, 0.0)
         if dt <= 0.0:
             result.set_from(b)
@@ -576,7 +574,7 @@ class Vec3:
         return result
 
     @staticmethod
-    def barycentric(a: 'Vec3', b: 'Vec3', c: 'Vec3', d: 'Vec3'):
+    def create_barycentric(a: 'Vec3', b: 'Vec3', c: 'Vec3', d: 'Vec3') -> 'Vec3':
         p0: Vec3= b - a
         p1: Vec3= c - a
         p2: Vec3= d - a
@@ -637,22 +635,21 @@ class Vec3:
         """
         return Vec2(self.x, self.y)
 
-    def to_unit(self) -> None:
-        """Convert to unit length
+    def normalize(self) -> None:
+        """Convert to normalized length
         """
-        ls: float= self.length_sqrt()
-
-        if is_zero(ls):
+        ls_sq= self.length_squared()
+        if is_zero(ls_sq):
             return
-        inv: float= 1.0 / ls
+        inv= inv_sqrt(ls_sq)
         self.x *= inv
         self.y *= inv
         self.z *= inv
 
-    def unit(self) -> 'Vec3':
+    def normalized(self) -> 'Vec3':
         """Return a copy of this vec3 with a normal length
         """
-        ls: float= self.length_sqrt()
+        ls: float= self.length()
 
         if is_zero(ls):
             return Vec3.zero()
@@ -709,7 +706,7 @@ class Vec3:
     def project(self, other: 'Vec3') -> 'Vec3':
         """Return the projection between self and other vec3
         """
-        return other * (self.dot(other) / other.length_sqr())
+        return other * (self.dot(other) / other.length_squared())
 
     def reject(self, other: 'Vec3') -> 'Vec3':
         """Return the reject between self and other vec3
@@ -717,13 +714,13 @@ class Vec3:
         return self - self.project(other)
 
     def rotate_by(self, angle_rad: float, axis: 'Vec3') -> 'Vec3':
-        """Rotate by angle along unit axis
+        """Rotate by angle along normalized axis
         """
 
         u: Vec3 = axis.copy()
 
-        if not u.is_unit():
-            u.to_unit()
+        if not u.is_normalized():
+            u.normalize()
 
         c: float= arccos(angle_rad)
         s: float= arcsin(angle_rad)
@@ -757,15 +754,15 @@ class Vec3:
         """
         return self.x + self.y + self.z
 
-    def length_sqr(self) -> float:
+    def length_squared(self) -> float:
         """Return the squared length
         """
         return sqr(self.x) + sqr(self.y) + sqr(self.z)
 
-    def length_sqrt(self) -> float:
+    def length(self) -> float:
         """Return the square root length
         """
-        return sqrt(self.length_sqr())
+        return sqrt(self.length_squared())
 
     def dist_sqr(self, other: 'Vec3') -> float:
         """
@@ -780,10 +777,10 @@ class Vec3:
         """
         return (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
 
-    def is_unit(self) -> bool:
+    def is_normalized(self) -> bool:
         """Check if the current length of self is normalized
         """
-        return is_one(self.length_sqr())
+        return is_one(self.length_squared())
 
     def is_zero(self) -> bool:
         """Check if the 'xyz' components have a zero value
@@ -1013,24 +1010,22 @@ class Vec4:
         """
         return Vec4(self.x, self.y, self.z, self.w)
 
-    def to_unit(self) -> None:
-        """Convert to unit length
+    def normalize(self) -> None:
+        """Convert to normalized length
         """
-        ls: float= self.length_sqrt()
-
-        if is_zero(ls):
+        ls_sq= self.length_squared()
+        if is_zero(ls_sq):
             return
-
-        inv: float= 1.0 / ls
+        inv= inv_sqrt(ls_sq)
         self.x *= inv
         self.y *= inv
         self.z *= inv
         self.w *= inv
 
-    def unit(self) -> 'Vec4':
-        """Return self with unit length
+    def normalized(self) -> 'Vec4':
+        """Return self with normalized length
         """
-        ls: float = self.length_sqrt()
+        ls: float = self.length()
 
         if is_zero(ls):
             return Vec4.zero()
@@ -1048,15 +1043,15 @@ class Vec4:
         """
         return self.x + self.y + self.z + self.w
 
-    def length_sqr(self) -> float:
+    def length_squared(self) -> float:
         """Return the squared length
         """
         return sqr(self.x) + sqr(self.y) + sqr(self.z) + sqr(self.w)
 
-    def length_sqrt(self) -> float:
+    def length(self) -> float:
         """Return the square root length
         """
-        return sqrt(self.length_sqr())
+        return sqrt(self.length_squared())
 
     def dot(self, other: 'Vec4') -> float:
         """Return the dot product between self and other vec4
@@ -1067,10 +1062,10 @@ class Vec4:
         w: float= self.w * other.w
         return x + y + z + w
 
-    def is_unit(self) -> bool:
+    def is_normalized(self) -> bool:
         """Check if the current length of self is normalized
         """
-        return is_one(self.length_sqr())
+        return is_one(self.length_squared())
 
     def is_equil(self, other: 'Vec4') -> bool:
         """Check if self and other have the same *x, y, z, w* component values
@@ -1184,8 +1179,8 @@ class Mat3:
     def create_from_axis(angle_rad: float, unit_axis: Vec3) -> 'Mat3':
         """Create a rotated matrix
         """
-        if not unit_axis.is_unit():
-            unit_axis.to_unit()
+        if not unit_axis.is_normalized():
+            unit_axis.normalize()
 
         x: float= unit_axis.x
         y: float= unit_axis.y
@@ -1369,8 +1364,8 @@ class Mat3:
             Vec3(cx, cy, cz)
         )
 
-    def to_unit(self) -> None:
-        """Convert to unit length
+    def normalize(self) -> None:
+        """Convert to normalized length
         """
         det: float= self.determinant()
 
@@ -1382,7 +1377,7 @@ class Mat3:
         self.row1.set_from(self.row1 * inv)
         self.row2.set_from(self.row2 * inv)
 
-    def unit(self) -> 'Mat3':
+    def normalized(self) -> 'Mat3':
         """Return a copy of self with normalized length
 
         Raises
@@ -1498,8 +1493,8 @@ class Mat3:
             result.y= (bz + cy) / sq
             result.z= 0.25 * sq
 
-        if not result.is_unit():
-            result.to_unit()
+        if not result.is_normalized():
+            result.normalize()
 
         return Quaternion.create_from_vec4(result)
 
@@ -1527,6 +1522,12 @@ class Mat3:
             return
 
         raise Mat3Error('out of range')
+
+    # def orthonormalize(self) -> None:
+    #     x= self.row0.copy()
+    #     y= self.row1.copy()
+    #     z= self.row2.copy()
+    #     x.normalize()
 
     def determinant(self) -> float:
         """Return the determinant of self
@@ -1777,8 +1778,8 @@ class Mat4:
     def create_from_axis(angle_rad: float, unit_axis: Vec3) -> 'Mat4':
         """Create a rotated matrix
         """
-        if not unit_axis.is_unit():
-            unit_axis.to_unit()
+        if not unit_axis.is_normalized():
+            unit_axis.normalize()
 
         x: float= unit_axis.x
         y: float= unit_axis.y
@@ -1888,12 +1889,12 @@ class Mat4:
         """
         """
         z: Vec3= eye-target
-        if not z.is_unit():
-            z.to_unit()
+        if not z.is_normalized():
+            z.normalize()
         
         x: Vec3= up.cross(z)
-        if not x.is_unit():
-            x.to_unit()
+        if not x.is_normalized():
+            x.normalize()
 
         y: Vec3= z.cross(x)
 
@@ -2078,8 +2079,8 @@ class Mat4:
             Vec4(dx, dy, dz, dw)
         )
 
-    def to_unit(self) -> None:
-        """Convert to unit length
+    def normalize(self) -> None:
+        """Convert to normalized length
         """
         det: float= self.determinant()
 
@@ -2092,8 +2093,8 @@ class Mat4:
         self.row2.set_from(self.row2 * inv)
         self.row3.set_from(self.row3 * inv)
 
-    def unit(self) -> 'Mat4':
-        """Return a copy of matrix with unit length
+    def normalized(self) -> 'Mat4':
+        """Return a copy of matrix with normalized length
         """
         det: float= self.determinant()
 
@@ -2162,9 +2163,9 @@ class Mat4:
     def get_scale(self) -> Vec3:
         """Return the scaler values from matrix
         """
-        x: float= self.row0.xyz().length_sqrt()
-        y: float= self.row1.xyz().length_sqrt()
-        z: float= self.row2.xyz().length_sqrt()
+        x: float= self.row0.xyz().length()
+        y: float= self.row1.xyz().length()
+        z: float= self.row2.xyz().length()
 
         return Vec3(x, y, z)
 
@@ -2491,8 +2492,8 @@ class Quaternion:
     def create_from_axis(angle_rad: float, unit_axis: Vec3) -> 'Quaternion':
         """Create a quaternion from an angle and axis of rotation
         """
-        if not unit_axis.is_unit():
-            unit_axis.to_unit()
+        if not unit_axis.is_normalized():
+            unit_axis.normalize()
 
         c: float= cos(angle_rad * 0.5)
         s: float= sin(angle_rad * 0.5)
@@ -2513,10 +2514,10 @@ class Quaternion:
         if dot < -1.0 + EPSILON:
             v3: Vec3= Vec3.create_unit_x().cross(start)
 
-            if v3.length_sqrt() < EPSILON:
+            if v3.length() < EPSILON:
                 v3= Vec3.create_unit_y().cross(start)
 
-            v3.to_unit()
+            v3.normalize()
             return Quaternion.create_from_axis(PI, v3)
 
         if dot > absf(-1.0 + EPSILON):
@@ -2580,8 +2581,8 @@ class Quaternion:
         """
         result= self.lerp(to, weight)
 
-        if not result.is_unit():
-            result.to_unit()
+        if not result.is_normalized():
+            result.normalize()
 
         return result
 
@@ -2613,8 +2614,8 @@ class Quaternion:
             weight0 * self.w + weight1 * to.w
         )
 
-        if not result.is_unit():
-            result.to_unit()
+        if not result.is_normalized():
+            result.normalize()
 
         return result
 
@@ -2672,7 +2673,7 @@ class Quaternion:
     def inverse(self) -> 'Quaternion':
         """Return the invserse of self
         """
-        inv: float= 1.0 / self.length_sqr()
+        inv: float= 1.0 / self.length_squared()
         return Quaternion(
             -self.x * inv,
             -self.y * inv,
@@ -2680,7 +2681,7 @@ class Quaternion:
             self.q * inv
         )
 
-    def unit(self) -> 'Quaternion':
+    def normalized(self) -> 'Quaternion':
         """Return a copy of self with normalized length
 
         Raises
@@ -2688,22 +2689,22 @@ class Quaternion:
         QuatError
             length of self was zero
         """
-        lsq: float= self.length_sqr()
+        lsq: float= self.length_squared()
 
         if is_zero(lsq):
             raise QuatError('length was zero')
 
         return self.scale(inv_sqrt(lsq))
 
-    def to_unit(self) -> None:
-        """Convert to unit length
+    def normalize(self) -> None:
+        """Convert to normalized length
         """
-        ls: float= self.length_sqrt()
+        ls_sq= self.length_squared()
 
-        if is_zero(ls):
+        if is_zero(ls_sq):
             return
 
-        inv: float= 1.0 / ls
+        inv= inv_sqrt(ls_sq)
         self.x *= inv
         self.y *= inv
         self.z *= inv
@@ -2757,7 +2758,7 @@ class Quaternion:
         qt_cpy: Quaternion= self.copy()
 
         if qt_cpy.w > 1.0:
-            qt_cpy.to_unit()
+            qt_cpy.normalize()
 
         scl: float= sqrt(1.0 - sqr(qt_cpy.w))
 
@@ -2819,15 +2820,15 @@ class Quaternion:
             dx, dy, dz, dw
         )
 
-    def length_sqr(self) -> float:
+    def length_squared(self) -> float:
         """Return the squared length
         """
         return sqr(self.x) + sqr(self.y) + sqr(self.z) + sqr(self.w)
 
-    def length_sqrt(self) -> float:
+    def length(self) -> float:
         """Return the square root length
         """
-        return sqrt(self.length_sqr())
+        return sqrt(self.length_squared())
 
     def dot(self, other: 'Quaternion') -> float:
         """Return the dot product between self and other
@@ -2868,7 +2869,7 @@ class Quaternion:
             is_equil(self.w, other.w)
         )
 
-    def is_unit(self) -> bool:
+    def is_normalized(self) -> bool:
         """Check if the length of self is one
         """
-        return is_one(self.length_sqr())
+        return is_one(self.length_squared())

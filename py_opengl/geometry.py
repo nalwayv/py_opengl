@@ -308,7 +308,7 @@ class Triangle3:
         return f'[P0: {self.p0}, P1: {self.p1}, P2: {self.p2}]'
 
     def intersect_pt(self, pt: maths.Vec3):
-        bc= maths.Vec3.barycentric(
+        bc= maths.Vec3.create_barycentric(
             self.p0,
             self.p1,
             self.p2,
@@ -391,39 +391,39 @@ class Sphere3:
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         point: maths.Vec3= pt - self.center
 
-        if not point.is_unit():
-            point.to_unit()
+        if not point.is_normalized():
+            point.normalize()
 
         return self.center + (point * self.radius)
 
     def furthest_pt(self, pt: maths.Vec3) -> maths.Vec3:
-        if not pt.is_unit():
-            pt.to_unit()
+        if not pt.is_normalized():
+            pt.normalize()
 
         return self.center + (pt * self.radius)
 
     def intersect_sphere(self, other: 'Sphere3') -> bool:
-        dis: float= (self.center - other.center).length_sqr()
+        dis: float= (self.center - other.center).length_squared()
         r2: float= maths.sqr(self.radius + other.radius)
 
         return dis < r2
 
     def intersect_pt(self, pt: maths.Vec3) -> bool:
-        dis: float= (self.center - pt).length_sqr()
+        dis: float= (self.center - pt).length_squared()
         r2: float= maths.sqr(self.radius)
 
         return dis < r2
 
     def intersect_aabb(self, aabb: 'AABB3') -> bool:
         close_pt: maths.Vec3= aabb.closest_pt(self.center)
-        dis: float= (self.center - close_pt).length_sqr()
+        dis: float= (self.center - close_pt).length_squared()
         r2: float= maths.sqr(self.radius)
 
         return dis < r2
 
     def intersect_plain(self, plain: 'Plane'):
         close_pt: maths.Vec3= plain.closest_pt(self.center)
-        dis: float= (self.center - close_pt).length_sqr()
+        dis: float= (self.center - close_pt).length_squared()
         r2: float= maths.sqr(self.radius)
 
         return dis < r2
@@ -464,8 +464,8 @@ class Plane:
         ac: maths.Vec3= c - a
         n: maths.Vec3= ab.cross(ac)
 
-        if not n.is_unit():
-            n.to_unit()
+        if not n.is_normalized():
+            n.normalize()
 
         d: float= -n.dot(a)
         return Plane(n, d)
@@ -575,20 +575,20 @@ class Plane:
             return -1
         return 0
 
-    def unit(self) -> 'Plane':
-        """Return a copy of self with unit length
+    def normalized(self) -> 'Plane':
+        """Return a copy of self with normalized length
         """
-        lsq: float= self.normal.length_sqr()
+        lsq: float= self.normal.length_squared()
         if (lsq - 1.0) < 2.220446049250313e-16:
             return
 
         inv: float= maths.inv_sqrt(lsq)
         return Plane(self.normal * inv, self.d * inv)
 
-    def to_unit(self) -> None:
-        """Convert to unit length
+    def normalize(self) -> None:
+        """Convert to normalized length
         """
-        lsq: float= self.normal.length_sqr()
+        lsq: float= self.normal.length_squared()
         if (lsq - 1.0) < 2.220446049250313e-16:
             return
 
@@ -631,7 +631,7 @@ class Frustum:
         result.planes[5]= Plane.create_from_v4(bottom)
 
         for pl in result.planes:
-            pl.to_unit()
+            pl.normalize()
 
         return result
 
@@ -665,7 +665,7 @@ class Frustum:
         """
         return self.planes[5]
 
-    def get_corners(self, to_unit: bool) -> list[maths.Vec3]:
+    def get_corners(self, normalize: bool) -> list[maths.Vec3]:
         """Return corners of camera frustum
 
         [ nbl, nbr, ntl, ntr, fbl, fbr, ftl, ftr ]
@@ -703,9 +703,9 @@ class Frustum:
                 self.planes[f], self.planes[t], self.planes[r]
             )
         ]
-        if to_unit:
+        if normalize:
             for c in corners:
-                c.to_unit()
+                c.normalize()
         return corners
 
     def intersect_ab3(self, ab3: AABB3)->bool:
@@ -731,8 +731,8 @@ class Ray3:
         self.direction: maths.Vec3= direction
         self.TYPE: GeometryType= GeometryType.RAY
 
-        if not self.direction.is_unit():
-            self.direction.to_unit()
+        if not self.direction.is_normalized():
+            self.direction.normalize()
 
     def __eq__(self, other: 'Ray3') -> bool:
         if isinstance(other, self.__class__):
@@ -752,8 +752,8 @@ class Ray3:
         o: maths.Vec3= origin.copy()
         d: maths.Vec3= target - origin
 
-        if not d.is_unit():
-            d.to_unit()
+        if not d.is_normalized():
+            d.normalize()
 
         return Ray3(o, d)
 
@@ -761,8 +761,8 @@ class Ray3:
         if unit_dir.is_zero():
             return
 
-        if not unit_dir.is_unit():
-            unit_dir.to_unit()
+        if not unit_dir.is_normalized():
+            unit_dir.normalize()
 
         self.direction.x = unit_dir.x
         self.direction.y = unit_dir.y
@@ -814,7 +814,7 @@ class Ray3:
     def cast_sphere(self, sph: Sphere3) -> float:
         a: maths.Vec3= sph.center - self.origin
         b: float= a.dot(self.direction)
-        c: float= a.length_sqr() - maths.sqr(sph.radius)
+        c: float= a.length_squared() - maths.sqr(sph.radius)
 
         if c > 0.0 and b > 0.0:
             return -1.0

@@ -2,18 +2,18 @@ from py_opengl import maths
 import pytest
 
 def test_vec_unit():
-    """test convertion to unit"""
+    """test convertion to normalized"""
     a: maths.Vec2 = maths.Vec2(1.0, 1.0)
-    a.to_unit()
-    assert a.is_unit()
+    a.normalize()
+    assert a.is_normalized()
 
     b: maths.Vec3 = maths.Vec3(1.0, 1.0, 1.0)
-    b.to_unit()
-    assert b.is_unit()
+    b.normalize()
+    assert b.is_normalized()
 
     c: maths.Vec4 = maths.Vec4(1.0, 1.0, 1.0, 1.0)
-    c.to_unit()
-    assert c.is_unit()
+    c.normalize()
+    assert c.is_normalized()
 
 
 def test_vec_equil():

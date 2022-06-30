@@ -1,6 +1,7 @@
 """Camera
 """
 from enum import Enum, auto
+from re import L
 
 from py_opengl import maths
 from py_opengl import geometry
@@ -77,29 +78,29 @@ class Camera:
         match dir:
             case CameraDirection.UP:
                 up: maths.Vec3= self.right.cross(self.position + self.front)
-                if not up.is_unit():
-                    up.to_unit()
+                if not up.is_normalized():
+                    up.normalize()
                 up= up * (self.sensativity * dt)
                 self.position.set_from(self.position + up)
 
             case CameraDirection.DOWN:
                 down: maths.Vec3= (self.position + self.front).cross(self.right)
-                if not down.is_unit():
-                    down.to_unit()
+                if not down.is_normalized():
+                    down.normalize()
                 down= down * (self.sensativity * dt)
                 self.position.set_from(self.position + down)
 
             case CameraDirection.RIGHT:
                 right: maths.Vec3= (self.position + self.front).cross(self.up)
-                if not right.is_unit():
-                    right.to_unit()
+                if not right.is_normalized():
+                    right.normalize()
                 right= right * (self.sensativity * dt)
                 self.position.set_from(self.position + right)
 
             case CameraDirection.LEFT:
                 left: maths.Vec3= self.up.cross(self.position + self.front)
-                if not left.is_unit():
-                    left.to_unit()
+                if not left.is_normalized():
+                    left.normalize()
                 left= left * (self.sensativity * dt)
                 self.position.set_from(self.position + left)
 
@@ -135,13 +136,13 @@ class Camera:
         self.front.y= maths.sin(self.pitch)
         self.front.z= maths.cos(self.pitch) * maths.sin(self.yaw)
 
-        if not self.front.is_unit():
-            self.front.to_unit()
+        if not self.front.is_normalized():
+            self.front.normalize()
 
         self.right= self.front.cross(maths.Vec3(y= 1.0))
 
-        if not self.right.is_unit():
-            self.right.to_unit()
+        if not self.right.is_normalized():
+            self.right.normalize()
 
         self.up= self.right.cross(self.front)
 
@@ -166,10 +167,10 @@ class Camera:
 
         return geometry.Frustum.create_from_matrix(vp)
 
-    def get_frustum_corners(self, to_unit: bool=False) -> list[maths.Vec3]:
+    def get_frustum_corners(self, normalize: bool=False) -> list[maths.Vec3]:
         """Return corners of camera frustum
 
         [ nbl, nbr, ntl, ntr, fbl, fbr, ftl, ftr ]
         """
         fr= self.get_frustum()
-        return fr.get_corners(to_unit)
+        return fr.get_corners(normalize)
