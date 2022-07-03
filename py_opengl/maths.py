@@ -2046,14 +2046,21 @@ class Mat4:
             self.row3.x, self.row3.y, self.row3.z, self.row3.w,
         )
 
-    def scale(self, by: float) -> 'Mat4':
-        """Return matrix scaled by value
+    def scale(self, by: float) -> None:
+        """
+        """
+        self.row0.set_from(self.row0 * by)
+        self.row1.set_from(self.row1 * by)
+        self.row2.set_from(self.row2 * by)
+        self.row3.set_from(self.row3 * by)
+    
+    def scaled(self, by: float) -> 'Mat4':
+        """
         """
         r0: Vec4= self.row0 * by
         r1: Vec4= self.row1 * by
         r2: Vec4= self.row2 * by
         r3: Vec4= self.row3 * by
-
         return Mat4(r0, r1, r2, r3)
 
     def transpose(self) -> None:
