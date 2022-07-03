@@ -1,6 +1,5 @@
 """Maths
 """
-from re import X
 from typing import Final
 import math
 
@@ -795,7 +794,7 @@ class Vec3:
         return is_zero(self.x) and is_zero(self.y) and is_zero(self.z)
 
     def is_equil(self, other: 'Vec3') -> bool:
-        """Check if self and other have the same *x, y, z* component values
+        """Check if self and other have the same 'xyz' component values
         """
         return (
             is_equil(self.x, other.x) and
@@ -804,7 +803,9 @@ class Vec3:
         )
 
     def transform_m3(self, m3: 'Mat3') -> 'Vec3':
-        """ Transform by mat4
+        """ Transform by mat3
+
+        row * col
         """
         x: float= self.dot(m3.col0())
         y: float= self.dot(m3.col1())
@@ -814,6 +815,8 @@ class Vec3:
 
     def transform_m4(self, m4: 'Mat4') -> 'Vec3':
         """ Transform by mat4
+
+        row * col
         """
         v4: Vec4= Vec4.create_from_v3(self, 1.0)
         x: float= v4.dot(m4.col0())
@@ -1104,11 +1107,15 @@ class Vec4:
             is_zero(self.w)
         )
 
-    def transform(self, m4: 'Mat4') -> 'Vec4':
-        x: float= (self.x * m4.get_at(0, 0)) + (self.y * m4.get_at(1, 0)) + (self.z * m4.get_at(2, 0)) + (self.w * m4.get_at(3, 0))
-        y: float= (self.x * m4.get_at(0, 1)) + (self.y * m4.get_at(1, 1)) + (self.z * m4.get_at(2, 1)) + (self.w * m4.get_at(3, 1))
-        z: float= (self.x * m4.get_at(0, 2)) + (self.y * m4.get_at(1, 2)) + (self.z * m4.get_at(2, 2)) + (self.w * m4.get_at(3, 2))
-        w: float= (self.x * m4.get_at(0, 3)) + (self.y * m4.get_at(1, 3)) + (self.z * m4.get_at(2, 3)) + (self.w * m4.get_at(3, 3))
+    def transform_m4(self, m4: 'Mat4') -> 'Vec4':
+        """tranmsform by mat4
+
+        row * col
+        """
+        x: float= self.dot(m4.col0())
+        y: float= self.dot(m4.col1())
+        z: float= self.dot(m4.col2())
+        w: float= self.dot(m4.col3())
 
         return Vec4(x, y, z, w)
 
@@ -1328,6 +1335,20 @@ class Mat3:
             Vec3(z= 1.0)
         )
 
+    @staticmethod
+    def create_lookat(target: Vec3, up: Vec3) -> 'Mat3':
+        """Create Look at
+        """
+        z: Vec3= (target * -1.0).normalized()
+        x: Vec3= up.cross(z).normalized()
+        y: Vec3= z.cross(x)
+
+        return Mat3(
+            Vec3(x.x, y.x, z.x),
+            Vec3(x.y, y.y, z.y),
+            Vec3(x.z, y.z, z.z)
+        )
+
     def set_from(self, other: 'Mat3') -> None:
         """
         """
@@ -1486,14 +1507,6 @@ class Mat3:
         """Return column of float values
         """
         return Vec3(self.row0.z, self.row1.z, self.row2.z)
-
-    def multiply_v3(self, v3: Vec3) -> Vec3:
-        """Return mat3 multiplyed by vec3
-        """
-        x: float= v3.dot(self.col0())
-        y: float= v3.dot(self.col1())
-        z: float= v3.dot(self.col2())
-        return Vec3(x, y, z)
 
     def get_rotation(self) -> 'Quaternion':
         """Get rotation from matrix
@@ -1961,14 +1974,8 @@ class Mat4:
     def create_lookat(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
         """
         """
-        z: Vec3= eye-target
-        if not z.is_normalized():
-            z.normalize()
-        
-        x: Vec3= up.cross(z)
-        if not x.is_normalized():
-            x.normalize()
-
+        z: Vec3= (eye - target).normalized()
+        x: Vec3= up.cross(z).normalized()
         y: Vec3= z.cross(x)
 
         return Mat4(
@@ -2195,7 +2202,7 @@ class Mat4:
         )
 
     def get_translation(self) -> Vec3:
-        """Return the transformed values from matrix
+        """Return the translation values from matrix
         """
         return self.row3.xyz()
 

@@ -120,7 +120,7 @@ def main() -> None:
             # shape3.rotate(maths.Vec3(y= 15.0, z= 15.0) * (1.2 * time.delta))
             shape3.draw(shader0, v_matrix, p_matrix)
             # shape4.rotate(maths.Vec3(x= 5.0, z= 10.0) * (1.2 * time.delta))
-            # shape4.rotate(maths.to_rad(45 * (1.2 * time.delta)), maths.Vec3(x=1))
+            # shape4.rotate(maths.to_rad(45 * (1.2 * time.delta)), maths.Vec3(x= 1.0))
             shape4.draw(shader0, v_matrix, p_matrix)
 
             fshape.draw(shader0, v_matrix, p_matrix, True)
