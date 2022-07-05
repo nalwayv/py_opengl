@@ -1,7 +1,6 @@
 """Window
 """
 from typing import Any, Callable
-
 import glfw
 
 

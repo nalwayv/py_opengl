@@ -1,7 +1,6 @@
 """Camera
 """
 from enum import Enum, auto
-from re import L
 
 from py_opengl import maths
 from py_opengl import geometry

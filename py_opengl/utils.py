@@ -1,6 +1,5 @@
 """Utils
 """
-
 import ctypes
 from typing import Final
 

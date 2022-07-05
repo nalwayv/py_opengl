@@ -1,7 +1,6 @@
 """Mouse
 """
 from enum import Enum, auto
-
 from py_opengl import window
 
 # ---

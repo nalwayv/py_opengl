@@ -1,7 +1,5 @@
 """Simplex
 """
-# TODO
-
 from typing import TypeVar
 from py_opengl import maths
 from py_opengl import model
