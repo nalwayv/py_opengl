@@ -92,11 +92,8 @@ def main() -> None:
         tree.add(shape3)
         tree.add(shape4)
 
-        # TODO
         fshape= model.FrustumModel(cam.get_frustum_corners(True))
         fshape.translate(maths.Vec3(z= 5.0))
-
-        # fr= cam.get_frustum()
 
         while not glwin.should_close():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -120,13 +117,8 @@ def main() -> None:
             shape3.draw(shader0, v_matrix, p_matrix)
             shape4.draw(shader0, v_matrix, p_matrix)
 
-            # shape4.rotate(maths.to_rad(45.0 * (1.2 * time.delta)), maths.Vec3(x= 1.0))
-
             fshape.draw(shader0, v_matrix, p_matrix, True)
             tree.debug(shader0, v_matrix, p_matrix)
-
-            if kb.is_key_pressed(glfw.KEY_P):
-                shape4.scale(0.5)
 
             if kb.is_key_held(glfw.KEY_I):
                 shape4.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
