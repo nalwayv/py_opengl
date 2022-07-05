@@ -516,6 +516,11 @@ class Plane:
         """
         return self.normal.dot(v3)
 
+    def distance_to(self, target: maths.Vec3) -> float:
+        """
+        """
+        return self.dot_normal(target) - self.d
+
     def classify_pt(self, v3: maths.Vec3) -> int:
         """Check what side of plane v3 fall on
 
@@ -526,7 +531,7 @@ class Plane:
 
             0 == intersect
         """
-        result: float= self.dot_normal(v3) - self.d
+        result: float= self.distance_to(v3)
         return int(result)
 
     def classify_ab3(self, ab3: AABB3) -> int:

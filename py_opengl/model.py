@@ -51,6 +51,9 @@ class Model:
     def rotate(self, angle_rad: float, unit_axis: maths.Vec3):
         self._transform.rotate(angle_rad, unit_axis)
 
+    def scale(self, by: float):
+        self._transform.scale(by)
+
     def get_furthest_pt(self, dir: maths.Vec3) -> maths.Vec3:
         """Return furthest pt
         """
@@ -145,13 +148,13 @@ class TriModel(Model):
 
 class PyramidModel(Model):
 
-    __slots__= ('scale',)
+    __slots__= ('size',)
 
-    def __init__(self, scale) -> None:
-        self.scale: float= scale
+    def __init__(self, size: float= 1.0) -> None:
+        self.size: float= size
 
         super().__init__(
-            mesh.PyramidMesh(self.scale)
+            mesh.PyramidMesh(self.size)
         )
 
 

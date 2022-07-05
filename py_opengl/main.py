@@ -78,10 +78,10 @@ def main() -> None:
         shape4= model.PyramidModel(0.3)
 
         shape0.translate(maths.Vec3(-2.0, 2.5, 0.5))
-        shape1.translate(maths.Vec3(0, 0, 1.5))
-        shape2.translate(maths.Vec3(-2.5, 0, -2.5))
-        shape3.translate(maths.Vec3(0, 1.5, 0))
-        shape4.translate(maths.Vec3(2, 2, 0))
+        shape1.translate(maths.Vec3(0.0, 0.0, 1.5))
+        shape2.translate(maths.Vec3(-2.5, 0.0, -2.5))
+        shape3.translate(maths.Vec3(0.0, 1.5, 0.0))
+        shape4.translate(maths.Vec3(2.0, 2.0, 0.0))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
         
@@ -94,7 +94,7 @@ def main() -> None:
 
         # TODO
         fshape= model.FrustumModel(cam.get_frustum_corners(True))
-        fshape.translate(maths.Vec3(z= 5))
+        fshape.translate(maths.Vec3(z= 5.0))
 
         # fr= cam.get_frustum()
 
@@ -117,14 +117,16 @@ def main() -> None:
             shape0.draw(shader0, v_matrix, p_matrix)
             shape1.draw(shader0, v_matrix, p_matrix)
             shape2.draw(shader0, v_matrix, p_matrix)
-            # shape3.rotate(maths.Vec3(y= 15.0, z= 15.0) * (1.2 * time.delta))
             shape3.draw(shader0, v_matrix, p_matrix)
-            # shape4.rotate(maths.Vec3(x= 5.0, z= 10.0) * (1.2 * time.delta))
-            # shape4.rotate(maths.to_rad(45 * (1.2 * time.delta)), maths.Vec3(x= 1.0))
             shape4.draw(shader0, v_matrix, p_matrix)
+
+            # shape4.rotate(maths.to_rad(45.0 * (1.2 * time.delta)), maths.Vec3(x= 1.0))
 
             fshape.draw(shader0, v_matrix, p_matrix, True)
             tree.debug(shader0, v_matrix, p_matrix)
+
+            if kb.is_key_pressed(glfw.KEY_P):
+                shape4.scale(0.5)
 
             if kb.is_key_held(glfw.KEY_I):
                 shape4.translate(maths.Vec3(y= 1.5) * (1.4 * time.delta))
@@ -184,8 +186,8 @@ def main() -> None:
             glfw.swap_buffers(glwin.window)
             glfw.poll_events()
 
-    # except Exception as err:
-    #     logger.error(f'ERROR: {err}')
+    except Exception as err:
+        logger.error(f'ERROR: {err}')
 
     finally:
         logger.debug('CLOSED')

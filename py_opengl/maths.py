@@ -83,7 +83,7 @@ def is_infinite(val: float) -> bool:
     return math.isinf(val)
 
 
-def signum(val: float) -> int:
+def sign(val: float) -> int:
     if is_zero(val):
         return 0
     return 1 if val > 0.0 else -1
@@ -770,7 +770,7 @@ class Vec3:
         """
         return sqrt(self.length_squared())
 
-    def dist_sqr(self, other: 'Vec3') -> float:
+    def distance_to_squared(self, other: 'Vec3') -> float:
         """
         """
         x: float= other.x - self.x
@@ -1088,7 +1088,7 @@ class Vec4:
         return is_one(self.length_squared())
 
     def is_equil(self, other: 'Vec4') -> bool:
-        """Check if self and other have the same *x, y, z, w* component values
+        """Check if self and other have the same 'xyzw' component values
         """
         return (
             is_equil(self.x, other.x) and
@@ -1380,6 +1380,16 @@ class Mat3:
         r2: Vec3= self.row2 * by
         return Mat3(r0, r1, r2)
 
+    def rotate(self, angle_rad: float, unit_axis: Vec3) -> None:
+        """
+        """
+        self.set_from(self * Mat3.create_from_axis(angle_rad, unit_axis))
+
+    def rotated(self, angle_rad: float, unit_axis: Vec3) -> 'Mat3':
+        """
+        """
+        return self * Mat3.create_from_axis(angle_rad, unit_axis)
+
     def sum(self) -> float:
         """Return sum of all rows
         """
@@ -1553,6 +1563,15 @@ class Mat3:
 
         return Quaternion.create_from_vec4(result)
 
+    def get_scale(self) -> Vec3:
+        """Return the scaler values from matrix
+        """
+        x: float= self.row0.length()
+        y: float= self.row1.length()
+        z: float= self.row2.length()
+
+        return Vec3(x, y, z)
+
     def get_at(self, row: int, col: int) -> float:
         if row == 0:
             return self.row0.get_at(col)
@@ -1566,35 +1585,38 @@ class Mat3:
     def set_at(self, row: int, col: int, value: float) -> None:
         """
         """
-        if row == 0:
-            self.row0.set_at(col, value)
-            return
-
-        if row == 1:
-            self.row1.set_at(col, value)
-            return
-
-        if row == 2:
-            self.row2.set_at(col, value)
-            return
+        match row:
+            case 0:
+                self.row0.set_at(col, value)
+                return
+            case 1:
+                self.row1.set_at(col, value)
+                return
+            case 2:
+                self.row2.set_at(col, value)
+                return
 
         raise Mat3Error('out of range')
 
     def set_col(self, at: int, value: Vec3) -> None:
         """
         """
-        if at == 0:
-            self.row0.x= value.x
-            self.row1.x= value.y
-            self.row2.x= value.z
-        if at == 2:
-            self.row0.y= value.x
-            self.row1.y= value.y
-            self.row2.y= value.z
-        if at == 3:
-            self.row0.z= value.x
-            self.row1.z= value.y
-            self.row2.z= value.z
+        match at:
+            case 0:
+                self.row0.x= value.x
+                self.row1.x= value.y
+                self.row2.x= value.z
+                return
+            case 1:
+                self.row0.y= value.x
+                self.row1.y= value.y
+                self.row2.y= value.z
+                return
+            case 2:
+                self.row0.z= value.x
+                self.row1.z= value.y
+                self.row2.z= value.z
+                return
 
         raise Mat3Error('out of range')
 
@@ -1626,6 +1648,14 @@ class Mat3:
         b3: float= self.row0.y * self.row1.x * self.row2.z
 
         return a0 + a1 + a2 - b1 - b2 - b3
+
+    def is_equil(self, other: 'Mat3') -> bool:
+        """
+        """
+        r0: bool= self.row0.is_equil(other.row0)
+        r1: bool= self.row1.is_equil(other.row1)
+        r2: bool= self.row2.is_equil(other.row2)
+        return r0 and r1 and r2
 
     def trace(self) -> float:
         """Return the sum of the trace values
@@ -2406,6 +2436,15 @@ class Mat4:
         """Return matrix trace value
         """
         return self.row0.x + self.row1.y + self.row2.z + self.row3.w
+
+    def is_equil(self, other: 'Mat4') -> bool:
+        """
+        """
+        r0: bool= self.row0.is_equil(other.row0)
+        r1: bool= self.row1.is_equil(other.row1)
+        r2: bool= self.row2.is_equil(other.row2)
+        r3: bool= self.row3.is_equil(other.row3)
+        return r0 and r1 and r2 and r3
 
     def array(self) -> list[float]:
         """
