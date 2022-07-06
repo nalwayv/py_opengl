@@ -8,7 +8,7 @@ from py_opengl import maths
 
 class Transform3:
 
-    __slots__= ('basis', 'position')
+    __slots__= ('basis', 'origin')
 
     def __init__(self) -> None:
         self.basis: maths.Mat3= maths.Mat3.identity()
