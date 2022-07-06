@@ -415,7 +415,7 @@ class ABTree:
                 que.append(current.right)
 
             leaf_m= model.CubeModel(current.aabb.extents)
-            leaf_m.translate(current.aabb.center)
+            leaf_m.translate(current.aabb.origin)
             
             leaf_m.draw(s, view, projection, True)
             leaf_m.delete()

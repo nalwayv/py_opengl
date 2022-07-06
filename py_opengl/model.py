@@ -41,7 +41,7 @@ class Model:
     def get_position(self) -> maths.Vec3:
         """Return current position
         """
-        return self._transform.position
+        return self._transform.origin
 
     def translate(self, v3: maths.Vec3) -> None:
         """Translate model by 'xyz'
@@ -58,7 +58,7 @@ class Model:
         """Return furthest pt
         """
         result= self._mesh.get_furthest_pt(dir)
-        result.set_from(result + self._transform.position)
+        result.set_from(result + self._transform.origin)
         return result
         
     def compute_aabb(self) -> geometry.AABB3:

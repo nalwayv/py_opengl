@@ -12,17 +12,17 @@ class Transform3:
 
     def __init__(self) -> None:
         self.basis: maths.Mat3= maths.Mat3.identity()
-        self.position: maths.Vec3= maths.Vec3()
+        self.origin: maths.Vec3= maths.Vec3()
 
     def set_position(self, v3: maths.Vec3) -> None:
         """
         """
-        self.position.set_from(v3)
+        self.origin.set_from(v3)
 
     def translate(self, v3: maths.Vec3) -> None:
         """
         """
-        self.position.set_from(self.position + v3.transform_m3(self.basis))
+        self.origin.set_from(self.origin + v3.transform_m3(self.basis))
 
     def rotate(self, angle_rad: float, unit_axis: maths.Vec3) -> None:
         """
@@ -47,5 +47,5 @@ class Transform3:
             maths.Vec4.create_from_v3(self.basis.row0),
             maths.Vec4.create_from_v3(self.basis.row1),
             maths.Vec4.create_from_v3(self.basis.row2),
-            maths.Vec4.create_from_v3(self.position, 1.0),
+            maths.Vec4.create_from_v3(self.origin, 1.0),
         )

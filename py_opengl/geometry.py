@@ -23,30 +23,30 @@ class GeometryType(Enum):
 
 
 class AABB3:
-    """AABB using center and extents
+    """AABB using origin and extents
 
 
-    Aabb(center= Vec3(0, 0, 0), extents= Vec3(1, 1, 1))
+    Aabb(origin= Vec3(0, 0, 0), extents= Vec3(1, 1, 1))
 
     get_min == Vec3(-1, -1, -1)\n
     get_max == Vec3(1, 1, 1)
     """
 
-    __slots__= ('center', 'extents', 'TYPE')
+    __slots__= ('origin', 'extents', 'TYPE')
 
     def __init__(
         self,
-        center: maths.Vec3= maths.Vec3(),
+        origin: maths.Vec3= maths.Vec3(),
         extents: maths.Vec3= maths.Vec3(),
     ) -> None:
-        self.center: maths.Vec3= center
+        self.origin: maths.Vec3= origin
         self.extents: maths.Vec3= extents
         self.TYPE: GeometryType= GeometryType.AABB3
 
     def __eq__(self, other: 'AABB3') -> bool:
         if isinstance(other, self.__class__):
             if(
-                self.center.is_equil(other.center) and
+                self.origin.is_equil(other.origin) and
                 self.extents.is_equil(other.extents) and
                 self.TYPE == other.TYPE
             ):
@@ -61,7 +61,7 @@ class AABB3:
     @staticmethod
     def create_from_min_max(min_pt: maths.Vec3, max_pt: maths.Vec3) -> 'AABB3':
         return AABB3(
-            center= (min_pt + max_pt) * 0.5,
+            origin= (min_pt + max_pt) * 0.5,
             extents= (min_pt - max_pt) * 0.5
         )
 
@@ -96,7 +96,7 @@ class AABB3:
             maths.Vec3.create_from_min(self.get_min(), a.get_min()),
             maths.Vec3.create_from_max(self.get_max(), a.get_max())
         )
-        self.center.set_from(aabb.center)
+        self.origin.set_from(aabb.origin)
         self.extents.set_from(aabb.extents)
 
     def combine_with(self, a: 'AABB3') -> 'AABB3':
@@ -112,7 +112,7 @@ class AABB3:
             maths.Vec3.create_from_min(a.get_min(), b.get_min()),
             maths.Vec3.create_from_max(a.get_max(), b.get_max())
         )
-        self.center.set_from(aabb.center)
+        self.origin.set_from(aabb.origin)
         self.extents.set_from(aabb.extents)
 
     def expand(self, by: float) -> 'AABB3':
@@ -127,14 +127,14 @@ class AABB3:
 
     def expanded(self, by: float) -> None:
         expand= self.expand(by)
-        self.center.set_from(expand.center)
+        self.origin.set_from(expand.origin)
         self.extents.set_from(expand.extents)
 
     def copy(self) -> 'AABB3':
         """Return a copy of self
         """
         return AABB3(
-            center= self.center.copy(),
+            origin= self.origin.copy(),
             extents= self.extents.copy()
         )
 
@@ -164,14 +164,14 @@ class AABB3:
         return pt
 
     def get_min(self) -> maths.Vec3:
-        p0: maths.Vec3= self.center + self.extents
-        p1: maths.Vec3= self.center - self.extents
+        p0: maths.Vec3= self.origin + self.extents
+        p1: maths.Vec3= self.origin - self.extents
 
         return maths.Vec3.create_from_min(p0, p1)
 
     def get_max(self) -> maths.Vec3:
-        p0: maths.Vec3= self.center + self.extents
-        p1: maths.Vec3= self.center - self.extents
+        p0: maths.Vec3= self.origin + self.extents
+        p1: maths.Vec3= self.origin - self.extents
 
         return maths.Vec3.create_from_max(p0, p1)
 
@@ -284,13 +284,13 @@ class Triangle3:
 
     def __init__(
         self,
-        p0: maths.Vec3,
-        p1: maths.Vec3,
-        p2: maths.Vec3
+        p0: maths.Vec3= maths.Vec3(),
+        p1: maths.Vec3= maths.Vec3(),
+        p2: maths.Vec3= maths.Vec3()
     ) -> None:
-        self.p0= p0.copy()
-        self.p1= p1.copy()
-        self.p2= p2.copy()
+        self.p0: maths.Vec3= p0
+        self.p1: maths.Vec3= p1
+        self.p2: maths.Vec3= p2
         self.TYPE: GeometryType= GeometryType.TRIANGLE
 
     def __eq__(self, other: 'Triangle3') -> bool:
@@ -329,21 +329,21 @@ class Triangle3:
 
 class Sphere3:
 
-    __slots__= ('center', 'radius', 'TYPE')
+    __slots__= ('origin', 'radius', 'TYPE')
 
     def __init__(
         self,
-        center: maths.Vec3= maths.Vec3(),
+        origin: maths.Vec3= maths.Vec3(),
         radius: float= 1.0
     ) -> None:
-        self.center: maths.Vec3= center
+        self.origin: maths.Vec3= origin
         self.radius: float= radius
         self.TYPE: GeometryType= GeometryType.SPHERE
 
     def __eq__(self, other: 'Sphere3') -> bool:
         if isinstance(other, self.__class__):
             if(
-                self.center.is_equil(other.center) and
+                self.origin.is_equil(other.origin) and
                 maths.is_equil(self.radius, other.radius) and
                 self.TYPE == other.TYPE
             ):
@@ -351,17 +351,17 @@ class Sphere3:
         return False
 
     def __str__(self) -> str:
-        return f'[CENTER: {self.center}, RADIUS: {self.radius}]'
+        return f'[CENTER: {self.origin}, RADIUS: {self.radius}]'
 
     @staticmethod
     def create_translate(sph3: 'Sphere3', offset: maths.Vec3) -> 'Sphere3':
-        c= sph3.center + offset
+        c= sph3.origin + offset
         r= sph3.radius
         return Sphere3(c, r)
 
     @staticmethod
     def create_transform(sph3: 'Sphere3', m4: maths.Mat4) -> 'Sphere3':
-        cen: maths.Vec3= sph3.center.transform_m4(m4)
+        cen: maths.Vec3= sph3.origin.transform_m4(m4)
 
         r0: maths.Vec3= m4.row0.xyz()
         r1: maths.Vec3= m4.row1.xyz()
@@ -383,47 +383,47 @@ class Sphere3:
     def copy(self) -> 'Sphere3':
         """Return a copy of self
         """
-        return Sphere3(self.center.copy(), self.radius)
+        return Sphere3(self.origin.copy(), self.radius)
 
     def transform(self, m4: maths.Mat4) -> None:
-        self.center.set_from(self.center.transform_m4(m4))
+        self.origin.set_from(self.origin.transform_m4(m4))
 
     def closest_pt(self, pt: maths.Vec3) -> maths.Vec3:
-        point: maths.Vec3= pt - self.center
+        point: maths.Vec3= pt - self.origin
 
         if not point.is_normalized():
             point.normalize()
 
-        return self.center + (point * self.radius)
+        return self.origin + (point * self.radius)
 
     def furthest_pt(self, pt: maths.Vec3) -> maths.Vec3:
         if not pt.is_normalized():
             pt.normalize()
 
-        return self.center + (pt * self.radius)
+        return self.origin + (pt * self.radius)
 
     def intersect_sphere(self, other: 'Sphere3') -> bool:
-        dis: float= (self.center - other.center).length_squared()
+        dis: float= (self.origin - other.origin).length_squared()
         r2: float= maths.sqr(self.radius + other.radius)
 
         return dis < r2
 
     def intersect_pt(self, pt: maths.Vec3) -> bool:
-        dis: float= (self.center - pt).length_squared()
+        dis: float= (self.origin - pt).length_squared()
         r2: float= maths.sqr(self.radius)
 
         return dis < r2
 
     def intersect_aabb(self, aabb: 'AABB3') -> bool:
-        close_pt: maths.Vec3= aabb.closest_pt(self.center)
-        dis: float= (self.center - close_pt).length_squared()
+        close_pt: maths.Vec3= aabb.closest_pt(self.origin)
+        dis: float= (self.origin - close_pt).length_squared()
         r2: float= maths.sqr(self.radius)
 
         return dis < r2
 
     def intersect_plain(self, plain: 'Plane'):
-        close_pt: maths.Vec3= plain.closest_pt(self.center)
-        dis: float= (self.center - close_pt).length_squared()
+        close_pt: maths.Vec3= plain.closest_pt(self.origin)
+        dis: float= (self.origin - close_pt).length_squared()
         r2: float= maths.sqr(self.radius)
 
         return dis < r2
@@ -817,7 +817,7 @@ class Ray3:
         return tmin
 
     def cast_sphere(self, sph: Sphere3) -> float:
-        a: maths.Vec3= sph.center - self.origin
+        a: maths.Vec3= sph.origin - self.origin
         b: float= a.dot(self.direction)
         c: float= a.length_squared() - maths.sqr(sph.radius)
 
