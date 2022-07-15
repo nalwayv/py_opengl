@@ -2004,15 +2004,15 @@ class Mat4:
     def create_lookat(eye: Vec3, target: Vec3, up: Vec3) -> 'Mat4':
         """
         """
-        z: Vec3= (eye - target).normalized()
-        x: Vec3= up.cross(z).normalized()
-        y: Vec3= z.cross(x)
+        f: Vec3= (eye - target).normalized()
+        s: Vec3= up.cross(f).normalized()
+        u: Vec3= f.cross(s)
 
         return Mat4(
-            Vec4(x.x, y.x, z.x, 0.0),
-            Vec4(x.y, y.y, z.y, 0.0),
-            Vec4(x.z, y.z, z.z, 0.0),
-            Vec4(-x.dot(eye), -y.dot(eye), -z.dot(eye), 1.0)
+            Vec4(s.x, u.x, f.x, 0.0),
+            Vec4(s.y, u.y, f.y, 0.0),
+            Vec4(s.z, u.z, f.z, 0.0),
+            Vec4(-s.dot(eye), -u.dot(eye), -f.dot(eye), 1.0)
         )
 
     def add(self, other: 'Mat4') -> None:
