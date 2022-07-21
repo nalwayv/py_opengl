@@ -339,7 +339,6 @@ class Vec2:
         self.x *= inv
         self.y *= inv
 
-
     def normalized(self) -> 'Vec2':
         """Return a copy of self with normalized length
         """
@@ -2083,7 +2082,7 @@ class Mat4:
         self.row1.set_from(self.row1 * by)
         self.row2.set_from(self.row2 * by)
         self.row3.set_from(self.row3 * by)
-    
+
     def scaled(self, by: float) -> 'Mat4':
         """
         """

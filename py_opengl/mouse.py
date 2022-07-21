@@ -35,18 +35,15 @@ class Mouse:
         """
         self.states[key]= (self.states[key] & 0xFFFF00FF) | (value << 8)
 
-
     def _get_current_state_at(self, key: int) -> int:
         """Get glfw mouse button number stored current state
         """
         return 0xFF & self.states[key]
 
-
     def _get_previous_state_at(self, key: int) -> int:
         """Get glfw mouse button number stored previous state
         """
         return 0xFF & (self.states[key] >> 8)
-
 
     def _get_state(self, glfw_mouse_state: int) -> MouseState:
         """Mouse button pressed
@@ -92,3 +89,4 @@ class Mouse:
         """Return true if mouse button is released
         """
         return self._get_state(mouse) is MouseState.RELEASED
+

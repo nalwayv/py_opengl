@@ -18,7 +18,7 @@ T= TypeVar('T', bound= model.Model)
 
 
 class Node:
-    
+
     __slots__= (
         'left',
         'right',
@@ -37,17 +37,17 @@ class Node:
         self.obj: T|None= None
 
     def is_leaf(self) -> bool:
-        return self.left == None
+        return self.left is None
 
     def has_obj(self) -> bool:
-        return self.obj != None
+        return self.obj is not None
 
 
 # ---
 
 
 class ABTree:
-    
+
     __slots__= (
         'root',
         'leaves'
@@ -75,7 +75,7 @@ class ABTree:
             c.parent= a.parent
             a.parent= c
 
-            if c.parent != None:
+            if c.parent is not None:
                 if c.parent.left is a:
                     c.parent.left= c
                 else:
@@ -112,12 +112,12 @@ class ABTree:
                     a.aabb,
                     g.aabb
                 )
-                
+
                 a.height= 1 + maths.maxi(b.height, f.height)
                 c.height= 1 + maths.maxi(a.height, g.height)
 
             return c
-        
+
         if balance < -1:
             d: Node= b.left
             e: Node= b.right
@@ -126,7 +126,7 @@ class ABTree:
             b.parent= a.parent
             a.parent= b
 
-            if b.parent != None:
+            if b.parent is not None:
                 if b.parent.left is a:
                     b.parent.left= b
                 else:
@@ -134,14 +134,13 @@ class ABTree:
             else:
                 self.root= b
 
-            
             if d.height > e.height:
                 b.right= d
                 a.left= e
                 e.parent= a
 
                 a.aabb= geometry.AABB3.create_combined_from(
-                    c.aabb, 
+                    c.aabb,
                     e.aabb
                 )
 
@@ -169,13 +168,13 @@ class ABTree:
 
                 a.height= 1 + maths.maxi(c.height, d.height)
                 b.height= 1 + maths.maxi(a.height, e.height)
-            
+
             return b
 
         return a
 
     def _insert_leaf(self, leaf: Node) -> None:
-        if self.root == None:
+        if self.root is None:
             self.root= leaf
             self.root.parent= None
             return
@@ -214,7 +213,7 @@ class ABTree:
                 oldperimiter= left.aabb.perimeter()
                 newperimiter= aabb.perimeter()
                 cost_left= (newperimiter - oldperimiter) + dcost
-            
+
             cost_right: float= 0.0
             if right.is_leaf():
                 aabb= geometry.AABB3.create_combined_from(
@@ -246,12 +245,12 @@ class ABTree:
         )
         new_parent.height= sibling.height + 1
 
-        if old_parent != None:
+        if old_parent is not None:
             if old_parent.left is sibling:
                 old_parent.left= new_parent
             else:
                 old_parent.right= new_parent
-            
+
             new_parent.left= sibling
             new_parent.right= leaf
             sibling.parent= new_parent
@@ -264,7 +263,7 @@ class ABTree:
             self.root= new_parent
 
         current= leaf.parent
-        while current != None:
+        while current is not None:
             current= self._balance_leaf(current)
 
             current.height= 1 + maths.maxi(
@@ -280,7 +279,7 @@ class ABTree:
             current= current.parent
 
     def _remove_leaf(self, leaf: Node) -> None:
-        if self.root == None:
+        if self.root is None:
             return
 
         if leaf is self.root:
@@ -291,16 +290,16 @@ class ABTree:
         gparent= parent.parent
         sibling= parent.right if (parent.left is leaf) else parent.left
 
-        if gparent != None:
+        if gparent is not None:
             if gparent.left is parent:
                 gparent.left= sibling
             else:
                 gparent.right= sibling
-            
+
             sibling.parent= gparent
 
             current: Node= gparent
-            while current != None:
+            while current is not None:
                 current= self._balance_leaf(current)
 
                 left= current.left
@@ -339,21 +338,20 @@ class ABTree:
         self._insert_leaf(node)
 
     def _is_valid(self, node: Node) -> bool:
-        if node == None:
+        if node is None:
             return True
 
         if node is self.root:
-            if node.parent != None:
+            if node.parent is not None:
                 return False
-
 
         l= node.left
         r= node.right
 
         if node.is_leaf():
-            if l != None:
+            if l is not None:
                 return False
-            if r != None:
+            if r is not None:
                 return False
             if node.height != 0:
                 return False
@@ -364,7 +362,7 @@ class ABTree:
         h= 1 + maths.maxi(h0, h1)
         if node.height != h:
             return False
-        
+
         aabb= geometry.AABB3.create_combined_from(
             l.aabb,
             r.aabb
@@ -374,9 +372,10 @@ class ABTree:
 
         if not aabb.get_max().is_equil(node.aabb.get_max()):
             return False
-        
+
         if not (l.parent is node):
             return False
+
         if not (r.parent is node):
             return False
 
@@ -386,28 +385,32 @@ class ABTree:
         return cl and cr
 
     def shift(self, shift_by: maths.Vec3) -> None:
+        """
+        """
         que: list[Node|None]= [self.root]
 
         while que:
             current: Node|None= que.pop(0)
-            
-            if current == None:
+
+            if current is None:
                 continue
 
             if not current.is_leaf():
                 que.append(current.left)
                 que.append(current.right)
-            
+
             m4= maths.Mat4.create_translation(shift_by)
             current.aabb.transform(m4)
 
-    def debug(self, s: shader.Shader, view: maths.Mat4, projection: maths.Mat4) -> None:
+    def draw(self, s: shader.Shader, view: maths.Mat4, projection: maths.Mat4) -> None:
+        """
+        """
         que: list[Node|None]= [self.root]
 
         while que:
             current: Node|None= que.pop(0)
 
-            if current == None:
+            if current is None:
                 return
 
             if not current.is_leaf():
@@ -416,7 +419,7 @@ class ABTree:
 
             leaf_m= model.CubeModel(current.aabb.extents)
             leaf_m.translate(current.aabb.origin)
-            
+
             leaf_m.draw(s, view, projection, True)
             leaf_m.delete()
 
@@ -426,12 +429,12 @@ class ABTree:
         que: list[Node|None]= [self.root]
 
         closest_t: float= -1.0
-        closest_o: T|None= None  
+        closest_o: T|None= None
 
         while que:
             current: Node|None= que.pop(0)
 
-            if current == None:
+            if current is None:
                 continue
 
             if not current.is_leaf():
@@ -455,7 +458,7 @@ class ABTree:
         while que:
             current: Node|None= que.pop(0)
 
-            if current == None:
+            if current is None:
                 continue
 
             if not current.is_leaf():
@@ -470,20 +473,20 @@ class ABTree:
 
     def add(self, obj: T) -> None:
         node= self.leaves.get(obj, None)
-        if node != None:
+        if node is not None:
             self._update_node(obj, node)
         else:
             self._add_node(obj)
 
     def remove(self, obj: T) -> None:
         node= self.leaves.get(obj, None)
-        if node != None:
+        if node is not None:
             self._remove_leaf(node)
             self.leaves.pop(node)
-    
+
     def update(self, obj: T) -> None:
         node= self.leaves.get(obj, None)
-        if node != None:
+        if node is not None:
             self._update_node(obj, node)
         else:
             self._add_node(obj)

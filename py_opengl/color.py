@@ -13,7 +13,7 @@ class Color:
 
     def __init__(self) -> None:
         self.rgba: int= 0xFF
-        
+
 
     @staticmethod
     def create_from_rgba(red: int, green: int, blue: int, alpha: int) -> 'Color':
@@ -36,7 +36,7 @@ class Color:
     def get_alpha(self) -> int:
         return 0xFF & (self.rgba >> 24)
 
-    def set_red(self, value: int) -> None: 
+    def set_red(self, value: int) -> None:
         self.rgba= (self.rgba & 0xFFFFFF00) | (maths.clampi(value, 0, 255))
 
     def set_green(self, value: int) -> None:
@@ -64,3 +64,4 @@ class Color:
             float(self.get_blue()) * inv,
             float(self.get_alpha()) * inv
         )
+

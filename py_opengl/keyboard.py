@@ -28,7 +28,7 @@ class KeyState(Enum):
 class Keyboard:
 
     __slots__= ('states', 'win')
-    
+
     def __init__(self, win: window.GlWindow) -> None:
         self.states: list[int]= [0xFF] * KEYBOARD_SIZE
         self.win: window.GlWindow|None= win
@@ -45,7 +45,7 @@ class Keyboard:
     def _get_previous_state_at(self, key: int) -> int:
         return 0xFF & (self.states[key] >> 8)
 
-    def _get_state(self, glfw_key_state: int ) -> KeyState:
+    def _get_state(self, glfw_key_state: int) -> KeyState:
         """Get keyboard keystate
         """
         key= glfw_key_state

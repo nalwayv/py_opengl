@@ -11,8 +11,6 @@ from py_opengl import geometry
 
 
 class MeshError(Exception):
-    '''
-    '''
     def __init__(self, msg: str):
         super().__init__(msg)
 
@@ -24,11 +22,7 @@ class Vertex:
 
     __slots__= ('position', 'normal', 'color')
 
-    def __init__(self,
-        pos: maths.Vec3= maths.Vec3(),
-        norm: maths.Vec3= maths.Vec3(),
-        col: maths.Vec3= maths.Vec3(),
-    ) -> None:
+    def __init__(self, pos: maths.Vec3= maths.Vec3(), norm: maths.Vec3= maths.Vec3(), col: maths.Vec3= maths.Vec3()) -> None:
         self.position: maths.Vec3= pos
         self.normal: maths.Vec3= norm
         self.color: maths.Vec3= col
@@ -50,7 +44,7 @@ class VBO:
 
     def __init__(self) -> None:
         self.ID= GL.glGenBuffers(1)
-    
+
     def set_data(self, vertices: list[Vertex]) -> None:
         v_array= [
             value
@@ -65,7 +59,7 @@ class VBO:
             GL.GL_STATIC_DRAW
         )
 
-    def link(self, index:int, components:int, stride: int, offset: int) -> None:
+    def link(self, index: int, components: int, stride: int, offset: int) -> None:
         GL.glEnableVertexAttribArray(index)
         GL.glVertexAttribPointer(
             index,
@@ -157,13 +151,13 @@ class Mesh:
         self._ebo.bind()
         self._ebo.set_data(self.indices)
 
-        self._vbo.link(0, 3, 6 * utils.SIZEOF_FLOAT, 0 * utils.SIZEOF_FLOAT) 
+        self._vbo.link(0, 3, 6 * utils.SIZEOF_FLOAT, 0 * utils.SIZEOF_FLOAT)
         self._vbo.link(1, 3, 6 * utils.SIZEOF_FLOAT, 3 * utils.SIZEOF_FLOAT)
 
         self._vbo.unbind()
         self._vao.unbind()
         self._ebo.unbind()
-    
+
     def compute_aabb(self) -> geometry.AABB3:
         pmin: maths.Vec3= maths.Vec3.create_from_value(maths.MAX_FLOAT)
         pmax: maths.Vec3= maths.Vec3.create_from_value(maths.MIN_FLOAT)
@@ -185,7 +179,7 @@ class Mesh:
 
             if pt.z < pmin.z:
                 pmin.z = pt.z
-                
+
             if pt.z > pmax.z:
                 pmax.z = pt.z
 
@@ -194,7 +188,7 @@ class Mesh:
     def get_furthest_pt(self, dir: maths.Vec3) -> maths.Vec3:
         if not dir.is_normalized():
             dir.normalize()
-    
+
         max_pt: maths.Vec3= maths.Vec3.zero()
         max_dis: float= maths.MIN_FLOAT
 
@@ -242,7 +236,7 @@ class LineMesh(Mesh):
         vertices: list[Vertex]= [
             Vertex(
                 start,
-                maths.Vec3(0.0, 0.0 ,0.0),
+                maths.Vec3(0.0, 0.0, 0.0),
                 maths.Vec3(1.0, 0.0, 0.0),
             ),
 
@@ -250,7 +244,7 @@ class LineMesh(Mesh):
                 end,
                 maths.Vec3(0.0, 0.0, 0.0),
                 maths.Vec3(0.0, 1.0, 0.0),
-            ), 
+            ),
         ]
 
         indices: list[int]= [0, 1]
@@ -349,24 +343,24 @@ class Traingle(Mesh):
         vertices: list[Vertex]=[
             Vertex(
                 tri.p0,
-                maths.Vec3(0,0,0),
-                maths.Vec3(1,0,0)
+                maths.Vec3(0.0, 0.0, 0.0),
+                maths.Vec3(1.0, 0.0, 0.0)
             ),
 
             Vertex(
                 tri.p1,
-                maths.Vec3(0,0,0),
-                maths.Vec3(0,1,0)
+                maths.Vec3(0.0, 0.0, 0.0),
+                maths.Vec3(0.0, 1.0, 0.0)
             ),
 
             Vertex(
                 tri.p2,
-                maths.Vec3(0,0,0),
-                maths.Vec3(0,0,1)
+                maths.Vec3(0.0, 0.0, 0.0),
+                maths.Vec3(0.0, 0.0, 1.0)
             ),
 
         ]
-        
+
         indices: list[int]= [0, 1, 2]
 
         super().__init__(vertices, indices)
@@ -377,7 +371,6 @@ class Traingle(Mesh):
 
 class CubeMesh(Mesh):
 
-    
     def __init__(self, size: maths.Vec3) -> None:
 
         vertices: list[Vertex]= [
@@ -526,7 +519,6 @@ class CubeMesh(Mesh):
 
 class FrustumMesh(Mesh):
 
-    
     def __init__(self, arr: list[maths.Vec3]) -> None:
         if len(arr) != 8:
             raise MeshError('len of arr was not 8')

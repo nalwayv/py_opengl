@@ -27,7 +27,7 @@ class Simplex:
     def _solve2(self, dir: maths.Vec3) -> bool:
         if self.length() < 2:
             return False
-    
+
         a: maths.Vec3= self._pts[1]
         b: maths.Vec3= self._pts[0]
 
@@ -45,7 +45,7 @@ class Simplex:
     def _solve3(self, dir: maths.Vec3) -> bool:
         if self.length() < 3:
             return False
-    
+
         a: maths.Vec3= self._pts[2]
         b: maths.Vec3= self._pts[1]
         c: maths.Vec3= self._pts[0]
@@ -139,7 +139,7 @@ class Simplex:
                 self._pts= [a, b, d]
                 dir.set_from(abd * -1.0)
             else:
-                self._pts= [a, c, d]                
+                self._pts= [a, c, d]
                 dir.set_from(acb * -1.0)
 
         return self._solve3(dir)
@@ -159,7 +159,7 @@ class Simplex:
 
     def push(self, pt: maths.Vec3):
         self._pts.append(pt)
-    
+
     def clear(self) -> None:
         """Clear current pts
         """
@@ -171,20 +171,16 @@ class Simplex:
 
 class Minkowskisum:
 
-    __slots__=  ('m0', 'm1')
+    __slots__= ('m0', 'm1')
 
-    def __init__(
-        self,
-        m0: MT|None= None,
-        m1: MT|None= None
-    ) -> None:
+    def __init__(self, m0: MT|None= None, m1: MT|None= None) -> None:
         self.m0: MT|None= m0
         self.m1: MT|None= m1
 
     def get_support(self, dir: maths.Vec3) -> maths.Vec3:
         """Return support between model types based on direction
         """
-        if (self.m0 == None) or (self.m1 == None):
+        if (self.m0 is None) or (self.m1 is None):
             return maths.Vec3.zero()
 
         p0: maths.Vec3= self.m0.get_furthest_pt(dir)
@@ -197,7 +193,7 @@ class Minkowskisum:
 
         if model types are none then return normalized x vec3
         """
-        if (self.m0 == None) or (self.m1 == None):
+        if (self.m0 is None) or (self.m1 is None):
             return maths.Vec3(x= 1.0)
 
         p0: maths.Vec3= self.m0.get_position()
@@ -232,7 +228,7 @@ class GJK:
         simp= Simplex()
         spt: maths.Vec3= mksum.get_support(dir)
         simp.push(spt)
-        
+
         dir.set_from(spt * -1.0)
 
         for _ in range(self.iterations):

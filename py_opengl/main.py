@@ -14,7 +14,7 @@ from py_opengl import camera
 from py_opengl import window
 from py_opengl import color
 from py_opengl import model
-from py_opengl import geometry
+# from py_opengl import geometry
 from py_opengl import abtree
 
 
@@ -84,7 +84,7 @@ def main() -> None:
         shape4.translate(maths.Vec3(2.0, 2.0, 0.0))
 
         bgcolor= color.Color.create_from_rgba(75, 75, 75, 255)
-        
+
         tree: abtree.ABTree= abtree.ABTree()
         tree.add(shape0)
         tree.add(shape1)
@@ -116,9 +116,8 @@ def main() -> None:
             shape2.draw(shader0, v_matrix, p_matrix)
             shape3.draw(shader0, v_matrix, p_matrix)
             shape4.draw(shader0, v_matrix, p_matrix)
-
             fshape.draw(shader0, v_matrix, p_matrix, True)
-            tree.debug(shader0, v_matrix, p_matrix)
+            tree.draw(shader0, v_matrix, p_matrix)
 
             # --
 
@@ -149,8 +148,7 @@ def main() -> None:
                 else:
                     mx, my= glwin.get_mouse_pos()
                     new_mp= maths.Vec3(x= mx, y= my) - last_mp
-                    last_mp.x= mx
-                    last_mp.y= my
+                    last_mp.set_from_xyz(mx, my, 0.0)
 
                     cam.rotate(camera.CameraRotation.YAW, new_mp.x, time.delta)
                     cam.rotate(camera.CameraRotation.PITCH, new_mp.y, time.delta)

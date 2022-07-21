@@ -322,7 +322,7 @@ class Triangle3:
             w >= 0.0 and
             (v + w) <= 1.0
         )
-        
+
 
 # ---
 
@@ -446,7 +446,7 @@ class Plane:
             if(
                 self.normal.is_equil(other.normal) and
                 maths.is_equil(self.d, other.d) and
-                self.TYPE == other.TYPE 
+                self.TYPE == other.TYPE
             ):
                 return True
         return False

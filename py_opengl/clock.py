@@ -15,7 +15,7 @@ DELTA: Final[float]= 0.01666666666666666667
 class Clock:
 
     __slots__= ('ticks', 'delta', 'last_step', 'accumalate')
-    
+
     def __init__(self) -> None:
         self.ticks: int= 0
         self.delta: float= DELTA
@@ -34,3 +34,4 @@ class Clock:
         while self.accumalate >= self.delta:
             self.accumalate -= self.delta
             self.ticks += 1.0
+

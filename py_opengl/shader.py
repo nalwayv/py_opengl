@@ -16,7 +16,7 @@ class ShaderError(Exception):
 
 
 class Shader:
-    
+
     __slots__= ('vshader', 'fshader', 'ID')
 
     def __init__(self, vshader: str, fshader: str) -> None:
@@ -36,7 +36,7 @@ class Shader:
         if not v_file.exists():
             GL.glDeleteProgram(self.ID)
             raise ShaderError('vert file was not found within shaders folder')
-        
+
         if not f_file.exists():
             GL.glDeleteProgram(self.ID)
             raise ShaderError('frag file was not found within shaders folder')
@@ -114,7 +114,7 @@ class Shader:
             GL.glUniform4f(idx, value.x, value.y, value.z, value.w)
 
     def set_mat4(self, variable_name: str, value: maths.Mat4) -> None:
-        """Set a global uniform mat4 variable within shader 
+        """Set a global uniform mat4 variable within shader
         """
         idx: int= GL.glGetUniformLocation(self.ID, variable_name)
         if idx >= 0:
