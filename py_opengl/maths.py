@@ -647,12 +647,13 @@ class Vec3:
     def normalized(self) -> 'Vec3':
         """Return a copy of this vec3 with a normal length
         """
-        ls: float= self.length()
+        ls_sq: float= self.length_squared()
 
-        if is_zero(ls):
+        if is_zero(ls_sq):
             return Vec3.zero()
-
-        return self * (1.0 / ls)
+            
+        inv= inv_sqrt(ls_sq)    
+        return self * inv
 
     def get_at(self, idx: int) -> float:
         if idx == 0:
@@ -1423,12 +1424,12 @@ class Mat3:
         ax: float= self.row0.x
         ay: float= -self.row0.y
         az: float= self.row0.z
-        bx: float= -self.row1.bx
-        by: float= self.row1.by
-        bz: float= -self.row1.bz
-        cx: float= self.row2.cx
-        cy: float= -self.row2.cy
-        cz: float= self.row2.cz
+        bx: float= -self.row1.x
+        by: float= self.row1.y
+        bz: float= -self.row1.z
+        cx: float= self.row2.x
+        cy: float= -self.row2.y
+        cz: float= self.row2.z
 
         return Mat3(
             Vec3(ax, ay, az),

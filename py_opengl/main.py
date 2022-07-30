@@ -142,8 +142,7 @@ def main() -> None:
             if ms.is_button_held(glfw.MOUSE_BUTTON_LEFT):
                 if first_move:
                     mx, my= glwin.get_mouse_pos()
-                    last_mp.x= mx
-                    last_mp.y= my
+                    last_mp.set_from_xyz(mx, my, 0.0)
                     first_move = False
                 else:
                     mx, my= glwin.get_mouse_pos()
