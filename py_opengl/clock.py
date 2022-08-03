@@ -14,13 +14,13 @@ DELTA: Final[float]= 0.01666666666666666667
 
 class Clock:
 
-    __slots__= ('ticks', 'delta', 'last_step', 'accumalate')
+    __slots__= ('delta', 'last_step', 'accumalate', 'ticks')
 
     def __init__(self) -> None:
-        self.ticks: int= 0
         self.delta: float= DELTA
         self.last_step: float= 0.0
         self.accumalate: float= 0.0
+        self.ticks: int= 0
 
     def update(self) -> None:
         """Update ticks and delta

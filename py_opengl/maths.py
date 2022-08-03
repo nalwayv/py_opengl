@@ -2692,7 +2692,7 @@ class Quaternion:
                 result.w= (m4.row0.z - m4.row2.x) * inv_s
                 result.x= (m4.row0.y + m4.row1.x) * inv_s
                 result.y= s * 0.25
-                result.z= (m4.row1.Z + m4.row2.y) * inv_s
+                result.z= (m4.row1.z + m4.row2.y) * inv_s
             else:
                 s: float= sqrt(1.0 + cz - ax - by) * 2.0
                 inv_s: float= 1.0 / s
