@@ -2815,7 +2815,7 @@ class Quaternion:
             -self.x * inv,
             -self.y * inv,
             -self.z * inv,
-            self.q * inv
+            self.w * inv
         )
 
     def normalized(self) -> 'Quaternion':
