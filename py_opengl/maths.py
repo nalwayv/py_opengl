@@ -2894,20 +2894,20 @@ class Quaternion:
         """
         qt_cpy: Quaternion= self.copy()
 
-        if qt_cpy.w > 1.0:
+        if absf(qt_cpy.w) > 1.0:
             qt_cpy.normalize()
 
         scl: float= sqrt(1.0 - sqr(qt_cpy.w))
 
-        if is_zero(scl):
-            raise QuatError('length of quaternion was zero')
+        if scl > 1e-4:
+            inv: float = 1.0 / scl
+            return Vec3(
+                qt_cpy.x * inv,
+                qt_cpy.y * inv,
+                qt_cpy.z * inv
+            )
 
-        inv: float = 1.0 / scl
-        return Vec3(
-            self.x * inv,
-            self.y * inv,
-            self.z * inv
-        )
+        return Vec3.create_unit_x()
 
     def xyz(self) -> Vec3:
         """Return 'xyz' components as a vec3
@@ -2980,21 +2980,7 @@ class Quaternion:
     def get_axis_angle_rotation(self) -> float:
         """Return the current angle of self in radians
         """
-        return arccos(self.w) * 2.0
-
-    def get_rotation_axis(self) -> Vec3:
-        """Return the current axis
-        """
-        s: float= sin(self.get_axis_angle_rotation() * 0.5)
-        if not is_zero(s):
-            inv: float= 1.0 / s
-            return Vec3(
-                self.x * inv,
-                self.y * inv,
-                self.z * inv
-            )
-
-        return Vec3.create_unit_x()
+        return 2.0 * arccos(self.w)
 
     def is_equil(self, other: 'Quaternion') -> bool:
         """Check if the components of self are the same as other's components
