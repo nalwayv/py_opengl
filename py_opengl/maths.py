@@ -2985,7 +2985,7 @@ class Quaternion:
     def get_rotation_axis(self) -> Vec3:
         """Return the current axis
         """
-        s: float= sin(self.get_axis_angle() * 0.5)
+        s: float= sin(self.get_axis_angle_rotation() * 0.5)
         if not is_zero(s):
             inv: float= 1.0 / s
             return Vec3(
