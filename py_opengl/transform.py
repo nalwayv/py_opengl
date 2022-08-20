@@ -33,7 +33,6 @@ class Transform3:
         """
         """
         self.basis.scale(by)
-        print(self.basis.get_scale())
 
     def orthonormalize(self) -> None:
         """

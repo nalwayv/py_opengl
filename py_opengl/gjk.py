@@ -56,7 +56,7 @@ class Simplex:
 
         abc: maths.Vec3= ab.cross(ac)
 
-        t0 = abc.cross(ac)
+        t0= abc.cross(ac)
         t1= ab.cross(abc)
 
         if t0.dot(a0) > 0.0:

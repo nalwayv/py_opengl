@@ -20,7 +20,6 @@ class Clock:
         self.delta: float= DELTA
         self.last_step: float= 0.0
         self.accumalate: float= 0.0
-        self.ticks: int= 0
 
     def update(self) -> None:
         """Update ticks and delta
@@ -33,5 +32,4 @@ class Clock:
 
         while self.accumalate >= self.delta:
             self.accumalate -= self.delta
-            self.ticks += 1.0
 

@@ -141,8 +141,11 @@ class AABB3:
     def perimeter(self) -> float:
         pmin: maths.Vec3= self.get_min()
         pmax: maths.Vec3= self.get_max()
-
-        return 4.0 * (pmax - pmin).sum()
+        d: maths.Vec3 = pmax - pmin;
+        xy: float= d.x * d.y
+        yz: float= d.y * d.z
+        zx: float= d.z * d.x
+        return 2.0 * (xy + yz + zx)
 
     def get_area(self) -> float:
         pmin= self.get_min()
@@ -585,7 +588,10 @@ class Plane:
         """
         lsq: float= self.normal.length_squared()
         if (lsq - 1.0) < 2.220446049250313e-16:
-            return
+            return Plane(
+                normal= Vec3(0.0, 0.0, 0.0),
+                d= 0.0
+            )
 
         inv: float= maths.inv_sqrt(lsq)
         return Plane(self.normal * inv, self.d * inv)
@@ -786,7 +792,7 @@ class Ray3:
     def cast_aabb(self, aabb: AABB3) -> float:
         pmin: maths.Vec3= aabb.get_min()
         pmax: maths.Vec3= aabb.get_max()
-        tmin: float= maths.MIN_FLOAT
+        tmin: float= 0.0
         tmax: float= maths.MAX_FLOAT
 
         for idx in range(3):
@@ -795,7 +801,7 @@ class Ray3:
                     self.origin.get_at(idx) < pmin.get_at(idx) or
                     self.origin.get_at(idx) > pmax.get_at(idx)
                 ):
-                    return -1.0
+                    return 0.0
             else:
                 inv: float= 1.0 / self.direction.get_at(idx)
 
@@ -812,7 +818,7 @@ class Ray3:
                     tmax= t2
 
                 if tmin > tmax:
-                    return -1.0
+                    return 0.0
 
         return tmin
 
@@ -822,11 +828,11 @@ class Ray3:
         c: float= a.length_squared() - maths.sqr(sph.radius)
 
         if c > 0.0 and b > 0.0:
-            return -1.0
+            return 0.0
 
         d: float= maths.sqr(b) - c
         if d < 0.0:
-            return -1.0
+            return 0.0
 
         t: float= -b - maths.sqrt(d)
         if t < 0.0:
